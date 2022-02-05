@@ -1,0 +1,207 @@
+---
+- name: Deploy vSphere Infrastructure for ZTP via RHACM OAS Discovery ISO
+  hosts: all
+  gather_facts: no
+  vars:
+    vcenter_credentials_secret:
+      namespace: "{{ vcenter_credentials_secret_namespace }}"
+      name: "{{ vcenter_credentials_secret_name }}"
+    infraenv:
+      namespace: "{{ infraenv_namespace }}"
+      name: "{{ infraenv_name }}"
+    cluster_configmap:
+      namespace: "{{ cluster_configmap_namespace }}"
+      name: "{{ cluster_configmap_name }}"
+    auto_approve_hosts: true
+
+  tasks:
+  - name: Preflight for Tower
+    block:
+    - name: Install needed pip modules
+      pip:
+        name:
+          - kubernetes
+          - openshift==0.12.1
+        extra_args: --upgrade
+      delegate_to: localhost
+
+  - name: Query OpenShift for needed Configs & Secrets
+    block:
+    - name: Get the vCenter Credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: "{{ vcenter_credentials_secret.namespace }}"
+        name: "{{ vcenter_credentials_secret.name }}"
+      register: vsphere_secret
+
+    - name: Fail if the vCenter credentials secret is not found
+      fail:
+        msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
+      when: vsphere_secret.resources | length == 0
+
+    - name: Get the Cluster Configuration
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        namespace: "{{ cluster_configmap.namespace }}"
+        name: "{{ cluster_configmap.name }}"
+      register: cluster_configmap_info
+
+    - name: Fail if the Cluster Config ConfigMap is not found
+      fail:
+        msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
+      when: cluster_configmap_info.resources | length == 0
+
+    - name: Query the RHACM OAS InfraEnv for the Discovery ISO
+      kubernetes.core.k8s_info:
+        api_version: agent-install.openshift.io/v1beta1
+        kind: InfraEnv
+        namespace: "{{ infraenv.namespace }}"
+        name: "{{ infraenv.name }}"
+      register: infraenv_info
+      retries: 30
+      delay: 10
+      until: infraenv_info.resources[0].status.isoDownloadURL != ""
+      ignore_errors: true
+
+  - name: Query vCenter for a connectivity test
+    community.vmware.vmware_datacenter_info:
+      hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+      username: '{{ vsphere_secret.resources[0].data.username | b64decode }}'
+      password: '{{ vsphere_secret.resources[0].data.password | b64decode }}'
+      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+    register: vcenter_test_info
+
+  - name: Fail if the vCenter instance cannot be connected to
+    fail:
+      msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
+    when: vcenter_test_info.datacenter_info | length == 0
+
+  - name: Create the ISOs directory on the datacenter/datastore
+    community.vmware.vsphere_file:
+      host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+      username: '{{ vsphere_secret.resources[0].data.username | b64decode }}'
+      password: '{{ vsphere_secret.resources[0].data.password | b64decode }}'
+      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+      datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+      datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
+      path: /ISOs
+      state: directory
+
+  - name: Create a VM folder on given datacenter
+    community.vmware.vcenter_folder:
+      hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+      username: '{{ vsphere_secret.resources[0].data.username | b64decode }}'
+      password: '{{ vsphere_secret.resources[0].data.password | b64decode }}'
+      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+      datacenter_name: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+      folder_name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+      folder_type: vm
+      state: present
+
+  - name: Download Discovery ISO
+    get_url:
+      url: "{{ infraenv_info.resources[0].status.isoDownloadURL }}"
+      dest: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+      validate_certs: false
+
+  - name: Delete the previous iso if present
+    community.vmware.vsphere_file:
+      host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+      username: '{{ vsphere_secret.resources[0].data.username | b64decode }}'
+      password: '{{ vsphere_secret.resources[0].data.password | b64decode }}'
+      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+      datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+      datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
+      path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+      state: absent
+
+  - name: Upload Discovery ISO to the target Cluster Host
+    community.vmware.vsphere_copy:
+      hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+      username: '{{ vsphere_secret.resources[0].data.username | b64decode }}'
+      password: '{{ vsphere_secret.resources[0].data.password | b64decode }}'
+      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+      src: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+      datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+      datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
+      path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+
+  - name: Delete local Discovery ISO
+    file:
+      path: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+      state: absent
+
+  - name: Create SNO VM
+    block:
+    - name: Create SNO VM
+      community.vmware.vmware_guest:
+        hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+        username: '{{ vsphere_secret.resources[0].data.username | b64decode }}'
+        password: '{{ vsphere_secret.resources[0].data.password | b64decode }}'
+        validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+        datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+        datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
+        cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
+        name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+        folder: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+        guest_id: coreos64Guest
+        state: powered-on
+        disk:
+        - size_gb: "{{ cluster_configmap_info.resources[0].data.sno_disk_size }}"
+          type: thin
+        hardware:
+          memory_mb: "{{ cluster_configmap_info.resources[0].data.sno_memory_size }}"
+          num_cpu_cores_per_socket : "{{ cluster_configmap_info.resources[0].data.sno_cpu_cores }}"
+          num_cpus : "{{ (cluster_configmap_info.resources[0].data.sno_cpu_sockets|int * cluster_configmap_info.resources[0].data.sno_cpu_cores|int) }}"
+        cdrom:
+        - controller_number: 0
+          unit_number: 0
+          state: present
+          type: iso
+          iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+        networks:
+        - name: "{{ cluster_configmap_info.resources[0].data.vsphere_network }}"
+          device_type: vmxnet3
+          mac: "{{ cluster_configmap_info.resources[0].data.sno_mac_address }}"
+
+#- name: Create Converged Cluster VMs
+#- name: Create HA Cluster VMs
+
+  - name: Set initial facts
+    block:
+    - name: Set empty facts
+      set_fact:
+        agent_names: []
+        approved_agents: []
+
+    - name: SNO Facts
+      set_fact:
+        agent_names: "{{ agent_names + [cluster_configmap_info.resources[0].data.cluster_name] }}"
+      when: cluster_configmap_info.resources[0].data.cluster_type == "sno"
+
+  - name: Loop through Agents
+    include_tasks: tasks/agent_loop_runner.yml
+    vars:
+      task_agent_names: "{{ agent_names }}"
+      task_approved_agents: "{{ approved_agents }}"
+
+#  - name: Wait and approve hosts
+#    block:
+#    - name: Set blank fact for VM list
+#      set_fact:
+#        approved_hosts: 0
+#        total_hosts: 0
+#
+#    - name: Add VM Names to fact
+#      set_fact:
+#        vm_names: "{{ vm_names + [cluster_name+'-'+item.name] }}"
+#      loop: "{{ cluster_nodes }}"
+#      
+#    - name: Check for Libvirt VM Rebooting
+#      include_tasks: tasks/approve_hosts.yaml
+#      vars:
+#        task_vm_names: "{{ vm_names }}"
+#        task_shutdown_vms: "{{ shutdown_vms }}"
+#    when: auto_approve_hosts|bool

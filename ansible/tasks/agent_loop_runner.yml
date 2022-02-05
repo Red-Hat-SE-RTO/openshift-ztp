@@ -1,0 +1,50 @@
+---
+
+- name: Wait for 10s
+  wait_for:
+    timeout: 10
+
+- name: Set empty facts
+  set_fact:
+    newly_approved_agents: "{{ task_approved_agents }}"
+
+- name: Query the Hub OpenShift Cluster for Agent CRDs
+  kubernetes.core.k8s_info:
+    api_version: agent-install.openshift.io/v1beta1
+    kind: Agent
+    namespace: "{{ cluster_configmap.namespace }}"
+    label_selectors:
+      - "infraenvs.agent-install.openshift.io = {{ infraenv.name }}"
+  register: agent_crd_info
+
+- name: Process an Agent
+  block:
+  - name: Approve nodes
+    kubernetes.core.k8s:
+      state: patched
+      kind: Agent
+      name: "{{ agent_item.metadata.name }}"
+      namespace: "{{ agent_item.metadata.namespace }}"
+      api_version: agent-install.openshift.io/v1beta1
+      definition:
+        spec:
+          approved: true
+    loop: "{{ agent_crd_info.resources }}"
+    loop_control:
+      loop_var: agent_item
+      label: "{{ agent_item.metadata.name }}"
+
+  - name: Add the approved node to the list
+    set_fact:
+      newly_approved_agents: "{{ newly_approved_agents + [agent_item.metadata.name] }}"
+    loop: "{{ agent_crd_info.resources }}"
+    loop_control:
+      loop_var: agent_item
+      label: "{{ agent_item.metadata.name }}"
+  when: agent_crd_info.resources | length > 0
+
+- name: INCEPTION
+  include_tasks: tasks/agent_loop_runner.yml
+  vars:
+    task_approved_agents: "{{ newly_approved_agents }}"
+  when: task_agent_names|length != task_approved_agents|length
