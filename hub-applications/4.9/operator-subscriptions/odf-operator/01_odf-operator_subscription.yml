@@ -1,0 +1,13 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  creationTimestamp: null
+  name: odf-operator
+  namespace: openshift-storage
+spec:
+  channel: stable-4.9
+  installPlanApproval: Automatic
+  name: odf-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: odf-operator.v4.9.1

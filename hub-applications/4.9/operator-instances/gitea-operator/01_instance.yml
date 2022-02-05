@@ -1,0 +1,14 @@
+apiVersion: gpte.opentlc.com/v1
+kind: Gitea
+metadata:
+  name: gitea
+spec:
+  giteaSsl: true
+  giteaAdminUser: opentlc-mgr
+  giteaAdminPassword: "r3dh4t123!"
+  giteaAdminEmail: opentlc-mgr@redhat.com
+  giteaImageTag: latest
+  giteaVolumeSize: 10Gi
+  giteaVolumeStorageClass: ocs-storagecluster-cephfs
+  postgresqlVolumeSize: 4Gi
+  postgresqlVolumeStorageClass: ocs-storagecluster-cephfs

@@ -1,0 +1,5 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: ztp-configs
+  # Can't remember why I made this...probably isn't needed

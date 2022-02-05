@@ -1,0 +1,69 @@
+apiVersion: automationhub.ansible.com/v1beta1
+kind: AutomationHub
+metadata:
+  name: hub
+  namespace: ansible-automation-platform
+spec:
+  route_tls_termination_mechanism: Edge
+  ingress_type: Route
+  loadbalancer_port: 80
+  file_storage_size: 100Gi
+  image_pull_policy: IfNotPresent
+  file_storage_storage_class: ocs-storagecluster-cephfs
+  web:
+    replicas: 1
+    resource_requirements:
+      limits:
+        cpu: 2000m
+      requests:
+        cpu: 500m
+  file_storage_access_mode: ReadWriteMany
+  content:
+    log_level: INFO
+    replicas: 1
+    resource_requirements:
+      limits:
+        cpu: 2000m
+      requests:
+        cpu: 500m
+  postgres_storage_requirements:
+    limits:
+      storage: 50Gi
+    requests:
+      storage: 8Gi
+  api:
+    log_level: INFO
+    replicas: 1
+    resource_requirements:
+      limits:
+        cpu: 1000m
+      requests:
+        cpu: 500m
+  postgres_resource_requirements:
+    limits:
+      cpu: 1000m
+      memory: 8Gi
+    requests:
+      cpu: 500m
+      memory: 2Gi
+  loadbalancer_protocol: http
+  resource_manager:
+    replicas: 1
+    resource_requirements:
+      limits:
+        cpu: 2000m
+      requests:
+        cpu: 500m
+  storage_type: File
+  redis_resource_requirements:
+    limits:
+      cpu: 1000m
+    requests:
+      cpu: 500m
+  worker:
+    replicas: 1
+    resource_requirements:
+      limits:
+        cpu: 2000m
+      requests:
+        cpu: 500m

@@ -1,0 +1,32 @@
+apiVersion: agent-install.openshift.io/v1beta1
+kind: AgentServiceConfig
+metadata:
+  name: agent
+  namespace: open-cluster-management
+  ### This is the annotation that injects modifications in the Assisted Service pod
+  annotations:
+    unsupported.agent-install.openshift.io/assisted-service-configmap: "assisted-service-config"
+###
+spec:
+  databaseStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  filesystemStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  ### This is a ConfigMap that only will make sense on Disconnected environments
+  ### mirrorRegistryRef:
+  ###   name: "lab-index-mirror"
+  ###
+  osImages:
+    - openshiftVersion: "4.9"
+      version: "49.84.202111231504-0"
+      url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live.x86_64.iso"
+      rootFSUrl: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live-rootfs.x86_64.img"
+      cpuArchitecture: x86_64
