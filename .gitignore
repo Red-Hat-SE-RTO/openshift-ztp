@@ -2,3 +2,5 @@ hub-applications/argocd-config/
 hub-applications/argocd-config/**
 aap2_user_application_token
 *.env-vars.sh
+legacy/
+legacy/**
