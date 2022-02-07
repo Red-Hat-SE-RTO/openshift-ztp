@@ -1,0 +1,33 @@
+---
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  annotations:
+    agentBareMetal-agentSelector/autoSelect: "true"
+  name: {{ cluster_name }}
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+spec:
+  baseDomain: {{ base_domain }}
+  clusterName: {{ cluster_name }}
+  #controlPlaneConfig:
+  #  servingCertificates: {}
+  installed: false
+  clusterInstallRef:
+    group: extensions.hive.openshift.io
+    kind: AgentClusterInstall
+    name: {{ cluster_name }}
+    version: v1beta1
+  platform:
+    agentBareMetal:
+      agentSelector:
+        matchLabels:
+          cluster-name: {{ cluster_name }}
+  pullSecretRef:
+    name: assisted-deployment-pull-secret

@@ -1,0 +1,11 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}

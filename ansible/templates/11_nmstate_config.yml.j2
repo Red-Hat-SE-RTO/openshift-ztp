@@ -1,0 +1,42 @@
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: {{ node_hostname }}-{{ cluster_name }}
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+    hostname: {{ node_hostname }}
+spec:
+  config:
+    dns-resolver:
+      config:
+        server:
+          - 192.168.42.9
+          - 192.168.42.10
+        search:
+          - atl.kemo.labs
+    interfaces:
+      - ipv4:
+          address:
+            - ip: {{ node_ip }}
+              prefix-length: {{ node_cidr_prefix }}
+          dhcp: False
+          enabled: true
+        name: ens192
+        state: up
+        type: ethernet
+    routes:
+      config:
+        - destination: 0.0.0.0/0
+          next-hop-address: {{ node_gateway }}
+          next-hop-interface: ens192
+          table-id: 254
+  interfaces:
+    - name: ens192
+      macAddress: {{ node_mac_address }}

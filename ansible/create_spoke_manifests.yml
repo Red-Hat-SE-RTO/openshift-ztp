@@ -1,0 +1,129 @@
+---
+- name: Create a Spoke Cluster Manifest Set
+  hosts: all
+  gather_facts: no
+  vars:
+    target_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
+    target_git_branch: main
+    target_spoke_git_path: "ztp-cluster/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+
+  tasks:
+  #- name: Preflight for Tower
+  #  block:
+  #  - name: Install needed pip modules
+  #    pip:
+  #      name:
+  #        - kubernetes
+  #        - openshift==0.12.1
+  #      extra_args: --upgrade
+  #    delegate_to: localhost
+
+  - name: Create a temporary directory
+    ansible.builtin.tempfile:
+      state: directory
+      suffix: build
+    register: temp_dir
+
+  - name: Create subdirectories
+    file:
+      path: "{{ temp_dir.path }}/{{ path_item }}"
+      state: directory
+    loop:
+      - git
+      - secrets
+      - "{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+    loop_control:
+      loop_var: path_item
+
+  - name: Set the SSH Key
+    block:
+    - name: Create a new SSH Key Pair
+      community.crypto.openssh_keypair:
+        path: "{{ temp_dir.path }}/secrets/ssh_key"
+
+    - name: Set the SSH Key facts for path
+      set_fact:
+        ssh_private_key_path: "{{ temp_dir.path }}/secrets/ssh_key"
+        ssh_public_key_path: "{{ temp_dir.path }}/secrets/ssh_key.pub"
+
+    - name: Set the SSH Key facts
+      set_fact:
+        ssh_private_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key') }}"
+        ssh_public_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key.pub') }}"
+    when: generate_ssh_keys|bool
+
+  - name: Read in the SSH Keys
+    block:
+    - name: Set the SSH Key facts
+      set_fact:
+        ssh_private_key: "{{ lookup('file', ssh_private_key_path) }}"
+        ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
+    when: generate_ssh_keys|bool == false
+  
+  - name: Clone down the repo
+    ansible.builtin.git:
+      repo: "{{ target_git_repo }}"
+      dest: "{{ temp_dir.path }}/git"
+      clone: yes
+  
+  - name: Create a directory for the spoke cluster
+    file:
+      path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
+      state: directory
+
+  #- name: Set big facts, no cap
+  #  set_fact:
+  #    api_vip:
+
+  - name: Template the Spoke Cluster Manifests
+    block:
+
+    - name: Template the Namepsace
+      template:
+        src: templates/00_namespace.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/00_namespace.yml"
+
+    - name: Template the AgentClusterInstall
+      template:
+        src: templates/02_agentclusterinstall.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/02_agentclusterinstall.yml"
+
+    - name: Template the ClusterDeployment
+      template:
+        src: templates/03_clusterdeployment.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/03_clusterdeployment.yml"
+
+    - name: Template the KlusterletAddonConfig
+      template:
+        src: templates/04_klusterletaddonconfig.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/04_klusterletaddonconfig.yml"
+
+    - name: Template the ManagedCluster
+      template:
+        src: templates/05_managedcluster.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/05_managedcluster.yml"
+
+    - name: Template the InfraEnv
+      template:
+        src: templates/07_infraenv.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/07_infraenv.yml"
+
+    - name: Template the ClusterConfig
+      template:
+        src: templates/08_clusterconfig.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/08_clusterconfig.yml"
+
+    - name: Template the AnsibleJob
+      template:
+        src: templates/09_ansiblejob.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/09_ansiblejob.yml"
+
+  #- name: Delete the temporary directory
+  #  ansible.builtin.file:
+  #    path: "{{ temp_dir.path }}"
+  #    state: absent
+  #    force: yes
+
+  - name: Debug
+    debug:
+      msg: "{{ temp_dir }}"

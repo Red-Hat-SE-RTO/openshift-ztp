@@ -1,0 +1,28 @@
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: {{ cluster_name }}
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+    agentclusterinstalls.extensions.hive.openshift.io/location: {{ cluster_location }}
+    networkType: {{ node_network_type }}
+spec:
+  agentLabels:
+    agentclusterinstalls.extensions.hive.openshift.io/location: {{ cluster_location }}
+  clusterRef:
+    name: {{ cluster_name }}
+    namespace: {{ cluster_name }}
+  sshAuthorizedKey: "{{ ssh_public_key }}"
+  pullSecretRef:
+    name: assisted-deployment-pull-secret
+  #ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/someconfig", "contents": {"source": "data:text/plain;base64,aGVscGltdHJhcHBlZGluYXN3YWdnZXJzcGVj"}}]}}'
+  nmStateConfigLabelSelector:
+    matchLabels:
+      cluster-name: {{ cluster_name }}

@@ -1,0 +1,37 @@
+---
+## SSH Key Options
+generate_ssh_keys: true
+ssh_private_key_path: /opt/id_rsa
+ssh_public_key_path: /opt/id_rsa.pub
+
+pull_secret_path: /opt/rh-ocp-pull-secret.json
+
+deployment_type: vsphere
+cluster_type: sno
+cluster_name: sno-ocp
+cluster_domain: kemo.labs
+cluster_location: loe-1
+
+# openshift_release_version needs to be formatted as a string
+openshift_release: "4.9.9"
+
+sno_memory: "65536"
+sno_cpu_cores: "12"
+sno_cpu_sockets: "1"
+sno_disks:
+  - "240"
+sno_mac_address: "00:51:56:42:06:91"
+
+vcenter_endpoint: vcenter.lab.kemo.network
+vcenter_username: administrator@vsphere.local
+vcenter_password: someStringForAPassword
+vcenter_datacenter: LabDC
+vcenter_datastore: nvme
+vcenter_cluster: LabCluster
+vcenter_network: VM Network
+vcenter_ca_path: /opt/vcenter-ca-certificate.pem
+# maybe just use some ansible to curl the zip and read in the CA cert dynamically
+vcenter_ca: "{{ lookup('file', vcenter_ca_path) }}"
+
+## Do not edit
+pull_secret: "{{ lookup('file', pull_secret_path) }}"

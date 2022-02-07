@@ -1,0 +1,25 @@
+---
+apiVersion: tower.ansible.com/v1alpha1
+kind: AnsibleJob
+metadata:
+  name: {{ cluster_name }}-vsphere-bootstrap
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+spec:
+  tower_auth_secret: {{ ansible_tower_credentials_name }}
+  job_template_name: deploy-to-vsphere
+  extra_vars:
+    vcenter_credentials_secret_namespace: {{ vsphere_credentials_namespace }}
+    vcenter_credentials_secret_name: {{ vsphere_credentials_name }}
+
+    infraenv_namespace: {{ cluster_name }}
+    infraenv_name: {{ cluster_name }}
+
+    cluster_configmap_namespace: {{ cluster_name }}
+    cluster_configmap_name: {{ cluster_name }}-cluster-config

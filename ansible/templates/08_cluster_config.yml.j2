@@ -1,0 +1,42 @@
+---
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: {{ cluster_name }}-cluster-config
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+data:
+  cluster_name: {{ cluster_name }}
+  cluster_provider: vsphere
+  cluster_type: {{ cluster_type }}
+  vsphere_datacenter: {{ vcenter_datacenter }}
+  vsphere_cluster: {{ vcenter_cluster }}
+  vsphere_datastore: {{ vcenter_datastore }}
+  vsphere_network: {{ vcenter_network }}
+
+  ## SNO CONFIG
+  sno_disk_size: "{{ sno_disk }}"
+  sno_cpu_sockets: "1"
+  sno_cpu_cores: "{{ sno_cpu_cores }}"
+  sno_memory_size: "{{ sno_memory_size }}"
+  sno_mac_address: "{{ sno_mac_address }}"
+  
+  ## CONVERGED CONFIG
+  control_plane_count: "${MASTER_COUNT}"
+  control_plane_disk_size: "${MASTER_HARD_DISK}"
+  control_plane_cpu_sockets: "1"
+  control_plane_cpu_cores: "${MASTER_CORES}"
+  control_plane_memory_size: "${MASTER_MEMORY}"
+
+  ## FULL CONFIG
+  app_node_count: "${WORKER_COUNT}"
+  app_node_disk_size: "${WORKER_HARD_DISK}"
+  app_node_cpu_sockets: "1"
+  app_node_cpu_cores: "${WORKER_CORES}"
+  app_node_memory_size: "${WORKER_MEMORY}"
