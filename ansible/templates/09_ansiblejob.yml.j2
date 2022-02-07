@@ -2,7 +2,7 @@
 apiVersion: tower.ansible.com/v1alpha1
 kind: AnsibleJob
 metadata:
-  name: {{ cluster_name }}-vsphere-bootstrap
+  name: {{ cluster_name }}-{{ deployment_type }}-bootstrap
   namespace: {{ cluster_name }}
   labels:
     name: {{ cluster_name }}
@@ -13,7 +13,7 @@ metadata:
     cluster-name: {{ cluster_name }}
 spec:
   tower_auth_secret: {{ ansible_tower_credentials_name }}
-  job_template_name: deploy-to-vsphere
+  job_template_name: {{ ansible_job_template_name }}
   extra_vars:
     vcenter_credentials_secret_namespace: {{ vsphere_credentials_namespace }}
     vcenter_credentials_secret_name: {{ vsphere_credentials_name }}

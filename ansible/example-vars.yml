@@ -6,32 +6,104 @@ ssh_public_key_path: /opt/id_rsa.pub
 
 pull_secret_path: /opt/rh-ocp-pull-secret.json
 
+## deployment_type specifies which deployment to use - maps to root directory of this repo, e.g. "aws", "vsphere", etc
 deployment_type: vsphere
+## cluster_type specifies what type of cluster, sno/converged/full
 cluster_type: sno
+## cluster_name is the name of the OCP cluster
 cluster_name: sno-ocp
-cluster_domain: kemo.labs
+## BASE_DOMAIN is the base domain for the OCP cluster
+base_domain: kemo.labs
+## cluster_location is the location of the OCP cluster, extra metadata required by OAS
 cluster_location: loe-1
-
 # openshift_release_version needs to be formatted as a string
 openshift_release: "4.9.9"
 
-sno_memory: "65536"
-sno_cpu_cores: "12"
-sno_cpu_sockets: "1"
-sno_disks:
-  - "240"
-sno_mac_address: "00:51:56:42:06:91"
+###############################################################################
+## Cluster Network Configuration
 
-vcenter_endpoint: vcenter.lab.kemo.network
+# cluster_api_vip: an IP or "auto" if your DHCP+DNS is configured correctly for dynamic hostname resolution
+cluster_api_vip: 192.168.42.74
+# cluster_load_balancer_vip: an IP or "auto"
+cluster_load_balancer_vip: 192.168.42.74
+# cluster_node_cidr: A CIDR definition of the network the nodes are connected to
+cluster_node_cidr: 192.168.42.0/24
+
+# cluster_node_network_ipam: dhcp or static
+cluster_node_network_ipam: static
+######################### If cluster_node_network_ipam == static:
+cluster_node_network_static_dns_servers:
+  - 192.168.42.9
+  - 192.168.42.10
+cluster_node_network_static_dns_search_domains:
+  - kemo.labs
+
+###############################################################################
+## Cluster Node Configuration
+#### If cluster_type == sno then the IP Address of the SNO node needs to match both the API and Ingress VIPs
+cluster_nodes:
+  - name: sno-white
+    ## type can be control-plane, application-node, or sno-node
+    type: sno-node
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:91
+        dhcp: false
+        ipv4:
+          - address: 192.168.42.90
+            prefix: 24
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+
+###############################################################################
+## Secret Configuration
+###############################################################################
+
+###############################################################################
+## Ansible Tower Configuration
+### When provisioning a new cluster, the vSphere infrastructure is provisioned
+### with Ansible Tower.  This is done via AAP2 and an AnsibleJob CRD.
+### The AnsibleJob CRD requires an OAuth token to connect to Ansible Tower.
+### Being that the AnsibleJob is namespaced in the same cluster namespace,
+### each cluster configuration needs a Secret in the same namespace.
+ansible_tower_credentials_name: ansible-tower-credentials
+ansible_tower_host: ac-tower-ansible-automation-platform.apps.core-ocp.kemo.labs
+ansible_tower_token: someToken
+
+## The vSphere Credentials that will be used to provision the cluster are 
+## namespaced with the cluster as well
+vsphere_credentials_name: "{{ cluster_name }}-vcenter-credentials"
+vsphere_credentials_namespace: "{{ cluster_name }}"
+
+###############################################################################
+## vSphere Configuration Options
+vcenter_endpoint: vcenter.example.com
 vcenter_username: administrator@vsphere.local
 vcenter_password: someStringForAPassword
 vcenter_datacenter: LabDC
 vcenter_datastore: nvme
 vcenter_cluster: LabCluster
 vcenter_network: VM Network
-vcenter_ca_path: /opt/vcenter-ca-certificate.pem
 # maybe just use some ansible to curl the zip and read in the CA cert dynamically
+vcenter_ca_path: /opt/vcenter-ca-certificate.pem
 vcenter_ca: "{{ lookup('file', vcenter_ca_path) }}"
 
-## Do not edit
+###############################################################################
+## Do not edit past this point unless you know what you're doing
+###############################################################################
 pull_secret: "{{ lookup('file', pull_secret_path) }}"
+
+ansible_job_template_name: deploy-to-vsphere-v2

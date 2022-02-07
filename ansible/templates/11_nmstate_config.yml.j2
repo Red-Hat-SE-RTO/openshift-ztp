@@ -2,7 +2,7 @@
 apiVersion: agent-install.openshift.io/v1beta1
 kind: NMStateConfig
 metadata:
-  name: {{ node_hostname }}-{{ cluster_name }}
+  name: {{ node_item.name }}-{{ cluster_name }}
   namespace: {{ cluster_name }}
   labels:
     name: {{ cluster_name }}
@@ -11,32 +11,47 @@ metadata:
     datacenter: {{ vcenter_datacenter }}
     cluster: {{ vcenter_cluster }}
     cluster-name: {{ cluster_name }}
-    hostname: {{ node_hostname }}
+    hostname: {{ node_item.name }}
 spec:
   config:
     dns-resolver:
       config:
         server:
-          - 192.168.42.9
-          - 192.168.42.10
+{% for dns_server in cluster_node_network_static_dns_servers %}
+          - {{ dns_server }}
+{% endfor %}
         search:
-          - atl.kemo.labs
+{% for dns_search in cluster_node_network_static_dns_search_domains %}
+          - {{ dns_search }}
+{% endfor %}
     interfaces:
+{% for iface in node_item.interfaces -%}
+{% if ((iface.ipv4 is defined) and (iface.ipv4|length>0)) %}
       - ipv4:
           address:
-            - ip: {{ node_ip }}
-              prefix-length: {{ node_cidr_prefix }}
-          dhcp: False
+{% for ipv4 in iface.ipv4 %}
+            - ip: {{ ipv4.address }}
+              prefix-length: {{ ipv4.prefix }}
+{% endfor %}
+          dhcp: {{ iface.dhcp }}
           enabled: true
-        name: ens192
+        name: {{ iface.name }}
         state: up
         type: ethernet
+{% if ((iface.routes is defined) and (iface.routes|length>0)) %}
     routes:
       config:
-        - destination: 0.0.0.0/0
-          next-hop-address: {{ node_gateway }}
-          next-hop-interface: ens192
-          table-id: 254
+{% for route in iface.routes %}
+        - destination: {{ route.destination }}
+          next-hop-address: {{ route.next_hop_address }}
+          next-hop-interface: {{ route.next_hop_interface }}
+          table-id: {{ route.table_id }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}
   interfaces:
-    - name: ens192
-      macAddress: {{ node_mac_address }}
+{% for iface in node_item.interfaces %}
+    - name: {{ iface.name }}
+      macAddress: {{ iface.mac_address }}
+{% endfor %}

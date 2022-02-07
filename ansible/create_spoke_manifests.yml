@@ -24,16 +24,26 @@
       suffix: build
     register: temp_dir
 
-  - name: Create subdirectories
+  - name: Create subdirectories in temporary path
     file:
       path: "{{ temp_dir.path }}/{{ path_item }}"
       state: directory
     loop:
       - git
       - secrets
-      - "{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
     loop_control:
       loop_var: path_item
+  
+  - name: Clone down the repo
+    ansible.builtin.git:
+      repo: "{{ target_git_repo }}"
+      dest: "{{ temp_dir.path }}/git"
+      clone: yes
+  
+  - name: Create a directory for the spoke cluster
+    file:
+      path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
+      state: directory
 
   - name: Set the SSH Key
     block:
@@ -59,21 +69,15 @@
         ssh_private_key: "{{ lookup('file', ssh_private_key_path) }}"
         ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
     when: generate_ssh_keys|bool == false
-  
-  - name: Clone down the repo
-    ansible.builtin.git:
-      repo: "{{ target_git_repo }}"
-      dest: "{{ temp_dir.path }}/git"
-      clone: yes
-  
-  - name: Create a directory for the spoke cluster
-    file:
-      path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
-      state: directory
 
-  #- name: Set big facts, no cap
-  #  set_fact:
-  #    api_vip:
+  - name: Set big facts, no cap
+    block:
+    - name: Set general facts
+      set_fact:
+        api_vip: "{{ cluster_api_vip }}"
+        ingress_vip: "{{ cluster_load_balancer_vip }}"
+        machine_network_cidr: "{{ cluster_node_cidr }}"
+        node_network_type: "{{ cluster_node_network_ipam }}"
 
   - name: Template the Spoke Cluster Manifests
     block:
@@ -110,13 +114,21 @@
 
     - name: Template the ClusterConfig
       template:
-        src: templates/08_clusterconfig.yml.j2
-        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/08_clusterconfig.yml"
+        src: templates/08_cluster_config.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/08_cluster_config.yml"
 
     - name: Template the AnsibleJob
       template:
         src: templates/09_ansiblejob.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/09_ansiblejob.yml"
+
+    - name: Template the NMState Config
+      template:
+        src: templates/11_nmstate_config.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
+      loop: "{{ cluster_nodes }}"
+      loop_control:
+        loop_var: node_item
 
   #- name: Delete the temporary directory
   #  ansible.builtin.file:
