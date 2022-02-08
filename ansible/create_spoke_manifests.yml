@@ -6,7 +6,7 @@
     target_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
     target_git_branch: main
     target_spoke_git_path: "ztp-cluster/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
-    
+
     secret_management: reflector
     credential_namespace: "ztp-credentials"
     ansible_tower_secret_name: "ansible-tower-credentials"
@@ -101,6 +101,8 @@
         - 01_reflected_ansible_tower_credential.yml
         - 01_reflected_pull_secret.yml
         - 01_reflected_vcenter_secret.yml
+      loop_control:
+        loop_var: template_item
       when: secret_management == "reflector"
 
     - name: Template the AgentClusterInstall

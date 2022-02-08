@@ -4,8 +4,6 @@ generate_ssh_keys: true
 ssh_private_key_path: /opt/id_rsa
 ssh_public_key_path: /opt/id_rsa.pub
 
-pull_secret_path: /opt/rh-ocp-pull-secret.json
-
 ## deployment_type specifies which deployment to use - maps to root directory of this repo, e.g. "aws", "vsphere", etc
 deployment_type: vsphere
 ## cluster_type specifies what type of cluster, sno/converged/full
@@ -104,6 +102,4 @@ vcenter_ca: "{{ lookup('file', vcenter_ca_path) }}"
 ###############################################################################
 ## Do not edit past this point unless you know what you're doing
 ###############################################################################
-pull_secret: "{{ lookup('file', pull_secret_path) }}"
-
 ansible_job_template_name: deploy-to-vsphere-v2
