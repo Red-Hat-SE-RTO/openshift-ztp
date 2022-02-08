@@ -12,11 +12,11 @@ metadata:
     cluster: {{ vcenter_cluster }}
     cluster-name: {{ cluster_name }}
 spec:
-  tower_auth_secret: {{ ansible_tower_credentials_name }}
+  tower_auth_secret: {{ ansible_tower_secret_name }}
   job_template_name: {{ ansible_job_template_name }}
   extra_vars:
-    vcenter_credentials_secret_namespace: {{ vsphere_credentials_namespace }}
-    vcenter_credentials_secret_name: {{ vsphere_credentials_name }}
+    vcenter_credentials_secret_namespace: {{ cluster_name }}
+    vcenter_credentials_secret_name: {{ vcenter_credential_secret_name }}
 
     infraenv_namespace: {{ cluster_name }}
     infraenv_name: {{ cluster_name }}

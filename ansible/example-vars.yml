@@ -69,35 +69,27 @@ cluster_nodes:
 ###############################################################################
 ## Secret Configuration
 ###############################################################################
+## Secrets are managed by Reflector and are mirrored into the Spoke Cluster
+## namespaces via empty Secrets that are then updated with the contents of the
+## original secret.
 
-###############################################################################
-## Ansible Tower Configuration
-### When provisioning a new cluster, the vSphere infrastructure is provisioned
-### with Ansible Tower.  This is done via AAP2 and an AnsibleJob CRD.
-### The AnsibleJob CRD requires an OAuth token to connect to Ansible Tower.
-### Being that the AnsibleJob is namespaced in the same cluster namespace,
-### each cluster configuration needs a Secret in the same namespace.
-ansible_tower_credentials_name: ansible-tower-credentials
-ansible_tower_host: ac-tower-ansible-automation-platform.apps.core-ocp.kemo.labs
-ansible_tower_token: someToken
+## secret_management: reflector
+secret_management: reflector
+## credential_namespace is the namespace that holds the credentials and Secrets
+credential_namespace: "ztp-credentials"
 
-## The vSphere Credentials that will be used to provision the cluster are 
-## namespaced with the cluster as well
-vsphere_credentials_name: "{{ cluster_name }}-vcenter-credentials"
-vsphere_credentials_namespace: "{{ cluster_name }}"
+## The names of the credentials to be mirrored into the Spoke Cluster Namespace
+## from the credential_namespace
+ansible_tower_secret_name: "ansible-tower-credentials"
+pull_secret_secret_name: "assisted-deployment-pull-secret"
+vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
 
 ###############################################################################
 ## vSphere Configuration Options
-vcenter_endpoint: vcenter.example.com
-vcenter_username: administrator@vsphere.local
-vcenter_password: someStringForAPassword
 vcenter_datacenter: LabDC
 vcenter_datastore: nvme
 vcenter_cluster: LabCluster
 vcenter_network: VM Network
-# maybe just use some ansible to curl the zip and read in the CA cert dynamically
-vcenter_ca_path: /opt/vcenter-ca-certificate.pem
-vcenter_ca: "{{ lookup('file', vcenter_ca_path) }}"
 
 ###############################################################################
 ## Do not edit past this point unless you know what you're doing
