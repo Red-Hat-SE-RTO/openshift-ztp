@@ -6,6 +6,12 @@
     target_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
     target_git_branch: main
     target_spoke_git_path: "ztp-cluster/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+    
+    secret_management: reflector
+    credential_namespace: "ztp-credentials"
+    ansible_tower_secret_name: "ansible-tower-credentials"
+    pull_secret_secret_name: "assisted-deployment-pull-secret"
+    vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
 
   tasks:
   #- name: Preflight for Tower
@@ -86,6 +92,16 @@
       template:
         src: templates/00_namespace.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/00_namespace.yml"
+
+    - name: Template the Reflected Secrets
+      template:
+        src: "templates/{{ template_item }}.j2"
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}"
+      loop:
+        - 01_reflected_ansible_tower_credential.yml
+        - 01_reflected_pull_secret.yml
+        - 01_reflected_vcenter_secret.yml
+      when: secret_management == "reflector"
 
     - name: Template the AgentClusterInstall
       template:
