@@ -7,11 +7,8 @@
     target_git_branch: main
     target_spoke_git_path: "ztp-cluster/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
 
-    secret_management: reflector
-    credential_namespace: "ztp-credentials"
-    ansible_tower_secret_name: "ansible-tower-credentials"
-    pull_secret_secret_name: "assisted-deployment-pull-secret"
-    vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+    git_push_credentials_secret_name: "ztp-git-push-credentials"
+    git_push_credentials_secret_namespace: "ztp-credentials"
 
   tasks:
   #- name: Preflight for Tower
@@ -24,21 +21,55 @@
   #      extra_args: --upgrade
   #    delegate_to: localhost
 
-  - name: Create a temporary directory
-    ansible.builtin.tempfile:
-      state: directory
-      suffix: build
-    register: temp_dir
+  - name: General Preflight
+    block:
+    - name: Check for required programs
+      ansible.builtin.shell: "which {{ item }}"
+      register: program_check
+      ignore_errors: true
+      with_items:
+        - git
+      
+    - name: Fail if needed programs are not found
+      fail:
+        msg: "{{ item.cmd | replace('which ','') }} is not found! You need to install it first."
+      failed_when: item.rc != 0
+      loop: "{{ program_check.results }}"
+      loop_control:
+        label: "{{ item.cmd | replace('which ','') }}"
 
-  - name: Create subdirectories in temporary path
-    file:
-      path: "{{ temp_dir.path }}/{{ path_item }}"
-      state: directory
-    loop:
-      - git
-      - secrets
-    loop_control:
-      loop_var: path_item
+  - name: Query OpenShift for needed Configs & Secrets
+    block:
+    - name: Get the Git Credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: "{{ git_push_credentials_secret_namespace }}"
+        name: "{{ git_push_credentials_secret_name }}"
+      register: git_secret
+
+    - name: Fail if the Git credentials secret is not found
+      fail:
+        msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
+      when: git_secret.resources | length == 0
+
+  - name: Filesystem Configuration
+    block:
+    - name: Create a temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: build
+      register: temp_dir
+
+    - name: Create subdirectories in temporary path
+      file:
+        path: "{{ temp_dir.path }}/{{ path_item }}"
+        state: directory
+      loop:
+        - git
+        - secrets
+      loop_control:
+        loop_var: path_item
   
   - name: Clone down the repo
     ansible.builtin.git:
