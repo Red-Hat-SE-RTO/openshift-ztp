@@ -282,20 +282,19 @@
         args:
           chdir: "{{ temp_dir.path }}/git"
 
-      - name: Create ssh config
-        copy:
-          content: |
-            Host github.com
-                User git
-                Hostname github.com
-                PreferredAuthentications publickey
-                IdentityFile {{ temp_dir.path }}/secrets/push_git_ssh_key
-                IdentitiesOnly yes
-                StrictHostKeyChecking no
-          dest: "{{ temp_dir.path }}/.ssh/config"
-          mode: 0644
-        when: push_git_auth_method == "ssh"
-        no_log: true
+      #- name: Create ssh config
+      #  copy:
+      #    content: |
+      #      Host github.com
+      #        User git
+      #        Hostname github.com
+      #        PreferredAuthentications publickey
+      #        IdentityFile {{ temp_dir.path }}/secrets/push_git_ssh_key
+      #        IdentitiesOnly yes
+      #        StrictHostKeyChecking no
+      #    dest: "{{ temp_dir.path }}/.ssh/config"
+      #    mode: 0644
+      #  when: push_git_auth_method == "ssh"
 
       - name: Git push the new cluster
         shell: |
