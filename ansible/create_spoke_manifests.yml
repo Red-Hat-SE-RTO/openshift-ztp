@@ -277,14 +277,31 @@
 
       - name: Git push the new cluster
         shell: |
-          cat {{ temp_dir.path }}/secrets/push_git_ssh_key
           HOME="{{ temp_dir.path }}"
           mkdir -p $HOME/.ssh
           ssh-keyscan github.com >> $HOME/.ssh/known_hosts
-          git config core.sshCommand 'ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i {{ temp_dir.path }}/secrets/push_git_ssh_key'
-          eval $(ssh-agent -s)
-          ssh-add "{{ temp_dir.path }}/secrets/push_git_ssh_key"
-          GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes' git push private {{ push_git_branch }}
+
+      - name: Create git config
+        copy:
+          content: |
+            Host github.com
+              Hostname github.com
+              IdentityFile {{ temp_dir.path }}/secrets/push_git_ssh_key
+              IdentitiesOnly yes # see NOTES below
+              StrictHostKeyChecking no
+          dest: "{{ temp_dir.path }}/.ssh/config"
+          mode: 0400
+        when: push_git_auth_method == "ssh"
+        no_log: true
+
+      - name: Git push the new cluster
+        shell: |
+          HOME="{{ temp_dir.path }}"
+          #git config core.sshCommand 'ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i {{ temp_dir.path }}/secrets/push_git_ssh_key'
+          #eval $(ssh-agent -s)
+          #ssh-add "{{ temp_dir.path }}/secrets/push_git_ssh_key"
+          #GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes' git push private {{ push_git_branch }}
+          git push private {{ push_git_branch }}
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "ssh"
