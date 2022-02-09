@@ -34,32 +34,32 @@
       delegate_to: localhost
 
     - name: Install needed packages in Ansible EE
-      shell: microdnf install -y git which
+      shell: microdnf install -y git
       delegate_to: localhost
 
     when: tower_job_id is defined
 
   #######################################################
   ## General Preflight
-  - name: Program Preflight
-    block:
-    - name: Check for required programs
-      ansible.builtin.shell: "which {{ item }}"
-      register: program_check
-      ignore_errors: true
-      with_items:
-        - git
-      when: tower_job_id is not defined
-      
-    - name: Fail if needed programs are not found
-      fail:
-        msg: "{{ item.cmd | replace('which ','') }} is not found! You need to install it first."
-      failed_when: item.rc != 0
-      loop: "{{ program_check.results }}"
-      loop_control:
-        label: "{{ item.cmd | replace('which ','') }}"
-      when: tower_job_id is not defined
-    when: tower_job_id is not defined
+  #- name: Program Preflight
+  #  block:
+  #  - name: Check for required programs
+  #    ansible.builtin.shell: "which {{ item }}"
+  #    register: program_check
+  #    ignore_errors: true
+  #    with_items:
+  #      - git
+  #    when: tower_job_id is not defined
+  #    
+  #  - name: Fail if needed programs are not found
+  #    fail:
+  #      msg: "{{ item.cmd | replace('which ','') }} is not found! You need to install it first."
+  #    failed_when: item.rc != 0
+  #    loop: "{{ program_check.results }}"
+  #    loop_control:
+  #      label: "{{ item.cmd | replace('which ','') }}"
+  #    when: tower_job_id is not defined
+  #  when: tower_job_id is not defined
 
   - name: General variable Preflight
     block:
