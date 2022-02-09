@@ -64,15 +64,15 @@
   - name: General variable Preflight
     block:
 
-    - name: Check cluster_node count against the different cluster_types
+    - name: Check cluster_nodes count against the different cluster_types
       fail:
-        msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_node|length }} nodes were found!"
-      failed_when: cluster_type != "sno" and cluster_node|length >= 2
+        msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_nodes|length }} nodes were found!"
+      failed_when: cluster_type != "sno" and cluster_nodes|length >= 2
 
     - name: Single node OpenShift can only be a single node!
       fail:
-        msg: "cluster_type {{ cluster_type }} requires only 1 control-plane nodes but {{ cluster_node|length }} nodes were configured!"
-      failed_when: cluster_type == "sno" and cluster_node|length >= 2
+        msg: "cluster_type {{ cluster_type }} requires only 1 control-plane nodes but {{ cluster_nodes|length }} nodes were configured!"
+      failed_when: cluster_type == "sno" and cluster_nodes|length >= 2
 
   #######################################################
   ## OpenShift Query Preflights
