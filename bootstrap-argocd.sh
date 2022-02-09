@@ -4,10 +4,10 @@
 OCP_VERSION="4.9"
 
 ## Specify an SSH Private Key to use to log into the Git repo
-SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
+SSH_PRIVATE_KEY_PATH=${SSH_PRIVATE_KEY_PATH:="$HOME/.ssh/MasterKemoKey"}
 
 ## Define the Git repo information
-GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/wg-serto-ztp.git"}
+GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f2 | sed 's/.git$//')
 
 ARGOCD_PROJECT_NAME="ztp"
@@ -96,6 +96,9 @@ spec:
       jsonPointers:
         - /spec
       kind: AgentClusterInstall
+    - kind: Secret
+      jsonPointers:
+        - /data
   destination:
     name: ''
     namespace: ''
