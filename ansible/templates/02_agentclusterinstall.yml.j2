@@ -30,5 +30,5 @@ spec:
     machineNetwork:
       - cidr: "{{ machine_network_cidr }}"
   provisionRequirements:
-    controlPlaneAgents: 1
+    controlPlaneAgents: {{ (cluster_type == 'sno') | ternary('1', '') }}{{ (cluster_type == 'converged') | ternary('3', '') }}
   sshPublicKey: "{{ ssh_public_key }}"
