@@ -6,7 +6,7 @@
     # source_git_repo should probably be overridden at execution
     source_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
     ## Defaults - shouldn't need to be changed
-    target_spoke_git_path: "ztp-cluster/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+    target_spoke_git_path: "ztp-clusters/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
 
     git_push_credentials_secret_name: "ztp-git-push-credentials"
     git_push_credentials_secret_namespace: "ztp-credentials"
