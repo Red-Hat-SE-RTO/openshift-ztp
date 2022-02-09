@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+source templates/scripts/shared_functions.sh
+
+checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 
+
 ## Login to OpenShift with a cluster-admin user
 OCP_VERSION="4.9"
 
@@ -7,29 +12,37 @@ OCP_VERSION="4.9"
 SSH_PRIVATE_KEY_PATH=${SSH_PRIVATE_KEY_PATH:="$HOME/.ssh/MasterKemoKey"}
 
 ## Define the Git repo information
-GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
-GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f2 | sed 's/.git$//')
+GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}\
+
+## Skip Git validation for https repos 
+SKIP_INSECURE=false
 
 ARGOCD_PROJECT_NAME="ztp"
 ARGOCD_CLUSTER_ACCESS="true"
 
 ###############################################################################
-## Create the argocd Namespace and Install the ArgoCD
-echo "Creating ArgoCD Namespace and Installing Operator..."
-oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/argocd-operator/
+CHECK_ARGO_CRD=$( oc get crd | grep argoproj.io | wc -l)
+if [[ $CHECK_ARGO_CRD -eq 5 ]] ; then
+  echo "ArgoCD Operator is installed and ready!"
+else
+    ## Create the argocd Namespace and Install the ArgoCD
+    echo "Creating ArgoCD Namespace and Installing Operator..."
+    oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/argocd-operator/
 
-## Wait for the ArgoCD Operator to be ready
-until [ "$(oc get subscription.v1alpha1.operators.coreos.com argocd-operator -n openshift-operators -o jsonpath='{.status.state}')" == "AtLatestKnown" ]; do
-  echo "- Waiting for ArgoCD Operator to be ready..."
-  sleep 5
-done
+    ## Wait for the ArgoCD Operator to be ready
+    until [ "$(oc get subscription.v1alpha1.operators.coreos.com argocd-operator -n openshift-operators -o jsonpath='{.status.state}')" == "AtLatestKnown" ]; do
+    echo "- Waiting for ArgoCD Operator to be ready..."
+    sleep 5
+    done
 
-echo "ArgoCD Operator is installed and ready!"
+    echo "ArgoCD Operator is installed and ready!"
 
-###############################################################################
-## Create the argocd Namespace and Install the ArgoCD
-echo "Creating ArgoCD Instance..."
-oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/argocd-operator/
+    ###############################################################################
+    ## Create the argocd Namespace and Install the ArgoCD
+    echo "Creating ArgoCD Instance..."
+    oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/argocd-operator/
+
+fi
 
 ###############################################################################
 ## Create an ArgoCD Project via the oc CLI
@@ -52,9 +65,11 @@ spec:
     - '*'
 YAML
 
+if [[ "$GIT_REPO" == *"@"* ]]; then
 ###############################################################################
 ## Create an ArgoCD Credential via the oc CLI
-echo "Creating ArgoCD Git Credential..."
+GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f2 | sed 's/.git$//')
+echo "Creating ArgoCD Git Credential... for ${GIT_REPO}"
 cat << YAML | oc apply -f -
 kind: Secret
 apiVersion: v1
@@ -76,7 +91,17 @@ $(cat $SSH_PRIVATE_KEY_PATH | awk '{printf "      %s\n", $0}')
   url: ${GIT_REPO}
 type: Opaque
 YAML
-
+else 
+  echo "Creating ArgoCD Git Credential... for ${GIT_REPO}"
+  GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f5 | sed 's/.git$//')
+  login-to-argocd
+  if [ $SKIP_INSECURE == true ];
+  then 
+    argocd repo add --insecure-skip-server-verification ${GIT_REPO}
+  else
+    argocd repo add ${GIT_REPO}
+  fi 
+fi
 ###############################################################################
 ## Create an ArgoCD Application via the oc CLI - modify .spec as needed
 echo "Creating ArgoCD Application..."
