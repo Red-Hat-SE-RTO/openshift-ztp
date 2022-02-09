@@ -16,8 +16,10 @@ spec:
     name: {{ cluster_name }}
   imageSetRef:
     name: openshift-v{{ openshift_release }}
-  #apiVIP: "{{ api_vip }}"
-  #ingressVIP: "{{ ingress_vip }}"
+{% if cluster_type == 'sno' %}
+  apiVIP: "{{ api_vip }}"
+  ingressVIP: "{{ ingress_vip }}"
+{% endif %}
   holdInstallation: false
   networking:
     networkType: OVNKubernetes
