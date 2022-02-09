@@ -32,6 +32,11 @@
           - openshift==0.12.1
         extra_args: --upgrade
       delegate_to: localhost
+
+    - name: Install git maybe
+      shell: dnf install -y git
+      delegate_to: localhost
+      
     when: tower_job_id is defined
 
   #######################################################
