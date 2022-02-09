@@ -34,9 +34,9 @@
       delegate_to: localhost
 
     - name: Install git maybe
-      shell: dnf install -y git
+      shell: microdnf install -y git
       delegate_to: localhost
-      
+
     when: tower_job_id is defined
 
   #######################################################
