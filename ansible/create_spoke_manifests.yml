@@ -14,6 +14,7 @@
     generate_ssh_keys: true
     deployment_type: vsphere
     openshift_release: "4.9.9"
+    template_secrets: true
     secret_management: reflector
     credential_namespace: "ztp-credentials"
     ansible_tower_secret_name: "ansible-tower-credentials"
@@ -146,11 +147,13 @@
       set_fact:
         ssh_private_key_path: "{{ temp_dir.path }}/secrets/ssh_key"
         ssh_public_key_path: "{{ temp_dir.path }}/secrets/ssh_key.pub"
+      no_log: true
 
     - name: Set the SSH Key facts
       set_fact:
         ssh_private_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key') }}"
         ssh_public_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key.pub') }}"
+      no_log: true
     when: generate_ssh_keys|bool
 
   - name: Read in the SSH Keys
@@ -159,6 +162,7 @@
       set_fact:
         ssh_private_key: "{{ lookup('file', ssh_private_key_path) }}"
         ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
+      no_log: true
     when: generate_ssh_keys|bool == false
 
   #######################################################
@@ -192,7 +196,7 @@
         - 01_reflected_vcenter_secret.yml
       loop_control:
         loop_var: template_item
-      when: secret_management == "reflector"
+      when: secret_management == "reflector" and template_secrets|bool
 
     - name: Template the AgentClusterInstall
       template:
