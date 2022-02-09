@@ -3,7 +3,7 @@
 echo -e "===== Running preflight...\n"
 
 echo -e "Checking for required binaries..."
-
+source 
 checkForProgramAndInstallOrExit jq jq
 checkForProgramAndInstallOrExit git git
 
@@ -12,6 +12,8 @@ checkForProgramAndDownloadOrExit kubeseal https://github.com/bitnami-labs/sealed
 checkForProgramAndDownloadOrExit kubectl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz /usr/local/bin
 checkForProgramAndDownloadOrExit kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.4.1/kustomize_v4.4.1_linux_amd64.tar.gz /usr/local/bin
 checkForProgramAndDownloadOrExit oc https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz /usr/local/bin
+checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 
+
 
 # Check for ssh key 
 echo -e "\nChecking for SSH Key..."
