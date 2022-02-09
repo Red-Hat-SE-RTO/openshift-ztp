@@ -277,9 +277,13 @@
 
       - name: Git push the new cluster
         shell: |
+          HOME="{{ temp_dir.path }}"
+          mkdir -p $HOME/.ssh
+          ssh-keyscan github.com >> $HOME/.ssh/known_hosts
+          git config core.sshCommand 'ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i {{ temp_dir.path }}/secrets/push_git_ssh_key'
           eval $(ssh-agent -s)
           ssh-add "{{ temp_dir.path }}/secrets/push_git_ssh_key"
-          git push private {{ push_git_branch }}
+          GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes' git push private {{ push_git_branch }}
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "ssh"
