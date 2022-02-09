@@ -16,7 +16,7 @@ spec:
     name: {{ cluster_name }}
   imageSetRef:
     name: openshift-v{{ openshift_release }}
-{% if cluster_type == 'sno' %}
+{% if cluster_type != 'sno' %}
   apiVIP: "{{ api_vip }}"
   ingressVIP: "{{ ingress_vip }}"
 {% endif %}
