@@ -25,14 +25,15 @@ spec:
           - {{ dns_search }}
 {% endfor %}
     interfaces:
-{% for iface in node_item.interfaces -%}
-{% if ((iface.ipv4 is defined) and (iface.ipv4|length>0)) %}
+{% for iface in node_item.interfaces %}
       - ipv4:
+{% if not iface.dhcp|bool %}
           address:
 {% for ipv4 in iface.ipv4 %}
             - ip: {{ ipv4.address }}
               prefix-length: {{ ipv4.prefix }}
-{% endfor %}
+{% endfor -%}
+{% endif %}
           dhcp: {{ iface.dhcp }}
           enabled: true
         name: {{ iface.name }}
@@ -47,7 +48,6 @@ spec:
           next-hop-interface: {{ route.next_hop_interface }}
           table-id: {{ route.table_id }}
 {% endfor %}
-{% endif %}
 {% endif %}
 {% endfor %}
   interfaces:

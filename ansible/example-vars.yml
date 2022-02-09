@@ -66,6 +66,98 @@ cluster_nodes:
             next_hop_interface: ens192
             table_id: 254
 
+
+sno_node_config:
+  - name: sno-white
+    type: sno-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:91
+        dhcp: false
+        ipv4:
+          - address: 192.168.42.71
+            prefix: 24
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+
+converged_nodes_config:
+  - name: ocp-1
+    type: control-plane
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:92
+        dhcp: true
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+  - name: ocp-2
+    type: control-plane
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:93
+        dhcp: true
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+  - name: ocp-3
+    type: control-plane
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:94
+        dhcp: true
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+
 ###############################################################################
 ## Secret Configuration
 ###############################################################################
