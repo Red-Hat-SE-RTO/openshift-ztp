@@ -287,7 +287,9 @@
         copy:
           content: |
             Host github.com
+              User git
               Hostname github.com
+              PreferredAuthentications publickey
               IdentityFile {{ temp_dir.path }}/secrets/push_git_ssh_key
               IdentitiesOnly yes # see NOTES below
               StrictHostKeyChecking no
