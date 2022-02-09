@@ -43,6 +43,9 @@ Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer
 GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
 ## Set the path to the SSH Key that has access to the Git repo
 SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
+## Create pull Secret
+## https://console.redhat.com/openshift/create
+vim "$HOME/rh-ocp-pull-secret.json"
 
 ## Log into the Hub cluster with a cluster-admin user:
 oc login ...
