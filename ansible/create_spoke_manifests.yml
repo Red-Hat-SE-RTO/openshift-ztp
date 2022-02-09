@@ -49,6 +49,7 @@
       ignore_errors: true
       with_items:
         - git
+      when: tower_job_id is not defined
       
     - name: Fail if needed programs are not found
       fail:
