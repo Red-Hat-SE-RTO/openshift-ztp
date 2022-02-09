@@ -30,7 +30,8 @@ SCM_CREDENTIAL_PASSWORD="your-password"
 SCM_CREDENTIAL_NAME="SCM Credentials"
 
 PROJECT_NAME="vSphere ZTP"
-GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/wg-serto-ztp.git"}
+## GIT_REPO SHOULD BE MODIFIED TO POINT TO YOUR GIT REPO FORK OF https://github.com/Red-Hat-SE-RTO/openshift-ztp
+GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 
 JOB_TEMPLATE_NAME="vsphere-infra-ztp"
 JOB_TEMPLATE_PLAYBOOK="ansible/deploy_to_vsphere.yml"
