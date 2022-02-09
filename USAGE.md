@@ -132,6 +132,8 @@ metadata:
   namespace: ztp-credentials
   annotations:
     reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: 'loe.*,.*ocp'
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled: 'true'
 type: Opaque
 stringData:
   host: $AAP_ROUTE
@@ -154,6 +156,8 @@ metadata:
   namespace: ztp-credentials
   annotations:
     reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: 'loe.*,.*ocp'
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled: 'true'
 type: Opaque
 stringData:
   .dockerconfigjson: '$(cat ${PULL_SECRET_PATH})'
@@ -181,6 +185,8 @@ metadata:
   namespace: ztp-credentials
   annotations:
     reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: 'loe.*,.*ocp'
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled: 'true'
 type: Opaque
 stringData:
   vcenter_fqdn: $VCENTER_FQDN

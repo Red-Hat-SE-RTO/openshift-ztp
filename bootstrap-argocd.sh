@@ -117,12 +117,45 @@ spec:
       jsonPointers:
         - /spec/installed
       kind: ClusterDeployment
+    - group: hive.openshift.io
+      jsonPointers:
+        - /spec
+      kind: ClusterDeployment
     - group: extensions.hive.openshift.io
       jsonPointers:
         - /spec
       kind: AgentClusterInstall
     - kind: Secret
       jsonPointers:
+        - /data/host
+        - /data/token
+        - /data/skip_ssl_validation
+        - /data/vcenter_fqdn
+        - /data/vcenter_username
+        - /data/vcenter_password
+        - /data/.dockerconfigjson
+        - /data
+    - kind: Secret
+      group: core
+      jsonPointers:
+        - /data/host
+        - /data/token
+        - /data/skip_ssl_validation
+        - /data/vcenter_fqdn
+        - /data/vcenter_username
+        - /data/vcenter_password
+        - /data/.dockerconfigjson
+        - /data
+    - kind: Secret
+      group: v1
+      jsonPointers:
+        - /data/host
+        - /data/token
+        - /data/skip_ssl_validation
+        - /data/vcenter_fqdn
+        - /data/vcenter_username
+        - /data/vcenter_password
+        - /data/.dockerconfigjson
         - /data
   destination:
     name: ''
@@ -140,7 +173,7 @@ spec:
   syncPolicy:
     automated:
       ## Do NOT give ArgoCD the ability to PRUNE resources with cluster-admin unless you want your cluster to be sucked into a black hole
-      prune: false
+      prune: true
       selfHeal: false
     syncOptions: []
 YAML
