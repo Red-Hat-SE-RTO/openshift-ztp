@@ -57,7 +57,7 @@ function checkForCephFS() {
 
 ####################################################
 ## Preflight
-source ./spoke-configuration/scripts/shared_functions.sh
+source templates/scripts/shared_functions.sh
 
 checkForProgramAndInstallOrExit jq jq
 checkForProgramAndInstallOrExit git git
