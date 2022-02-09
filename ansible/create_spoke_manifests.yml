@@ -49,6 +49,7 @@
       ignore_errors: true
       with_items:
         - git
+      when: tower_job_id is not defined
       
     - name: Fail if needed programs are not found
       fail:
@@ -57,6 +58,7 @@
       loop: "{{ program_check.results }}"
       loop_control:
         label: "{{ item.cmd | replace('which ','') }}"
+      when: tower_job_id is not defined
     when: tower_job_id is not defined
 
   - name: General variable Preflight
