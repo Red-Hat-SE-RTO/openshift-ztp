@@ -1,0 +1,45 @@
+---
+
+- name: Setup VMWare disk dictionary
+  set_fact:
+    disks: "{{ disks | default([]) + [{ 'size_gb' : disk_item.size, 'type' : 'thin' }] }}"
+  loop: "{{ node_item.vm.disks }}"
+  loop_control:
+    loop_var: disk_item
+
+- name: Setup VMWare network dictionary
+  set_fact:
+    networks: "{{ networks | default([]) + [{ 'name' : cluster_configmap_info.resources[0].data.vsphere_network, 'device_type' : 'vmxnet3', 'mac' : iface_item.mac_address }] }}"
+  loop: "{{ node_item.interfaces }}"
+  loop_control:
+    loop_var: iface_item
+
+- name: Setup Agent Names
+  set_fact:
+    agent_names: "{{ agent_names | default([]) + [node_item.name] }}"
+
+- name: Create VM
+  community.vmware.vmware_guest:
+    hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+    username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
+    password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
+    validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+    datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
+    cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
+    name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
+    folder: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+    guest_id: coreos64Guest
+    state: powered-on
+    disk: "{{ disks }}"
+    hardware:
+      memory_mb: "{{ node_item.vm.memory }}"
+      num_cpu_cores_per_socket : "{{ node_item.vm.cpu_cores }}"
+      num_cpus : "{{ (node_item.vm.cpu_sockets|int * node_item.vm.cpu_cores|int) }}"
+    cdrom:
+    - controller_number: 0
+      unit_number: 0
+      state: present
+      type: iso
+      iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+    networks: "{{ networks }}"
