@@ -9,7 +9,7 @@ spec:
   loadbalancer_port: 80
   file_storage_size: 100Gi
   image_pull_policy: IfNotPresent
-  file_storage_storage_class: ocs-storagecluster-cephfs
+  file_storage_storage_class: ocs-storagecluster-ceph-rbd
   web:
     replicas: 1
     resource_requirements:

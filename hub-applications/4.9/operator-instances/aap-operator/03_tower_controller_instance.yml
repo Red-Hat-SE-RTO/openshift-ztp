@@ -29,8 +29,8 @@ spec:
   projects_storage_size: 8Gi
   admin_email: kmoini@redhat.com
   task_privileged: false
-  projects_storage_class: ocs-storagecluster-cephfs
-  projects_storage_access_mode: ReadWriteMany
+  projects_storage_class: ocs-storagecluster-ceph-rbd
+  projects_storage_access_mode: ReadWriteOnce
   web_resource_requirements:
     limits:
       cpu: 2000m

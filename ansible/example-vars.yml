@@ -94,4 +94,4 @@ vcenter_network: VM Network
 ###############################################################################
 ## Do not edit past this point unless you know what you're doing
 ###############################################################################
-ansible_job_template_name: deploy-to-vsphere-v2
+ansible_job_template_name: vsphere-infra-ztp

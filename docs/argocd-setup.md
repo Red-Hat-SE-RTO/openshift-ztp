@@ -78,7 +78,7 @@ Likely this repo that ArgoCD syncs to is private and thus needs credentials to a
 SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
 
 ## Define the Git repo information
-GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
+GIT_REPO="git@github.com:kenmoini/openshift-ztp.git"
 GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f2 | sed 's/.git$//')
 
 ## Create an ArgoCD Credential via the oc CLI
@@ -111,7 +111,7 @@ The ArgoCD Application is what will actually sync the repo and apply it to a tar
 
 ```bash
 ## Define the Git repo information
-GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
+GIT_REPO="git@github.com:kenmoini/openshift-ztp.git"
 GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f2 | sed 's/.git$//')
 
 ## Create an ArgoCD Application via the oc CLI - modify .spec as needed

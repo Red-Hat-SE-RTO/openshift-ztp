@@ -24,6 +24,7 @@
           - openshift==0.12.1
         extra_args: --upgrade
       delegate_to: localhost
+    when: tower_job_id is defined
 
   - name: Query OpenShift for needed Configs & Secrets
     block:

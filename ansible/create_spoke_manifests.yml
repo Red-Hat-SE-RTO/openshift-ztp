@@ -3,24 +3,39 @@
   hosts: all
   gather_facts: no
   vars:
-    target_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
-    target_git_branch: main
+    # source_git_repo should probably be overridden at execution
+    source_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
+    ## Defaults - shouldn't need to be changed
     target_spoke_git_path: "ztp-cluster/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
 
     git_push_credentials_secret_name: "ztp-git-push-credentials"
     git_push_credentials_secret_namespace: "ztp-credentials"
 
-  tasks:
-  #- name: Preflight for Tower
-  #  block:
-  #  - name: Install needed pip modules
-  #    pip:
-  #      name:
-  #        - kubernetes
-  #        - openshift==0.12.1
-  #      extra_args: --upgrade
-  #    delegate_to: localhost
+    generate_ssh_keys: true
+    deployment_type: vsphere
+    openshift_release: "4.9.9"
+    secret_management: reflector
+    credential_namespace: "ztp-credentials"
+    ansible_tower_secret_name: "ansible-tower-credentials"
+    pull_secret_secret_name: "assisted-deployment-pull-secret"
+    ansible_job_template_name: vsphere-infra-ztp
 
+  tasks:
+  #######################################################
+  ## Tower Preflight
+  - name: Preflight for Tower
+    block:
+    - name: Install needed pip modules if running in Tower
+      pip:
+        name:
+          - kubernetes
+          - openshift==0.12.1
+        extra_args: --upgrade
+      delegate_to: localhost
+    when: tower_job_id is defined
+
+  #######################################################
+  ## General Preflight
   - name: General Preflight
     block:
     - name: Check for required programs
@@ -38,6 +53,18 @@
       loop_control:
         label: "{{ item.cmd | replace('which ','') }}"
 
+    - name: Check cluster_node count against the different cluster_types
+      fail:
+        msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_node|length }} nodes were found!"
+      failed_when: cluster_type != "sno" and cluster_node|length >= 2
+
+    - name: Single node OpenShift can only be a single node!
+      fail:
+        msg: "cluster_type {{ cluster_type }} requires only 1 control-plane nodes but {{ cluster_node|length }} nodes were configured!"
+      failed_when: cluster_type == "sno" and cluster_node|length >= 2
+
+  #######################################################
+  ## OpenShift Query Preflights
   - name: Query OpenShift for needed Configs & Secrets
     block:
     - name: Get the Git Credentials
@@ -53,6 +80,20 @@
         msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
       when: git_secret.resources | length == 0
 
+    - name: Read in the Git Push Information
+      set_fact:
+        push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
+        push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
+        push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
+        push_git_username: "{{ git_secret.resources[0].data.git_username | b64decode }}"
+        push_git_ssh_key: "{{ git_secret.resources[0].data.git_ssh_key | b64decode }}"
+        push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+        push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
+        push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
+      no_log: true
+
+  #######################################################
+  ## Filesystem Operations
   - name: Filesystem Configuration
     block:
     - name: Create a temporary directory
@@ -73,7 +114,7 @@
   
   - name: Clone down the repo
     ansible.builtin.git:
-      repo: "{{ target_git_repo }}"
+      repo: "{{ source_git_repo }}"
       dest: "{{ temp_dir.path }}/git"
       clone: yes
   
@@ -82,6 +123,8 @@
       path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
       state: directory
 
+  #######################################################
+  ## Cluster SSH Key Operations
   - name: Set the SSH Key
     block:
     - name: Create a new SSH Key Pair
@@ -107,7 +150,9 @@
         ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
     when: generate_ssh_keys|bool == false
 
-  - name: Set big facts, no cap
+  #######################################################
+  ## Set Fact logic
+  - name: Set facts
     block:
     - name: Set general facts
       set_fact:
@@ -116,6 +161,8 @@
         machine_network_cidr: "{{ cluster_node_cidr }}"
         node_network_type: "{{ cluster_node_network_ipam }}"
 
+  #######################################################
+  ## Spoke Cluster Manifest Templating
   - name: Template the Spoke Cluster Manifests
     block:
 
@@ -179,12 +226,57 @@
       loop_control:
         loop_var: node_item
 
-  #- name: Delete the temporary directory
-  #  ansible.builtin.file:
-  #    path: "{{ temp_dir.path }}"
-  #    state: absent
-  #    force: yes
+  #######################################################
+  ## Git Push
+  - name: Technologic
+    block:
 
-  - name: Debug
-    debug:
-      msg: "{{ temp_dir }}"
+      - name: Git set push user info
+        shell: |
+          git config user.email "{{ push_git_user_email }}"
+          git config user.name "{{ push_git_user_name }}"
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+
+      - name: Git add the new cluster
+        shell: |
+          git add {{ target_spoke_git_path }}
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+
+      - name: Git commit the new cluster
+        shell: |
+          git commit -m "add new ztp cluster: {{ cluster_name }}"
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+
+      - name: Git set new remote
+        shell: |
+          git remote add private {{ push_git_url }}
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+
+      - name: Save the contents of the SSH Key to a file
+        copy:
+          content: "{{ push_git_ssh_key }}"
+          dest: "{{ temp_dir.path }}/secrets/push_git_ssh_key"
+          mode: 0600
+        when: push_git_auth_method == "ssh"
+        no_log: true
+
+      - name: Git push the new cluster
+        shell: |
+          GIT_SSH_COMMAND='ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key' git push private {{ push_git_branch }}
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "ssh"
+
+      ## TODO: Add username:password basic auth, just split the git_url and insert it
+
+  #######################################################
+  ## Cleanup
+  - name: Delete the temporary directory
+    ansible.builtin.file:
+      path: "{{ temp_dir.path }}"
+      state: absent
+      force: yes
