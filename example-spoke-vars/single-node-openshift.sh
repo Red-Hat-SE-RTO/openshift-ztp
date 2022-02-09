@@ -10,7 +10,7 @@ export SSH_PRI_KEY_PATH="$HOME/.ssh/id_rsa"
 export SSH_PUB_KEY_PATH="$HOME/.ssh/id_rsa.pub"
 
 ## PULL_SECRET_PATH - Path to the RH Registry OCP pull secret, get from https://console.redhat.com/openshift/downloads
-export PULL_SECRET_PATH="$HOME/pull-secret.json"
+export PULL_SECRET_PATH="$HOME/rh-ocp-pull-secret.json"
 
 ## DEPLOYMENT_TYPE specifies which deployment to use - maps to root directory of this repo, e.g. "aws", "vsphere", etc
 export DEPLOYMENT_TYPE="vsphere"
