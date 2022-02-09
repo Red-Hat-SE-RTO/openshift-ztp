@@ -68,7 +68,7 @@
     - name: Check cluster_nodes count against the different cluster_types
       fail:
         msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_nodes|length }} nodes were found!"
-      failed_when: cluster_type != "sno" and cluster_nodes|length >= 2
+      failed_when: cluster_type != "sno" and cluster_nodes|length <= 2
 
     - name: Single node OpenShift can only be a single node!
       fail:
