@@ -277,7 +277,9 @@
 
       - name: Git push the new cluster
         shell: |
-          GIT_SSH_COMMAND='ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key' git push private {{ push_git_branch }}
+          eval $(ssh-agent -s)
+          ssh-add "{{ temp_dir.path }}/secrets/push_git_ssh_key"
+          git push private {{ push_git_branch }}
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "ssh"
