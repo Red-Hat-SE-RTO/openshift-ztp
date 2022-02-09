@@ -21,9 +21,9 @@ openshift_release: "4.9.9"
 ## Cluster Network Configuration
 
 # cluster_api_vip: an IP or "auto" if your DHCP+DNS is configured correctly for dynamic hostname resolution
-cluster_api_vip: 192.168.42.74
+cluster_api_vip: 192.168.42.71
 # cluster_load_balancer_vip: an IP or "auto"
-cluster_load_balancer_vip: 192.168.42.74
+cluster_load_balancer_vip: 192.168.42.71
 # cluster_node_cidr: A CIDR definition of the network the nodes are connected to
 cluster_node_cidr: 192.168.42.0/24
 
@@ -44,7 +44,7 @@ cluster_nodes:
     ## type can be control-plane, application-node, or sno-node
     type: sno-node
     vm:
-      cpu_cores: 4
+      cpu_cores: 8
       cpu_sockets: 1
       cpu_threads: 1
       memory: 65536
@@ -58,7 +58,7 @@ cluster_nodes:
         mac_address: 00:51:56:42:06:91
         dhcp: false
         ipv4:
-          - address: 192.168.42.90
+          - address: 192.168.42.71
             prefix: 24
         routes:
           - destination: 0.0.0.0/0

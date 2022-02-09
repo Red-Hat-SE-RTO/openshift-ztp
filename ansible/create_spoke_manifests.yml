@@ -282,29 +282,11 @@
         args:
           chdir: "{{ temp_dir.path }}/git"
 
-      #- name: Create ssh config
-      #  copy:
-      #    content: |
-      #      Host github.com
-      #        User git
-      #        Hostname github.com
-      #        PreferredAuthentications publickey
-      #        IdentityFile {{ temp_dir.path }}/secrets/push_git_ssh_key
-      #        IdentitiesOnly yes
-      #        StrictHostKeyChecking no
-      #    dest: "{{ temp_dir.path }}/.ssh/config"
-      #    mode: 0644
-      #  when: push_git_auth_method == "ssh"
-
       - name: Git push the new cluster
         shell: |
           ssh-keyscan github.com >> $HOME/.ssh/known_hosts
           chmod 0644 $HOME/.ssh/known_hosts
           git config core.sshCommand "ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
-          #git config core.sshCommand 'ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i {{ temp_dir.path }}/secrets/push_git_ssh_key'
-          #eval $(ssh-agent -s)
-          #ssh-add "{{ temp_dir.path }}/secrets/push_git_ssh_key"
-          #GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes' git push private {{ push_git_branch }}
           git push private {{ push_git_branch }}
         args:
           chdir: "{{ temp_dir.path }}/git"
