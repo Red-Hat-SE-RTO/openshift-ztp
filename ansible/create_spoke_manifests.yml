@@ -280,6 +280,8 @@
           HOME="{{ temp_dir.path }}"
           mkdir -p $HOME/.ssh
           ssh-keyscan github.com >> $HOME/.ssh/known_hosts
+        args:
+          chdir: "{{ temp_dir.path }}/git"
 
       - name: Create git config
         copy:
