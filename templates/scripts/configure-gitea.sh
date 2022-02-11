@@ -1,5 +1,5 @@
 #!/bin/bash 
-source shared_functions.sh
+source ./templates/scripts/shared_functions.sh
 
 ## Configure Gitea repo on OpenShift 
 PROJECT="gpte-deployment"
@@ -14,7 +14,7 @@ cat >/tmp/gitea-with-admin.yaml<<YAML
 apiVersion: gpte.opentlc.com/v1
 kind: Gitea
 metadata:
-  name: gitea
+  name: gitea-with-admin
 spec:
   giteaSsl: true
   giteaAdminUser: adminuser
