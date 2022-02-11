@@ -79,8 +79,8 @@ function checkForArgocdcliAndDownloadOrExit() {
         printf '  %-72s %-7s\n' $1 "NOT FOUND!";
         echo "    Attempting to install $1 via $2."
 
-        curl -sSL -o /usr/local/bin/$1 $2
-        chmod +x /usr/local/bin/$1
+        sudo curl -sSL -o /usr/local/bin/$1 $2
+        sudo chmod +x /usr/local/bin/$1
         
         if [[ $? -eq 0 ]]; then
             printf '  %-72s %-7s\n' $1 "PASSED!";

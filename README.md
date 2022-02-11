@@ -40,7 +40,7 @@ Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer
 
 ```bash
 ## Set the Git Repo if not using this one
-GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
+export GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
 ## Set the path to the SSH Key that has access to the Git repo
 SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
 ## Create pull Secret
@@ -74,6 +74,8 @@ cp ./example-spoke-vars/single-node-openshift.sh ./vsphere-sno.env-vars.sh
 cp ./example-spoke-vars/three-node-openshift.sh ./vsphere-converged.env-vars.sh
 
 ## Create the Spoke Cluster Manifests
+## Set the Git Repo if not using this one
+export GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
 ./bootstrap-spoke.sh ./vsphere-sno.env-vars.sh
 
 ## Check the newly made manifests into the repository

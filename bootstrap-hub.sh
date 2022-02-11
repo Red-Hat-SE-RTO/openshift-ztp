@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -xe
 ## Set the OCP_VERSION for the short x.y version string
 OCP_VERSION="4.9"
 PULL_SECRET_PATH="$HOME/rh-ocp-pull-secret.json"
@@ -67,6 +67,7 @@ checkForProgramAndDownloadOrExit kubeseal https://github.com/bitnami-labs/sealed
 checkForProgramAndDownloadOrExit kubectl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz /usr/local/bin
 checkForProgramAndDownloadOrExit kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.4.1/kustomize_v4.4.1_linux_amd64.tar.gz /usr/local/bin
 checkForProgramAndDownloadOrExit oc https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz /usr/local/bin
+checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 
 
 ## Check for the OCP Pull Secret
 if [ ! -f "$PULL_SECRET_PATH" ]; then
@@ -126,7 +127,7 @@ fi
 
 if [ "$DEPLOY_GITEA" == "true" ]; then
   echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
-  oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/gitea-operator/ &>> $LOG_FILE
+  ./templates/scripts/configure-gitea.sh &>> $LOG_FILE
 fi
 
 if [ "$DEPLOY_ARGO_CD" == "true" ]; then
