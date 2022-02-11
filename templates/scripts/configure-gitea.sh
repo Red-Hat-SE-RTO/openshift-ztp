@@ -34,7 +34,7 @@ spec:
     name: openshift-ztp
     private: ${SET_PRIVATE_REPO}
 YAML
-if 
+
 oc create -f /tmp/gitea-with-admin.yaml -n ${PROJECT}
 sleep 10s
 
