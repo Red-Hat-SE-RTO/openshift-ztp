@@ -99,7 +99,7 @@ until oc get packagemanifest gitea-operator -n openshift-marketplace; do echo "W
 
 if [ "$DEPLOY_GITEA" == "true" ] && [ -z $GIT_REPO ]; then
   echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
-  ./templates/scripts/configure-gitea.sh &>> $LOG_FILE
+  ./templates/scripts/configure-gitea.sh | tee -a  $LOG_FILE
 fi
 
 ODF_INSTALLED=$(oc describe StorageSystem ocs-storagecluster-storagesystem  -n openshift-storage | grep "Reason:.*Ready")

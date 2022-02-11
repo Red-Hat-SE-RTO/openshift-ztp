@@ -60,6 +60,7 @@ echo "https://$(oc get -n ansible-automation-platform route/ac-tower -o jsonpath
 ## Attach a RH Subscription
 
 ## Bootstrap the Ansible Automation Platform 2 instance
+## get Gitea URL if you are using Gitea echo https://$(oc get route -n  ${PROJECT} |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
 ./bootstrap-aap2.sh
 
 ## Bootstrap the ArgoCD instance

@@ -23,14 +23,24 @@ AAP2_ADMIN_PASSWORD=$(oc get secret ${AAP2_ADMIN_SECRET_NAME} -n ${AAP2_NAMESPAC
 ORGANIZATION="Default"
 INVENTORY_NAME="localhost-ee"
 
-SCM_CREDENTIAL_AUTH_TYPE="ssh" # ssh or basic
+## Using https registry using Gitea Deployment
+SCM_CREDENTIAL_AUTH_TYPE="basic" # ssh or basic
 SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
-SCM_CREDENTIAL_USERNAME="your-username"
-SCM_CREDENTIAL_PASSWORD="your-password"
+SCM_CREDENTIAL_USERNAME="user-1"
+SCM_CREDENTIAL_PASSWORD="openshift"
 SCM_CREDENTIAL_NAME="SCM Credentials"
+
+## Using Exteral repo with ssh 
+#SCM_CREDENTIAL_AUTH_TYPE="ssh" # ssh or basic
+#SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
+#SCM_CREDENTIAL_USERNAME="your-username"
+#SCM_CREDENTIAL_PASSWORD="your-password"
+#SCM_CREDENTIAL_NAME="SCM Credentials"
 
 PROJECT_NAME="vSphere ZTP"
 ## GIT_REPO SHOULD BE MODIFIED TO POINT TO YOUR GIT REPO FORK OF https://github.com/Red-Hat-SE-RTO/openshift-ztp
+## get Gitea URL if you are using Gitea echo https://$(oc get route -n  ${PROJECT} |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
+GIT_REPO=$(echo https://$(oc get route -n  ${PROJECT} |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
 GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 
 JOB_TEMPLATE_NAME="vsphere-infra-ztp"
