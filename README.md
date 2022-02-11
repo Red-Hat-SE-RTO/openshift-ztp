@@ -39,7 +39,7 @@ Once the intended systems report in and are discoverable by the InfraEnv, the An
 Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer Service (OAS), you can simply run the following:
 
 ```bash
-## Set the Git Repo if not using this one
+## Set the Git Repo if your would not like a genreated on via Gitea
 export GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
 ## Set the path to the SSH Key that has access to the Git repo
 SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"

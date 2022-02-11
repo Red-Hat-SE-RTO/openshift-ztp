@@ -42,5 +42,5 @@ waitforme $GITEA_POD  ${PROJECT}
 
 URL="https://$(oc get route -n  ${PROJECT} |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git"
 echo "GITEA URL: ${URL}"
-echo "export GIT_REPO="${URL}""
+echo "export GIT_REPO='${URL}'"
 echo "GITEA PASSWORD: ${GITEA_PASSWORD}"
