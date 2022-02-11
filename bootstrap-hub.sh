@@ -97,24 +97,38 @@ oc apply -f hub-applications/${OCP_VERSION}/operator-catalogs/ &>> $LOG_FILE
 ## Wait for the Operator Catalog to come online
 until oc get packagemanifest gitea-operator -n openshift-marketplace; do echo "Waiting for PackageManifests...sleeping 10s..." && sleep 10; done
 
-####################################################
-## Label worker nodes as ODF Hosts
-logHeader "Labeling worker nodes as ODF Hosts" 2>&1 | tee -a $LOG_FILE
-WORKER_NODES=$(oc get nodes -l node-role.kubernetes.io/worker -o name)
+if [ "$DEPLOY_GITEA" == "true" ] && [ -z $GIT_REPO ]; then
+  echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
+  ./templates/scripts/configure-gitea.sh &>> $LOG_FILE
+fi
 
-echo "$WORKER_NODES" | while read line 
-do
-  echo -e " - Adding openshift-storage label to $line..." 2>&1 | tee -a $LOG_FILE
-  oc label --overwrite $line cluster.ocs.openshift.io/openshift-storage="" &>> $LOG_FILE
-done
+ODF_INSTALLED=$(oc describe StorageSystem ocs-storagecluster-storagesystem  -n openshift-storage | grep "Reason:.*Ready")
+if [ -z $ODF_INSTALLED ];
+then 
+  ####################################################
+  ## Label worker nodes as ODF Hosts
+  logHeader "Labeling worker nodes as ODF Hosts" 2>&1 | tee -a $LOG_FILE
+  WORKER_NODES=$(oc get nodes -l node-role.kubernetes.io/worker -o name)
 
-####################################################
-## Create Namespaces and Operator Subscriptions
-logHeader "Creating Operator Namespaces and Operator Subscriptions" 2>&1 | tee -a $LOG_FILE
-echo -e " - LSO Operator..." 2>&1 | tee -a $LOG_FILE
-oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/local-storage-operator/ &>> $LOG_FILE
-echo -e " - ODF Operator..." 2>&1 | tee -a $LOG_FILE
-oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/odf-operator/ &>> $LOG_FILE
+  echo "$WORKER_NODES" | while read line 
+  do
+    echo -e " - Adding openshift-storage label to $line..." 2>&1 | tee -a $LOG_FILE
+    oc label --overwrite $line cluster.ocs.openshift.io/openshift-storage="" &>> $LOG_FILE
+  done
+
+  ####################################################
+  ## Create Namespaces and Operator Subscriptions
+  logHeader "Creating Operator Namespaces and Operator Subscriptions" 2>&1 | tee -a $LOG_FILE
+  AWS_CHECK=$(oc get sc | grep aws)
+  if [ -z ${AWS_CHECK} ];
+  then 
+    echo -e " - LSO Operator..." 2>&1 | tee -a $LOG_FILE
+    oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/local-storage-operator/ &>> $LOG_FILE
+  fi
+  echo -e " - ODF Operator..." 2>&1 | tee -a $LOG_FILE
+  oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/odf-operator/ &>> $LOG_FILE
+fi
+
 echo -e " - RHACM Operator..." 2>&1 | tee -a $LOG_FILE
 oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/rhacm-operator/ &>> $LOG_FILE
 echo -e " - Ansible Automation Platform 2 Operator..." 2>&1 | tee -a $LOG_FILE
@@ -123,11 +137,6 @@ oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/aap-operato
 if [ "$DEPLOY_NFD" == "true" ]; then
   echo -e " - NFD Operator..." 2>&1 | tee -a $LOG_FILE
   oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/nfd-operator/ &>> $LOG_FILE
-fi
-
-if [ "$DEPLOY_GITEA" == "true" ] && [ -z $GIT_REPO ]; then
-  echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
-  ./templates/scripts/configure-gitea.sh &>> $LOG_FILE
 fi
 
 if [ "$DEPLOY_ARGO_CD" == "true" ]; then
