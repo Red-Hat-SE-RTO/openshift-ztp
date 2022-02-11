@@ -107,3 +107,7 @@ function login-to-argocd(){
     echo "$argoRoute"
     echo "$argoPass"
 }
+
+function waitforme() {
+  while [[ $(oc get pods $1 -n $2 -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 5; done
+}
