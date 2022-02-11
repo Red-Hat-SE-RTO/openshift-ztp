@@ -134,6 +134,12 @@ if [ "$DEPLOY_NFD" == "true" ]; then
   oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/nfd-operator/ &>> $LOG_FILE
 fi
 
+
+if [ "$DEPLOY_GITEA" == "true" ] && [ -z $GIT_REPO ]; then
+  echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
+  oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/gitea-operator/ &>> $LOG_FILE
+fi
+
 if [ "$DEPLOY_ARGO_CD" == "true" ]; then
   echo -e " - ArgoCD Operator..." 2>&1 | tee -a $LOG_FILE
   oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/argocd-operator/ &>> $LOG_FILE
