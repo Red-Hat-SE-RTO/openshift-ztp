@@ -97,11 +97,6 @@ oc apply -f hub-applications/${OCP_VERSION}/operator-catalogs/ &>> $LOG_FILE
 ## Wait for the Operator Catalog to come online
 until oc get packagemanifest gitea-operator -n openshift-marketplace; do echo "Waiting for PackageManifests...sleeping 10s..." && sleep 10; done
 
-if [ "$DEPLOY_GITEA" == "true" ] && [ -z $GIT_REPO ]; then
-  echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
-  ./templates/scripts/configure-gitea.sh | tee -a  $LOG_FILE
-fi
-
 ODF_INSTALLED=$(oc describe StorageSystem ocs-storagecluster-storagesystem  -n openshift-storage | grep "Reason:.*Ready")
 if [ -z $ODF_INSTALLED ];
 then 
@@ -183,8 +178,9 @@ if [ "$DEPLOY_AAP_CONTROLLER" == "true" ]; then
   oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/aap-operator/03_tower_controller_instance.yml &>> $LOG_FILE
 fi
 
-if [ "$DEPLOY_GITEA" == "true" ]; then
+if [ "$DEPLOY_GITEA" == "true" ] && [ -z $GIT_REPO ]; then
   echo -e " - Gitea Operator..." 2>&1 | tee -a $LOG_FILE
+  #./templates/scripts/configure-gitea.sh | tee -a  $LOG_FILE
   oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/gitea-operator/ &>> $LOG_FILE
 fi
 
@@ -220,6 +216,13 @@ logHeader "FINISHED!" 2>&1 | tee -a $LOG_FILE
 echo -e "\n===== Log saved to ${LOG_FILE}\n"
 
 echo "Next steps:"
+echo ""
+echo "===== Gitea Repo Info"
+echo " - Get the Gitea Route:"
+echo "echo https://$(oc get route -n  ${PROJECT} |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git"
+echo " - Get the Gitea User Info:"
+echo "Username: user-1"
+echo "Password: openshift"
 echo ""
 echo "===== Ansible Automation Platform 2 Setup"
 echo " - Get the AAP Tower Admin Password:"

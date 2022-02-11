@@ -12,3 +12,12 @@ spec:
   giteaVolumeStorageClass: ocs-storagecluster-cephfs
   postgresqlVolumeSize: 4Gi
   postgresqlVolumeStorageClass: ocs-storagecluster-cephfs
+  giteaCreateUsers: true
+  giteaGenerateUserFormat: "user-%d"
+  giteaUserNumber: 2
+  giteaUserPassword: openshift
+  giteaMigrateRepositories: true
+  giteaRepositoriesList:
+  - repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp.git
+    name: openshift-ztp
+    private: true
