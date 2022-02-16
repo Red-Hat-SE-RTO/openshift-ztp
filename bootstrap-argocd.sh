@@ -13,14 +13,24 @@ SSH_PRIVATE_KEY_PATH=${SSH_PRIVATE_KEY_PATH:="$HOME/.ssh/MasterKemoKey"}
 
 ## Define the Git repo information
 ## get Gitea URL if you are using Gitea echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
-GIT_REPO=$(echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
-GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
-
+if [[ -z $GIT_REPO ]];
+then 
+  GIT_REPO=$(echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
+  GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
+fi 
 ## Skip Git validation for https repos 
 SKIP_INSECURE=false
 
 ARGOCD_PROJECT_NAME="ztp"
 ARGOCD_CLUSTER_ACCESS="true"
+
+DEPLOYMENT_TYPE="sno"
+INFRA="vsphere"
+
+if [[ -z $CLUSTER_NAME ]];
+then 
+    read -p "Enter cluster name 'Example: sno-ocp' > " CLUSTER_NAME
+fi 
 
 ###############################################################################
 CHECK_ARGO_CRD=$( oc get crd | grep argoproj.io | wc -l)
@@ -111,7 +121,7 @@ cat << YAML | oc apply -f -
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ${GIT_REPO_NAME}
+  name: ${CLUSTER_NAME}
   namespace: argocd
 spec:
   ignoreDifferences:
@@ -167,7 +177,7 @@ spec:
     repoURL: '${GIT_REPO}'
     targetRevision: HEAD
     ## Path is the repo directory that containers the cluster(s) configuration and deployment manifests
-    path: ztp-clusters/
+    path: ztp-clusters/${INFRA}/${DEPLOYMENT_TYPE}/${CLUSTER_NAME}
     ## Enable recursive sub-directory search to enable management of multiple cluster from this single Application
     directory:
       recurse: true
