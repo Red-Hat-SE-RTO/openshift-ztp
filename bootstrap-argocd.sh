@@ -12,7 +12,9 @@ OCP_VERSION="4.9"
 SSH_PRIVATE_KEY_PATH=${SSH_PRIVATE_KEY_PATH:="$HOME/.ssh/MasterKemoKey"}
 
 ## Define the Git repo information
-GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}\
+## get Gitea URL if you are using Gitea echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
+GIT_REPO=$(echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
+GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 
 ## Skip Git validation for https repos 
 SKIP_INSECURE=false

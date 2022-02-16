@@ -12,6 +12,7 @@
     git_push_credentials_secret_namespace: "ztp-credentials"
 
     generate_ssh_keys: true
+    use_https_repo: false
     deployment_type: vsphere
     openshift_release: "4.9.9"
     template_secrets: true
@@ -77,7 +78,7 @@
 
   #######################################################
   ## OpenShift Query Preflights
-  - name: Query OpenShift for needed Configs & Secrets
+  - name: Query OpenShift for needed Configs & Secrets with ssh key
     block:
     - name: Get the Git Credentials
       kubernetes.core.k8s_info:
@@ -86,6 +87,7 @@
         namespace: "{{ git_push_credentials_secret_namespace }}"
         name: "{{ git_push_credentials_secret_name }}"
       register: git_secret
+      when: generate_ssh_keys|bool 
 
     - name: Fail if the Git credentials secret is not found
       fail:
@@ -103,6 +105,38 @@
         push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
         push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
       no_log: true
+      when: generate_ssh_keys|bool 
+    when: use_https_repo |bool == false
+
+  ## OpenShift Query Preflights
+  - name: Query OpenShift for needed Configs & Secrets without ssh key
+    block:
+    - name: Get the Git Credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: "{{ git_push_credentials_secret_namespace }}"
+        name: "{{ git_push_credentials_secret_name }}"
+      register: git_secret
+      when: use_https_repo|bool 
+
+    - name: Fail if the Git credentials secret is not found
+      fail:
+        msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
+      when: git_secret.resources | length == 0
+
+    - name: Read in the Git Push Information
+      set_fact:
+        push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
+        push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
+        push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
+        push_git_username: "{{ git_secret.resources[0].data.git_username | b64decode }}"
+        push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+        push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
+        push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
+      no_log: true
+      when: use_https_repo|bool 
+    when: use_https_repo|bool 
 
   #######################################################
   ## Filesystem Operations
@@ -163,7 +197,7 @@
         ssh_private_key: "{{ lookup('file', ssh_private_key_path) }}"
         ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
       no_log: true
-    when: generate_ssh_keys|bool == false
+    when: (generate_ssh_keys|bool == false and use_https_repo|bool == false)
 
   #######################################################
   ## Set Fact logic
@@ -253,6 +287,14 @@
         args:
           chdir: "{{ temp_dir.path }}/git"
 
+      - name: Git set push user token info
+        shell: |
+          git config --global github.user  user1
+          git config --global github.token d4a1fa03f3ecdd6aab0775b42547e4da94f01ee0
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "https"
+
       - name: Git add the new cluster
         shell: |
           git add {{ target_spoke_git_path }}
@@ -270,6 +312,7 @@
           git remote add private {{ push_git_url }}
         args:
           chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "ssh"
 
       - name: Save the contents of the SSH Key to a file
         copy:
@@ -285,6 +328,7 @@
           chmod 0700 $HOME/.ssh
         args:
           chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "ssh"
 
       - name: Git push the new cluster
         shell: |
@@ -296,7 +340,56 @@
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "ssh"
 
-      ## TODO: Add username:password basic auth, just split the git_url and insert it
+      - name: extract git url
+        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
+        register: extract_output
+        when: push_git_auth_method == "https"
+
+      - name: save git url
+        set_fact: 
+          git_url_https: "{{ extract_output.stdout }}"
+        when: push_git_auth_method == "https"
+
+      - name: extract git path
+        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
+        register: extract_path_output
+        when: push_git_auth_method == "https"
+
+      - name: save git path
+        set_fact: 
+          git_url_https: "{{ extract_path_output.stdout }}"
+        when: push_git_auth_method == "https"
+
+      - name: extract git repo 
+        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
+        register: extract_repo_output
+        when: push_git_auth_method == "https"
+
+      - name: save git repo
+        set_fact: 
+          git_url_https: "{{ extract_repo_output.stdout }}"
+        when: push_git_auth_method == "https"
+
+      - name: Git set new remote
+        shell: |
+          git remote add private "https://{{ push_git_username }}:{{ push_git_password }}@{{ git_url_https }}/{{ extract_path_output }}/{{ extract_repo_output }}"
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "https"
+
+      - name: git config --list
+        shell: |
+          git config --list
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "https"
+
+      - name: Git push the new cluster
+        shell: |
+          git push private main  
+        args:
+          chdir: "{{ temp_dir.path }}/git"
+        when: push_git_auth_method == "https"
 
   #######################################################
   ## Cleanup
@@ -305,3 +398,4 @@
       path: "{{ temp_dir.path }}"
       state: absent
       force: yes
+
