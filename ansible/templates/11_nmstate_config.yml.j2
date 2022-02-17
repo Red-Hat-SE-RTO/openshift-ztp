@@ -35,6 +35,9 @@ spec:
 {% endfor -%}
 {% endif %}
           dhcp: {{ iface.dhcp }}
+{% if iface.dhcp|bool %}
+          auto-dns: true
+{% endif %}
           enabled: true
         name: {{ iface.name }}
         state: up

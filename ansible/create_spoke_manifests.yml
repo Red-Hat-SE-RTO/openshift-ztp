@@ -267,10 +267,12 @@
         src: templates/09_ansiblejob.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/09_ansiblejob.yml"
 
-    - name: Template the NMState Config
+    - name: Template the NMState Config for static networks 
       template:
         src: templates/11_nmstate_config.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
+      when: network_type == "static"
+
       loop: "{{ cluster_nodes }}"
       loop_control:
         loop_var: node_item

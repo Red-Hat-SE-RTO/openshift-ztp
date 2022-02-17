@@ -138,6 +138,7 @@ type: Opaque
 stringData:
   host: $AAP_ROUTE
   token: $ANSIBLE_TOWER_TOKEN
+EOF
 ```
 
 ### Pull Secret...Secret
@@ -197,6 +198,9 @@ EOF
 ```
 
 > From this point, all the Secrets are pre-configured on the cluster, can be pulled from ExternalSecrets+Vault, blah blah - now you can have empty Secrets in Git and it'll just magically sync over with Reflector.
+
+## See Deployment Examples for different configuration settings
+* (Deployment Examples)[deployment-examples/README.md]
 
 ## Create Spoke Clusters
 
