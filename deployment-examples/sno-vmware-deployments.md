@@ -99,7 +99,8 @@ cluster_nodes:
             table_id: 254
 ```
 
-### VMWARE DHCP Static Configuration with Multi Nic
+### VMWARE DHCP Static Configuration with Multi Nic - WIP
+> need to select different VM networks in VMWARE
 ```
 ---
 source_git_repo: https://gitea.example.com/user1/openshift-ztp
