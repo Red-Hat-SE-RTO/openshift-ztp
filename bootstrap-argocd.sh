@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 
 source templates/scripts/shared_functions.sh
 
