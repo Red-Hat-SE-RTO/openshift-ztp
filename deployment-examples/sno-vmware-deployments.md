@@ -16,12 +16,7 @@ base_domain: example.com
 cluster_location: loc-1
 node_network_type: dhcp
 cluster_node_cidr: 192.168.1.0/24
-cluster_node_network_ipam: static
-cluster_node_network_static_dns_servers:
-  - 1.1.1.1
-  - 8.8.8.8
-cluster_node_network_static_dns_search_domains:
-  - example.com
+cluster_node_network_ipam: dhcp
 
 vcenter_credential_secret_name: "example-vcenter-credentials"
 vcenter_datacenter: Datacenter
@@ -113,15 +108,8 @@ cluster_type: sno
 cluster_name: sno-ocp
 base_domain: example.com
 cluster_location: loc-1
-cluster_api_vip: 192.168.1.71
-cluster_load_balancer_vip: 192.168.1.71
 cluster_node_cidr: 192.168.1.0/24
 cluster_node_network_ipam: static
-cluster_node_network_static_dns_servers:
-  - 1.1.1.1
-  - 8.8.8.8
-cluster_node_network_static_dns_search_domains:
-  - example.com
 
 vcenter_credential_secret_name: "example-vcenter-credentials"
 vcenter_datacenter: Datacenter
@@ -156,12 +144,6 @@ cluster_nodes:
         dhcp: false
         state: up
         type: ethernet
-        routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.1.1
-            next_hop_interface: ens192
-            table_id: 254
-
 ```
 
 ## For Issues see Troubleshooting doc
