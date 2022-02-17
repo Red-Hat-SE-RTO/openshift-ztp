@@ -13,3 +13,6 @@ rm -rf ztp-clusters/vsphere/sno/${CLUSTER_NAME}
 git add  ztp-clusters/vsphere/sno/${CLUSTER_NAME}
 git commit -m "cleanup ${CLUSTER_NAME}"
 git push 
+
+oc delete  Application ${CLUSTER_NAME} -n argocd
+oc delete project ${CLUSTER_NAME}
