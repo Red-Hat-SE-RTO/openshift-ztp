@@ -5,7 +5,7 @@ This document contains different node configurations for OpenShift deployments. 
 * See [mac Generator for OpenShift deployments on VMWARE](https://gist.github.com/tosin2013/eb9e67ab88da09b9597f1b7760f199c9) before starting a unique mac is need for each deployment
 
 ### VMWARE DHCP Configuration 
-> This configuration will auto assign ip address and auto assign the dns servers as well. 
+> This configuration will auto assign ip address and auto assign the dns servers as well. This configuration will auto assign the vips for api and the load balancer. 
 ```
 ---
 source_git_repo: https://gitea.example.com/user1/openshift-ztp
@@ -15,15 +15,8 @@ cluster_name: sno-ocp
 base_domain: example.com
 cluster_location: loc-1
 node_network_type: dhcp
-cluster_api_vip: 192.168.1.10
-cluster_load_balancer_vip: 192.168.1.10
 cluster_node_cidr: 192.168.1.0/24
-cluster_node_network_ipam: static
-cluster_node_network_static_dns_servers:
-  - 1.1.1.1
-  - 8.8.8.8
-cluster_node_network_static_dns_search_domains:
-  - example.com
+cluster_node_network_ipam: dhcp
 
 vcenter_credential_secret_name: "example-vcenter-credentials"
 vcenter_datacenter: Datacenter

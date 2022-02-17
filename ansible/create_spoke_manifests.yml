@@ -203,10 +203,16 @@
   ## Set Fact logic
   - name: Set facts
     block:
-    - name: Set general facts
+    - name: Set general facts for vips
       set_fact:
         api_vip: "{{ cluster_api_vip }}"
         ingress_vip: "{{ cluster_load_balancer_vip }}"
+      when: cluster_type  != 'sno'
+
+  - name: Set facts for cluster network info
+    block:
+    - name: Set general facts
+      set_fact:
         machine_network_cidr: "{{ cluster_node_cidr }}"
         node_network_type: "{{ cluster_node_network_ipam }}"
 
@@ -271,7 +277,6 @@
       template:
         src: templates/11_nmstate_config.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
-      when: network_type == "static"
 
       loop: "{{ cluster_nodes }}"
       loop_control:
@@ -359,7 +364,7 @@
 
       - name: save git path
         set_fact: 
-          git_url_https: "{{ extract_path_output.stdout }}"
+          extract_path_output: "{{ extract_path_output.stdout }}"
         when: push_git_auth_method == "https"
 
       - name: extract git repo 
@@ -369,7 +374,7 @@
 
       - name: save git repo
         set_fact: 
-          git_url_https: "{{ extract_repo_output.stdout }}"
+          extract_repo_output: "{{ extract_repo_output.stdout }}"
         when: push_git_auth_method == "https"
 
       - name: Git set new remote

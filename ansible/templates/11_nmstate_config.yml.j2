@@ -14,6 +14,7 @@ metadata:
     hostname: {{ node_item.name }}
 spec:
   config:
+{% if cluster_node_network_static_dns_servers is defined %}
     dns-resolver:
       config:
         server:
@@ -24,6 +25,7 @@ spec:
 {% for dns_search in cluster_node_network_static_dns_search_domains %}
           - {{ dns_search }}
 {% endfor %}
+{% endif %}
     interfaces:
 {% for iface in node_item.interfaces %}
       - ipv4:
