@@ -14,6 +14,7 @@ cluster_type: sno
 cluster_name: sno-ocp
 base_domain: example.com
 cluster_location: loc-1
+node_network_type: dhcp
 cluster_api_vip: 192.168.1.10
 cluster_load_balancer_vip: 192.168.1.10
 cluster_node_cidr: 192.168.1.0/24

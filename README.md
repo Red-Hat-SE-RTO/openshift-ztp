@@ -20,7 +20,7 @@ This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a
 
 ---
 
-## Proceedures & Documentation
+## Procedures & Documentation
 
 There is a Hub Cluster that runs ArgoCD, Ansible, RHACM, and all the other supporting services needed to deploy Spoke Clusters.
 
