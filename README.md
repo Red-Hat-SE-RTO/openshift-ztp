@@ -138,6 +138,9 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 - [ArgoCD Setup](./docs/argocd-setup.md)
 - [Deploying Gitea to OpenShift](./docs/deploying-gitea-to-openshift.md)
 
+## For Issues see Troubleshooting doc
+* [Troubleshooting Doc](deployment-examples/troubleshooting.md)
+
 ## Additional Notes
 
 - Gitea is based on Gogs, however [both are susceptible to RCE](https://github.com/gogs/gogs/issues/6536) - it would be ideal to transition to another Git repository platform that isn't so easily pwned.

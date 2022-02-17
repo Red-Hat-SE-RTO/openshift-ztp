@@ -16,7 +16,12 @@ base_domain: example.com
 cluster_location: loc-1
 node_network_type: dhcp
 cluster_node_cidr: 192.168.1.0/24
-cluster_node_network_ipam: dhcp
+cluster_node_network_ipam: static
+cluster_node_network_static_dns_servers:
+  - 1.1.1.1
+  - 8.8.8.8
+cluster_node_network_static_dns_search_domains:
+  - example.com
 
 vcenter_credential_secret_name: "example-vcenter-credentials"
 vcenter_datacenter: Datacenter
@@ -99,6 +104,9 @@ cluster_nodes:
             table_id: 254
 ```
 
+
+## For Issues see Troubleshooting doc
+* [TroubleShooting Doc](troubleshooting.md)
 
 To-Do
 ----

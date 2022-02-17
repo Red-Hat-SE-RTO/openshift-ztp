@@ -205,3 +205,6 @@ EOF
 ## Create Spoke Clusters
 
 The recommended way to do this is via Ansible Tower - if you used the `./bootstrap-aap2.sh` script then it's already set up, you just need to run the **Create Spoke Manifest** Job Template, or the **Create Spoke Manifest - Survey** to use an interactive version.
+
+## For Issues see Troubleshooting doc
+* [Troubleshooting Doc](deployment-examples/troubleshooting.md)
