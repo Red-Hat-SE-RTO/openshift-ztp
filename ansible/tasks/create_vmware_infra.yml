@@ -43,3 +43,9 @@
       type: iso
       iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
     networks: "{{ networks }}"
+
+- name: Resetting Facts
+  set_fact:
+    networks: []
+    disks: []
+    agent_names: []

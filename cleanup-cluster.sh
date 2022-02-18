@@ -1,16 +1,19 @@
 #!/bin/bash 
-if [ -z $1 ];
+if (( $# != 2 ));
 then 
   echo "Enter Cluster name"
-  echo "Example $0 sno-ocp"
+  echo "Example $0 sno sno-ocp"
+  echo "Example $0 converged converged-ocp"
   exit 1
 fi 
 
-CLUSTER_NAME=${1}
+
+CLUSTER_TYPE=${1}
+CLUSTER_NAME=${2}
 
 git pull 
-rm -rf ztp-clusters/vsphere/sno/${CLUSTER_NAME}
-git add  ztp-clusters/vsphere/sno/${CLUSTER_NAME}
+rm -rf ztp-clusters/vsphere/${CLUSTER_TYPE}/${CLUSTER_NAME}
+git add  ztp-clusters/vsphere/${CLUSTER_TYPE}/${CLUSTER_NAME}
 git commit -m "cleanup ${CLUSTER_NAME}"
 git push 
 

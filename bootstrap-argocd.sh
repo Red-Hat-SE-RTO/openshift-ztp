@@ -24,12 +24,19 @@ SKIP_INSECURE=false
 ARGOCD_PROJECT_NAME="ztp"
 ARGOCD_CLUSTER_ACCESS="true"
 
+## Deployment types sno/converged/full 
 DEPLOYMENT_TYPE="sno"
 INFRA="vsphere"
 
 if [[ -z $CLUSTER_NAME ]];
 then 
     read -p "Enter cluster name 'Example: sno-ocp' > " CLUSTER_NAME
+fi 
+
+if [[ -z ${CLUSTER_NAME} ]];
+then
+    echo "Cluster name not found exiting"
+    exit 
 fi 
 
 ###############################################################################

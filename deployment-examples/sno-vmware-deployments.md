@@ -100,7 +100,7 @@ cluster_nodes:
 ```
 
 ### VMWARE DHCP Static Configuration with Multi Nic - WIP
-> need to select different VM networks in VMWARE
+> need to select different VM networks `vcenter_network` in VMWARE
 ```
 ---
 source_git_repo: https://gitea.example.com/user1/openshift-ztp

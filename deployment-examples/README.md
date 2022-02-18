@@ -5,3 +5,6 @@
 
 ## Single Node OpenShift on VMware
 [Single node OpenShift](sno-vmware-deployments.md)
+
+## Compact OpenShift Deployments on VMware
+[Compact OpenShift Deployment](sno-vmware-deployments.md)
