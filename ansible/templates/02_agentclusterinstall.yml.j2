@@ -29,8 +29,10 @@ spec:
         hostPrefix: 23
     serviceNetwork:
       - "172.30.0.0/16"
+{% if cluster_type != 'converged' and node_network_type == 'dhcp' %}
     machineNetwork:
       - cidr: "{{ machine_network_cidr }}"
+{% endif %}
   provisionRequirements:
     controlPlaneAgents: {{ (cluster_type == 'sno') | ternary('1', '3') }}
   sshPublicKey: "{{ ssh_public_key }}"
