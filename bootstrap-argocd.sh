@@ -189,12 +189,7 @@ spec:
     directory:
       recurse: true
   project: ${ARGOCD_PROJECT_NAME}
-  syncPolicy:
-    automated:
-      ## Do NOT give ArgoCD the ability to PRUNE resources with cluster-admin unless you want your cluster to be sucked into a black hole
-      prune: true
-      selfHeal: false
-    syncOptions: []
+  syncPolicy: {}
 YAML
 
 ###############################################################################
@@ -214,3 +209,5 @@ fi
 
 echo ""
 echo "Finished deploying ArgoCD!"
+echo "argocd app get ${CLUSTER_NAME}"
+echo "argocd app sync ${CLUSTER_NAME} --force"

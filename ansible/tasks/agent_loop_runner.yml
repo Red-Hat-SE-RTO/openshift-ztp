@@ -1,8 +1,8 @@
 ---
 
-- name: Wait for 10s
+- name: Wait for 30s
   wait_for:
-    timeout: 10
+    timeout: 30
 
 - name: Set empty facts
   set_fact:
@@ -16,6 +16,9 @@
     label_selectors:
       - "infraenvs.agent-install.openshift.io = {{ infraenv.name }}"
   register: agent_crd_info
+  until: agent_crd_info.resources | list | length != 0
+  retries: 20
+  delay: 10
 
 - name: Process an Agent
   block:
