@@ -24,8 +24,6 @@ SKIP_INSECURE=false
 ARGOCD_PROJECT_NAME="ztp"
 ARGOCD_CLUSTER_ACCESS="true"
 
-## Deployment types sno/converged/full 
-DEPLOYMENT_TYPE="sno"
 INFRA="vsphere"
 
 if [[ -z $CLUSTER_NAME ]];
@@ -38,6 +36,36 @@ then
     echo "Cluster name not found exiting"
     exit 
 fi 
+
+PS3='Please enter your deployment type: '
+options=("sno " "converged" "full" "Quit")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "sno")
+            echo "you chose choice sno"
+            ## Deployment types sno/converged/full 
+            DEPLOYMENT_TYPE="sno"
+            break
+            ;;
+        "converged")
+            echo "you chose choice converged"
+            ## Deployment types sno/converged/full 
+            DEPLOYMENT_TYPE="converged"
+            break
+            ;;
+        "full")
+            echo "you chose choice full"
+            ## Deployment types sno/converged/full 
+            DEPLOYMENT_TYPE="full"
+            break
+            ;;
+        "Quit")
+            break && exit
+            ;;
+        *) echo "invalid option $REPLY";;
+    esac
+done
 
 ###############################################################################
 CHECK_ARGO_CRD=$( oc get crd | grep argoproj.io | wc -l)
@@ -210,4 +238,4 @@ fi
 echo ""
 echo "Finished deploying ArgoCD!"
 echo "argocd app get ${CLUSTER_NAME}"
-echo "argocd app sync ${CLUSTER_NAME} --force"
+echo "argocd app sync ${CLUSTER_NAME}"
