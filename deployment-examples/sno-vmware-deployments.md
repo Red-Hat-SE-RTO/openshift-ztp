@@ -49,8 +49,8 @@ cluster_nodes:
         dhcp: true
 ```
 **Additional Settings**
-* Job Slicing `1`
-* Options: `Concurrent Jobs`
+* Job Slicing `1`  
+* Options: `Concurrent Jobs`  
 
 ### VMWARE DHCP Static Configuration 
 ```
