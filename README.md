@@ -4,7 +4,7 @@ This repository houses assets for deploying OpenShift via ZTP (Zero-Touch Provis
 
 This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a function of GitOps where clusters and their states and supporting automation are defined in a Git repository for end-to-end provisioning of OpenShift clusters, their governance, policies, and applications.
 
-![Alt Text](https://i.imgur.com/LXEFFtc.gif)
+See Demo: https://i.imgur.com/LXEFFtc.gif
 
 ## Primer Information
 
