@@ -7,7 +7,7 @@
 [Single node OpenShift](sno-vmware-deployments.md)
 
 ## Compact OpenShift Deployments on VMware
-[Compact OpenShift Deployment](sno-vmware-deployments.md)
+[Compact OpenShift Deployment](converged-vmware-deployments.md)
 
 ## Ansible Tower Jobs
 [Anisble Tower Jobs](ansible-tower-jobs.md)
