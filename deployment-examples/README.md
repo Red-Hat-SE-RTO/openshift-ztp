@@ -8,3 +8,6 @@
 
 ## Compact OpenShift Deployments on VMware
 [Compact OpenShift Deployment](sno-vmware-deployments.md)
+
+## Ansible Tower Jobs
+[Anisble Tower Jobs](ansible-tower-jobs.md)

@@ -1,4 +1,4 @@
-# Single node OpenShift Deployments
+# Converged OpenShift Deployments
 This document contains different node configurations for OpenShift deployments. These variables are to be used in the `create-spoke-cluster` Automation template.
 
 ## Requirements
@@ -10,12 +10,13 @@ This document contains different node configurations for OpenShift deployments. 
 ---
 source_git_repo: https://gitea.example.com/user1/openshift-ztp
 
-cluster_type: sno
-cluster_name: sno-ocp
+cluster_type: converged
+cluster_name: converged-ocp
 base_domain: example.com
 cluster_location: loc-1
 node_network_type: dhcp
-cluster_node_cidr: 192.168.1.0/24
+cluster_api_vip: 192.168.1.10
+cluster_load_balancer_vip: 192.168.1.11
 cluster_node_network_ipam: dhcp
 
 vcenter_credential_secret_name: "example-vcenter-credentials"
@@ -23,12 +24,48 @@ vcenter_datacenter: Datacenter
 vcenter_datastore: Datastore
 vcenter_cluster: Cluster
 vcenter_network: VM Network
-node_boot_timeout: 15
-node_count: 1
+node_boot_timeout: 60
+node_count: 3
 
 cluster_nodes:
-  - name: sno-dev
-    type: sno-node
+  - name: converged-ocp-1
+    type: converged-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 120
+          name: boot
+        - size: 100
+          name: odf
+        - size: 100
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:50:56:68:47:10
+        dhcp: true
+  - name: converged-ocp-2
+    type: converged-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 120
+          name: boot
+        - size: 100
+          name: odf
+        - size: 100
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:50:56:68:47:10
+        dhcp: true
+  - name: converged-ocp-3
+    type: converged-node
     vm:
       cpu_cores: 8
       cpu_sockets: 1
@@ -47,13 +84,13 @@ cluster_nodes:
         dhcp: true
 ```
 
-### VMWARE DHCP Static Configuration 
+### VMWARE DHCP Static Configuration WIP
 ```
 ---
 source_git_repo: https://gitea.example.com/user1/openshift-ztp
 
-cluster_type: sno
-cluster_name: sno-ocp
+cluster_type: converged
+cluster_name: converged-ocp
 base_domain: example.com
 cluster_location: loc-1
 cluster_api_vip: 192.168.1.71
@@ -71,12 +108,10 @@ vcenter_datacenter: Datacenter
 vcenter_datastore: Datastore
 vcenter_cluster: Cluster
 vcenter_network: VM Network
-node_boot_timeout: 15
-node_count: 1
 
 cluster_nodes:
-  - name: sno
-    type: sno-node
+  - name: converged-ocp-1
+    type: converged-node
     vm:
       cpu_cores: 8
       cpu_sockets: 1
@@ -109,8 +144,8 @@ cluster_nodes:
 ---
 source_git_repo: https://gitea.example.com/user1/openshift-ztp
 
-cluster_type: sno
-cluster_name: sno-ocp
+cluster_type: converged
+cluster_name: converged-ocp
 base_domain: example.com
 cluster_location: loc-1
 cluster_node_cidr: 192.168.1.0/24
@@ -121,12 +156,10 @@ vcenter_datacenter: Datacenter
 vcenter_datastore: Datastore
 vcenter_cluster: Cluster
 vcenter_network: VM Network
-node_boot_timeout: 15
-node_count: 1
 
 cluster_nodes:
-  - name: sno
-    type: sno-node
+  - name: converged
+    type: converged-node
     vm:
       cpu_cores: 8
       cpu_sockets: 1
