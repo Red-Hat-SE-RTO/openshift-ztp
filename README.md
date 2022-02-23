@@ -158,7 +158,6 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 ## TO-DO
 
 - Swap ArgoCD out for Red Hat GitOps
-- Add 3 node converged OpenShift cluster examples and workflows
 - Add HA OpenShift cluster examples and workflows
 - Convert Bash script templating of Spoke Clusters to Ansible
 - Video on ZTP to vSphere deployments

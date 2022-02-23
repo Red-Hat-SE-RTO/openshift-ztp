@@ -158,6 +158,8 @@
     vars:
       task_agent_names: "{{ agent_names }}"
       task_approved_agents: "{{ approved_agents }}"
+      boot_timeout: "{{ cluster_configmap_info.resources[0].data.node_boot_timeout | int }}"
+      node_count: "{{ cluster_configmap_info.resources[0].data.node_count  }}"
 
   #- name: Create SNO VM
   #  block:
