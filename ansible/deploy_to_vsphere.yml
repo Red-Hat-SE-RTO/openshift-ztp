@@ -161,6 +161,9 @@
       boot_timeout: "{{ cluster_configmap_info.resources[0].data.node_boot_timeout | int }}"
       node_count: "{{ cluster_configmap_info.resources[0].data.node_count  }}"
 
+  - name: Loop through Agents
+    include_tasks: tasks/agent_loop_runner.yml
+    
   #- name: Create SNO VM
   #  block:
   #  - name: Create SNO VM

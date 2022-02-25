@@ -215,7 +215,9 @@
       set_fact:
         machine_network_cidr: "{{ cluster_node_cidr }}"
         node_network_type: "{{ cluster_node_network_ipam }}"
-      when: (cluster_type  != 'converged' && node_network_type == 'dhcp')
+      when: 
+        - (cluster_type  != 'converged' && node_network_type == 'dhcp')
+        - (cluster_type  != 'full' && node_network_type == 'dhcp')
 
   #######################################################
   ## Spoke Cluster Manifest Templating
@@ -406,4 +408,3 @@
       path: "{{ temp_dir.path }}"
       state: absent
       force: yes
-

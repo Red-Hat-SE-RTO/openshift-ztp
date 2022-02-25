@@ -9,5 +9,8 @@
 ## Compact OpenShift Deployments on VMware
 [Compact OpenShift Deployment](converged-vmware-deployments.md)
 
+## Full OpenShift Deployments on VMware
+[ Full OpenShift Deployment](full-vmware-deployments.md)
+
 ## Ansible Tower Jobs
 [Anisble Tower Jobs](ansible-tower-jobs.md)

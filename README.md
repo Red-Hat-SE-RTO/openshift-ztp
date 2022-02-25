@@ -3,7 +3,7 @@
 This repository houses assets for deploying OpenShift via ZTP (Zero-Touch Provisioning) to vSphere - other infrastructure platforms will be added as needed.
 
 This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a function of GitOps where clusters and their states and supporting automation are defined in a Git repository for end-to-end provisioning of OpenShift clusters, their governance, policies, and applications.
-![20220223123206](https://i.imgur.com/8WNSaDu.png)
+
 ## Primer Information
 
 - ZTP operates in a ***Hub-and-Spoke*** model - there is a primary Hub cluster that runs RHACM and other supporting services to conduct the deployment of Spoke clusters.
@@ -156,9 +156,9 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 - [ArgoCD Namespaced mode as default?](https://github.com/argoproj-labs/argocd-operator/issues/523)
 
 ## TO-DO
-
+- Disconnected deployments (In progress)
 - Swap ArgoCD out for Red Hat GitOps
-- Add HA OpenShift cluster examples and workflows
+- Add HA OpenShift cluster examples and workflows (Fix tagging of machines when it populates in cluster)
 - Convert Bash script templating of Spoke Clusters to Ansible
 - Video on ZTP to vSphere deployments
 - Expand to Nutanix

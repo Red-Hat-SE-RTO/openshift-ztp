@@ -4,6 +4,7 @@ then
   echo "Enter Cluster name"
   echo "Example $0 sno sno-ocp"
   echo "Example $0 converged converged-ocp"
+  echo "Example $0 full full-ocp"
   exit 1
 fi 
 
