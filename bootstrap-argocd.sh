@@ -38,7 +38,7 @@ then
 fi 
 
 PS3='Please enter your deployment type: '
-options=("sno " "converged" "full" "Quit")
+options=("sno" "converged" "full" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
