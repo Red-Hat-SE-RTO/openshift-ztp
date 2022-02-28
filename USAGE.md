@@ -145,6 +145,7 @@ EOF
 
 Take the RH Registry Pull Secret you stored at `$HOME/rh-ocp-pull-secret.json` and create a Secret from it:
 
+
 ```bash
 ## Set the Pull Secret Path
 PULL_SECRET_PATH="$HOME/rh-ocp-pull-secret.json"
@@ -163,9 +164,33 @@ type: Opaque
 stringData:
   .dockerconfigjson: '$(cat ${PULL_SECRET_PATH})'
 EOF
+
+
 ```
 
 This pull secret can be shared by spoke clusters to pull from the RH Registry for deployment - you would add other Pull Secret compositions for disconnected/offline registries.
+
+Take the RH Registry Pull Secret you stored at `$HOME/merged-pull-secret.json` and create a Secret from it:
+
+
+```bash
+## Set the Pull Secret Path
+PULL_SECRET_PATH="$HOME/merged-pull-secret.json"
+
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: assisted-deployment-merged-pull-secret
+  namespace: ztp-credentials
+  annotations:
+    reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: 'loe.*,.*ocp'
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled: 'true'
+type: Opaque
+stringData:
+  .dockerconfigjson: '$(cat ${PULL_SECRET_PATH})'
+EOF
 
 ### vCenter Credentials
 
