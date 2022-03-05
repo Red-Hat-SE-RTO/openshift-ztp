@@ -3,6 +3,20 @@
 ### Requirements 
 * ODF 
 * OPENSHIFT
+* RHACM
+* kustomize 
+
+### Programs that shpuld be installed via preflight_checks.sh
+* jq
+* helm
+* oc 
+* kubeseal
+* argocd
+* git 
+
+### Recomned hub clsuter sizing 
+* Control plane Nodes: 
+* Worker Nodes: 
 
 ### Run bootstrap-hub.sh
 **Log into the Hub cluster with a cluster-admin user:**

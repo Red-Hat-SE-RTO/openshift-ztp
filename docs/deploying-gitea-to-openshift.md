@@ -27,4 +27,5 @@ sleep 10
 oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/gitea-operator/
 ```
 
-The default username/password will be `opentlc-mgr` and `r3dh4t123!`
+* The default admin username/password will be `opentlc-mgr` and `r3dh4t123!`
+* The default `user-1` or `user-2` password is `openshift`

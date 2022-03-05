@@ -158,7 +158,7 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 - [ArgoCD Cluster Wide Access](https://github.com/argoproj/argo-cd/issues/5886)
 - [ArgoCD Namespaced mode as default?](https://github.com/argoproj-labs/argocd-operator/issues/523)
 
-## TO-DO
+## TO-DO/WishList
 - Disconnected deployments (In progress)
 - Swap ArgoCD out for Red Hat GitOps
 - Add HA OpenShift cluster examples and workflows (Fix tagging of machines when it populates in cluster)
@@ -166,6 +166,9 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 - Video on ZTP to vSphere deployments
 - Expand to Nutanix
 - Expand to Hyper-V
+- Vault integration
+- Quick start Script 
+- bootstrap-hub.sh (bug-fixs and Optimizations)
 
 ## Special Thanks
 
