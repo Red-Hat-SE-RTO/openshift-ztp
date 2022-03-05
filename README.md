@@ -34,6 +34,8 @@ Cluster composition, Discovery ISO download link, and other variables are passed
 
 Once the intended systems report in and are discoverable by the InfraEnv, the AnsibleJob kicks back over to OAS/ZTP to continue the installation.
 
+### Install Quick Start
+
 ### tl;dr
 
 Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer Service (OAS), you can simply run the following:
