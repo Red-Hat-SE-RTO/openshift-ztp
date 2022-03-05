@@ -8,8 +8,11 @@ Perform the following actions as a user with cluster-admin privileges:
 ## Assuming you're in the cloned repo root folder
 OCP_VERSION="4.9"
 
+## Create new project 
+oc new-project gitea
+
 ## Install the Operator CatalogSource
-oc apply -f ./hub-applications/operator-catalogs/rh-gpte-gitea-catalogsource.yml
+oc apply -f ./hub-applications/${OCP_VERSION}/operator-catalogs/rh-gpte-gitea-catalogsource.yml
 
 ## Wait a few seconds...
 sleep 10
