@@ -35,6 +35,7 @@ Cluster composition, Discovery ISO download link, and other variables are passed
 Once the intended systems report in and are discoverable by the InfraEnv, the AnsibleJob kicks back over to OAS/ZTP to continue the installation.
 
 ### Install Quick Start
+[Quick Start Guide for Blank OpenShift Cluster](docs/README.md)
 
 ### tl;dr
 
