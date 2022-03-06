@@ -2,6 +2,20 @@
 
 Ansible provides the infrastructure automation needed for this ZTP to vSphere process.
 
+Perform the following actions as a user with cluster-admin privileges:
+
+```bash
+## Assuming you're in the cloned repo root folder
+OCP_VERSION="4.9"
+
+##  Switch to ansible-automation-platform
+oc project ansible-automation-platform\
+
+## Create a Gitea Operator instance
+oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/aap-operator/03_tower_controller_instance.yml
+```
+
+
 Deploy an Ansible Controller/Tower via AAP2 on OpenShift and do the following:
 
 1. Find the Admin password: `oc get secret/ac-tower-admin-password -n ansible-automation-platform -o jsonpath='{.data.password}' | echo "$(base64 -d)"`
