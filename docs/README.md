@@ -43,26 +43,25 @@ oc login ...
 
 ## Configure Credentials for deployment 
 ### Install and configure credentials 
-[Install Reflector](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#install-reflector)
-[Install Reflector - Usage](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#install-reflector)
+* [Install Reflector](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#install-reflector)  
+* [Install Reflector - Usage](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#install-reflector)
 
 ### Create Credentials Namespace
-[Create Credentials Namespace](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#create-credentials-namespace)
+* [Create Credentials Namespace](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#create-credentials-namespace)
 
 ### Create GitHub Repo Credentials
-[GitHub Repo Credentials](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#github-repo-credentials)
+* [GitHub Repo Credentials](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#github-repo-credentials)
 
 ### Configure Ansible Tower credentials
-[Ansible Tower Application OAuth Token Secret](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#ansible-tower-application-oauth-token-secret)
-[Create an Ansible Tower Credential - Example](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#create-an-ansible-tower-credential)
+* [Ansible Tower Application OAuth Token Secret](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#ansible-tower-application-oauth-token-secret)  
+*  [Create an Ansible Tower Credential - Example](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#create-an-ansible-tower-credential)  
 
 ### Configure  vCenter Credential
-[Create a vCenter Credential - Example](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#create-a-vcenter-credential)
+* [Create a vCenter Credential - Example](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#create-a-vcenter-credential)  
 
 ### Configure Pull Secret
-[Pull Secret...Secret](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#pull-secretsecret)
-[]()
-[Create a Pull Secret - Example](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#create-a-pull-secret)
+* [Pull Secret...Secret](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/USAGE.md#pull-secretsecret)  
+* [Create a Pull Secret - Example](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#create-a-pull-secret)  
 
 ## Start cluster deployments 
-[See Deployment Examples for different configuration settings](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/deployment-examples/README.md)
+* [See Deployment Examples for different configuration settings](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/deployment-examples/README.md)
