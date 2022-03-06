@@ -40,7 +40,6 @@ oc login ...
 > verify ocs-storagecluster-cephfs is the default storage class
 * [Ansible Automation Platform 2, Controller/Tower Setup](aap2-setup.md)
 
-
 ## Configure Credentials for deployment 
 ### Install and configure credentials 
 * [Install Reflector](https://github.com/Red-Hat-SE-RTO/openshift-ztp/blob/main/docs/credential-setup.md#install-reflector)  
