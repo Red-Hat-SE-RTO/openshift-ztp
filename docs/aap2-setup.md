@@ -23,10 +23,14 @@ Deploy an Ansible Controller/Tower via AAP2 on OpenShift and do the following:
 3. Attach a Subscription to Tower
 4. Create an **Application**, 'Resource owner password-based' Authorization grant type, 'Confidential' Client type
 5. Create a **User Personal Access Token** with that Application, take note of the Token
-6. Create SCM **Credentials** to access the ZTP Git repo
-7. Create a **Project** to the ZTP Git repo
-8. Create an **Inventory**, localhost being the only host with explicit locality via `ansible_connection=local` and  `ansible_python_interpreter: '{{ ansible_playbook_python }}'` in the host inventory variables.
-9. Create a **Job Template**, allow for extra variables to be passed in
+6. Create SCM **Credentials** to access the ZTP Git repo `SCM Credentials`
+![20220306093607](https://i.imgur.com/O8u5ABx.png)
+7. Create a **Project** to the ZTP Git repo `vSphere ZTP`
+![20220306094000](https://i.imgur.com/IG3IV2o.png)
+8. Create an **Inventory**, localhost named `localhost-ee` being the only host with explicit locality via `ansible_connection: local` and  `ansible_python_interpreter: "{{ ansible_playbook_python }}"` in the host inventory variables.
+![20220306091757](https://i.imgur.com/g1oTptr.png)
+9. Create a **Job Template**, allow for extra variables to be passed in `vsphere-infra-ztp` enable Concurrent Jobs
+![20220306094218](https://i.imgur.com/Qlv3FUW.png)
 10. Give the default ServiceAccount in the ansible-automation-platform Namespace cluster-admin permissions: `oc adm policy add-cluster-role-to-user cluster-admin -z default -n ansible-automation-platform`
 
 ***Note***: Save/Verify ./aap2_user_application_token for future use.  
