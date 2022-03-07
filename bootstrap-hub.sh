@@ -9,7 +9,8 @@ DEPLOY_AAP_HUB="false" # This is the AAP that's hosted on RHHC
 DEPLOY_GITEA="true"
 DEPLOY_NFD="false"
 DEPLOY_ARGO_CD="true"
-DEPLOY_SEALED_SECRETS="true"
+DEPLOY_SEALED_SECRETS="false"
+DEPLOY_REFLECTOR="true"
 
 LOG_FILE="/tmp/bootstrap-hub-$(date '+%s').log"
 PROMPT_FOR_ODF_CHECK="true"
@@ -86,6 +87,24 @@ if [ "$DEPLOY_SEALED_SECRETS" == "true" ]; then
   if [ $? -ne 0 ]; then
     echo -e " - Deploying Sealed Secrets to OCP..." 2>&1 | tee -a $LOG_FILE
     helm install sealed-secrets --namespace kube-system --version 2.1.0 sealed-secrets/sealed-secrets &>> $LOG_FILE
+  fi
+fi
+
+## Deploy the Reflector Service
+if [ "$DEPLOY_REFLECTOR" == "true" ]; then
+  if [ -z "$(helm repo list | grep emberstack)" ]; then
+    echo -e " - Installing Emberstack Helm Repo for Reflector..." 2>&1 | tee -a $LOG_FILE
+    helm repo add emberstack https://emberstack.github.io/helm-charts &>> $LOG_FILE
+    helm repo update &>> $LOG_FILE
+  fi
+  HELM_REFLECTOR_STATUS=$(helm status reflector -n reflector)
+  if [ $? -ne 0 ]; then
+    echo -e " - Deploying Sealed Secrets to OCP..." 2>&1 | tee -a $LOG_FILE
+    oc new-project reflector &>> $LOG_FILE
+    oc project reflector &>> $LOG_FILE
+    helm upgrade --install reflector emberstack/reflector --namespace reflector &>> $LOG_FILE
+    oc adm policy add-scc-to-user privileged -z default -n reflector
+    oc adm policy add-scc-to-user privileged -z reflector -n reflector
   fi
 fi
 
