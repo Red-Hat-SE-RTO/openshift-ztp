@@ -40,7 +40,7 @@ SCM_CREDENTIAL_NAME="SCM Credentials"
 PROJECT_NAME="vSphere ZTP"
 ## GIT_REPO SHOULD BE MODIFIED TO POINT TO YOUR GIT REPO FORK OF https://github.com/Red-Hat-SE-RTO/openshift-ztp
 ## get Gitea URL if you are using Gitea echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
-GIT_REPO=$(echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
+GIT_REPO=$(echo https://$(oc get route -n gitea | grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
 GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 
 JOB_TEMPLATE_NAME="vsphere-infra-ztp"
