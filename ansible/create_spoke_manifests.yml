@@ -207,17 +207,21 @@
       set_fact:
         api_vip: "{{ cluster_api_vip }}"
         ingress_vip: "{{ cluster_load_balancer_vip }}"
-      when: cluster_type  != 'sno'
+      when:  node_count >= 1 && node_network_type == 'static'
 
   - name: Set facts for cluster network info
     block:
     - name: Set general facts
       set_fact:
         machine_network_cidr: "{{ cluster_node_cidr }}"
+      when: cluster_type  == 'sno'
+
+  - name: Set facts for cluster network info
+    block:
+    - name: Set general facts
+      set_fact:
         node_network_type: "{{ cluster_node_network_ipam }}"
-      when: 
-        - (cluster_type  != 'converged' && node_network_type == 'dhcp')
-        - (cluster_type  != 'full' && node_network_type == 'dhcp')
+
 
   #######################################################
   ## Spoke Cluster Manifest Templating
