@@ -7,7 +7,7 @@ PULL_SECRET_PATH="$HOME/rh-ocp-pull-secret.json"
 DEPLOY_AAP_CONTROLLER="true" # This is "Tower"
 DEPLOY_AAP_HUB="false" # This is the AAP that's hosted on RHHC
 DEPLOY_GITEA="true"
-DEPLOY_NFD="true"
+DEPLOY_NFD="false"
 DEPLOY_ARGO_CD="true"
 DEPLOY_SEALED_SECRETS="true"
 
