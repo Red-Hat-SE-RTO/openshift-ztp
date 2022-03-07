@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xe
+
 ## Set the OCP_VERSION for the short x.y version string
 OCP_VERSION="4.9"
 PULL_SECRET_PATH="$HOME/rh-ocp-pull-secret.json"
@@ -45,14 +45,14 @@ function checkForODFConsolePlugin() {
 }
 
 function checkForCephFS() {
-  STORAGE_CLASS_QUERY=$(oc get storageclass/ocs-storagecluster-ceph)
+  STORAGE_CLASS_QUERY=$(oc get storageclass/ocs-storagecluster-ceph-rbd)
   if [ $? -ne 0 ]; then
     echo -e " - CephFS StorageClass not found, waiting 30s..." 2>&1 | tee -a $LOG_FILE
     sleep 30
     checkForCephFS
   else
     echo -e " - CephFS StorageClass found, labeling as default StorageClass..." 2>&1 | tee -a $LOG_FILE
-    oc annotate --overwrite storageclass/ocs-storagecluster-ceph storageclass.kubernetes.io/is-default-class="true" &>> $LOG_FILE
+    oc annotate --overwrite storageclass/ocs-storagecluster-ceph-rbd storageclass.kubernetes.io/is-default-class="true" &>> $LOG_FILE
   fi
 }
 
@@ -68,7 +68,7 @@ checkForProgramAndDownloadOrExit kubeseal https://github.com/bitnami-labs/sealed
 checkForProgramAndDownloadOrExit kubectl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz /usr/local/bin
 checkForProgramAndDownloadOrExit kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.4.1/kustomize_v4.4.1_linux_amd64.tar.gz /usr/local/bin
 checkForProgramAndDownloadOrExit oc https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz /usr/local/bin
-checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 
+checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
 
 ## Check for the OCP Pull Secret
 if [ ! -f "$PULL_SECRET_PATH" ]; then
@@ -99,7 +99,7 @@ if [ "$DEPLOY_REFLECTOR" == "true" ]; then
   fi
   HELM_REFLECTOR_STATUS=$(helm status reflector -n reflector)
   if [ $? -ne 0 ]; then
-    echo -e " - Deploying Sealed Secrets to OCP..." 2>&1 | tee -a $LOG_FILE
+    echo -e " - Deploying Reflector to OCP..." 2>&1 | tee -a $LOG_FILE
     oc new-project reflector &>> $LOG_FILE
     oc project reflector &>> $LOG_FILE
     helm upgrade --install reflector emberstack/reflector --namespace reflector &>> $LOG_FILE

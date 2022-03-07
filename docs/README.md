@@ -37,7 +37,7 @@ oc login ...
 * [Deploying Gitea to OpenShift](deploying-gitea-to-openshift.md)
 
 ### Install Ansible Tower
-> verify ocs-storagecluster-cephfs is the default storage class
+> verify ocs-storagecluster-ceph-rbd is the default storage class
 * [Ansible Automation Platform 2, Controller/Tower Setup](aap2-setup.md)
 
 ## Configure Credentials for deployment 
