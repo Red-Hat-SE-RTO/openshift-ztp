@@ -26,6 +26,7 @@ vcenter_datacenter: Datacenter
 vcenter_datastore: Datastore
 vcenter_cluster: Cluster
 vcenter_network: VM Network
+# Change timeout based of speed of network
 node_boot_timeout: 60
 node_count: 3
 
