@@ -44,14 +44,14 @@ function checkForODFConsolePlugin() {
 }
 
 function checkForCephFS() {
-  STORAGE_CLASS_QUERY=$(oc get storageclass/ocs-storagecluster-cephfs)
+  STORAGE_CLASS_QUERY=$(oc get storageclass/ocs-storagecluster-ceph)
   if [ $? -ne 0 ]; then
     echo -e " - CephFS StorageClass not found, waiting 30s..." 2>&1 | tee -a $LOG_FILE
     sleep 30
     checkForCephFS
   else
     echo -e " - CephFS StorageClass found, labeling as default StorageClass..." 2>&1 | tee -a $LOG_FILE
-    oc annotate --overwrite storageclass/ocs-storagecluster-cephfs storageclass.kubernetes.io/is-default-class="true" &>> $LOG_FILE
+    oc annotate --overwrite storageclass/ocs-storagecluster-ceph storageclass.kubernetes.io/is-default-class="true" &>> $LOG_FILE
   fi
 }
 
