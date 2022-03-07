@@ -9,9 +9,9 @@ Perform the following actions as a user with cluster-admin privileges:
 OCP_VERSION="4.9"
 
 ##  Switch to ansible-automation-platform
-oc project ansible-automation-platform\
+oc project ansible-automation-platform
 
-## Create a Gitea Operator instance
+## Create an AAP 2 Controller/Tower Operator instance
 oc apply -f ./hub-applications/${OCP_VERSION}/operator-instances/aap-operator/03_tower_controller_instance.yml
 ```
 
@@ -34,4 +34,19 @@ Deploy an Ansible Controller/Tower via AAP2 on OpenShift and do the following:
 10. Give the default ServiceAccount in the ansible-automation-platform Namespace cluster-admin permissions: `oc adm policy add-cluster-role-to-user cluster-admin -z default -n ansible-automation-platform`
 
 ***Note***: Save/Verify ./aap2_user_application_token for future use.  
+
 ***Note***: You don't need to give the default SA full cluster-admin permissions, just enough RBAC to allow listing/viewing of Secrets in a few namespaces, but this is easier for testing.  Production workloads will want to set proper Roles and RoleBindings.
+
+***Note***: If you're using self-signed certificates you'll need to log into the AAP2 Controler/Tower, navigate to Settings > Job Settings - then add one of the following to the Extra Environment Variables:
+
+```json
+{
+ "GIT_SSL_CAINFO": "/etc/custom-ca/bundle-ca.crt",
+}
+```
+
+```json
+{
+  "GIT_SSL_NO_VERIFY": "True"
+}
+```
