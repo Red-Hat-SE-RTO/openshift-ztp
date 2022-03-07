@@ -43,9 +43,10 @@ AAP_ROUTE="$(echo "https://$(oc get -n ansible-automation-platform route/ac-towe
 
 ## Set your Tower Token
 ANSIBLE_TOWER_TOKEN="someLongString"
+ANSIBLE_TOWER_TOKEN="$(cat ./aap2_user_application_token)"
 
 ## Create the Ansible Tower Credential
-cat <<EOF | oc create -f -
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -71,7 +72,7 @@ VCENTER_USERNAME="administrator@vsphere.local"
 VCENTER_PASSWORD="someString"
 
 ## Create the vSphere Credential
-cat <<EOF | oc create -f -
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -96,7 +97,7 @@ EOF
 ## Set the Pull Secret Path
 PULL_SECRET_PATH="$HOME/rh-ocp-pull-secret.json"
 
-cat <<EOF | oc create -f -
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -118,22 +119,29 @@ If using the Ansible Playbook to push spoke manifest generation to a Git repo (a
 
 ```bash
 ## Set the repo target
-GIT_REPO="git@github.com:kenmoini/openshift-ztp.git"
+GIT_REPO=$(echo https://$(oc get route -n gitea | grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
+GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 GIT_BRANCH="main"
 
 ## ssh or basic
-GIT_AUTH_METHOD="ssh"
+GIT_AUTH_METHOD="basic"
+
+## SSH Options
 GIT_SSH_KEY="$HOME/.ssh/id_rsa"
 GIT_USERNAME="git"
 GIT_PASSWORD=""
+
+## Basic Auth options
+GIT_USERNAME="user-1"
+GIT_PASSWORD="openshift"
 
 ## Keep mind of this secret name, the create_spoke_manifests.yml needs it
 GIT_CREDENTIALS_SECRET_NAME="ztp-git-push-credentials"
 GIT_CREDENTIALS_SECRET_NAMESPACE="ztp-credentials"
 
 ## Information for Git Commit/Push Events
-GIT_USER_NAME="Ken Moini"
-GIT_USER_EMAIL="ken@kenmoini.com"
+GIT_USER_NAME="Bob the Builder"
+GIT_USER_EMAIL="bob@canwefixit.com"
 
 cat <<EOF | oc apply -f -
 apiVersion: v1
@@ -160,6 +168,8 @@ EOF
 ```
 
 # Per Spoke Secret Setup
+
+> This step is not needed if you are using the Secrets as defined above since they're automatically reflected into every namespace.
 
 With Reflector installed, you can copy Secrets simply:
 
