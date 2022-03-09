@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 source templates/scripts/shared_functions.sh
 
@@ -15,11 +15,11 @@ SSH_PRIVATE_KEY_PATH=${SSH_PRIVATE_KEY_PATH:="$HOME/.ssh/MasterKemoKey"}
 ## get Gitea URL if you are using Gitea echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
 if [[ -z $GIT_REPO ]];
 then 
-  GIT_REPO=$(echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
+  GIT_REPO=$(echo https://$(oc get route -n gitea |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
   GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
 fi 
 ## Skip Git validation for https repos 
-SKIP_INSECURE=false
+SKIP_INSECURE="true"
 
 ARGOCD_PROJECT_NAME="ztp"
 ARGOCD_CLUSTER_ACCESS="true"
@@ -144,7 +144,7 @@ else
   login-to-argocd
   if [ $SKIP_INSECURE == true ];
   then 
-    argocd repo add --insecure-skip-server-verification ${GIT_REPO}
+    argocd repo add --insecure-skip-server-verification --username user-1 --password openshift ${GIT_REPO}
   else
     argocd repo add ${GIT_REPO}
   fi 
