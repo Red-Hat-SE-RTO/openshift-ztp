@@ -8,8 +8,8 @@
     deploy_sealed_secrets: false
     deploy_hashicorp_vault: false
     deploy_nfd: true
+    deploy_lso: true
 
-    deploy_los: true
     deploy_odf: true
     deploy_gitea: true
     deploy_rh_gitops: true
@@ -36,3 +36,18 @@
       include_role:
         name: deploy_nfd_operator
       when: deploy_nfd|bool
+
+    - name: Install Local Storage Operator
+      block:
+        - name: Get the cluster infrastructure information
+          kubernetes.core.k8s_info:
+            api_version: config.openshift.io/v1
+            kind: Infrastructure
+            name: cluster
+          register: r_ocp_infra
+
+        - name: Start the role if not on AWS
+          include_role:
+            name: deploy_lso_operator
+          when: r_ocp_infra.resources[0].status.platform != "AWS"
+      when: deploy_lso|bool

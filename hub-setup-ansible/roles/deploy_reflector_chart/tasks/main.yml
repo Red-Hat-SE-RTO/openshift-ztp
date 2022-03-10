@@ -23,3 +23,8 @@
     name: reflector
     chart_ref: emberstack/reflector
     release_namespace: "{{ reflector_namespace }}"
+
+- name: Add the SCC RoleBinding
+  kubernetes.core.k8s:
+    state: present
+    template: templates/rolebinding.yml.j2
