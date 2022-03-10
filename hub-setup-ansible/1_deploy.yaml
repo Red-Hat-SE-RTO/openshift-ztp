@@ -1,0 +1,38 @@
+---
+- name: Setup a Hub OpenShift Cluster for ZTP
+  hosts: localhost
+  connection: local
+
+  vars:
+    deploy_reflector: true
+    deploy_sealed_secrets: false
+    deploy_hashicorp_vault: false
+    deploy_nfd: true
+
+    deploy_los: true
+    deploy_odf: true
+    deploy_gitea: true
+    deploy_rh_gitops: true
+    deploy_aap_controller: true
+    deploy_aap_hub: false
+
+  tasks:
+    - name: Install Reflector for Secret management
+      include_role: 
+        name: deploy_reflector_chart
+      when: deploy_reflector|bool
+
+    - name: Install Bitnami SealedSecrets for Secret management
+      include_role:
+        name: deploy_sealedsecrets_chart
+      when: deploy_sealed_secrets|bool
+
+    - name: Install Hashicorp Vault for Secret management
+      include_role:
+        name: deploy_vault_chart
+      when: deploy_hashicorp_vault|bool
+
+    - name: Install Node Feature Discovery
+      include_role:
+        name: deploy_nfd_operator
+      when: deploy_nfd|bool

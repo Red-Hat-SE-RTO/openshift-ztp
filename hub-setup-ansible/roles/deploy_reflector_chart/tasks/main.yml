@@ -1,0 +1,25 @@
+---
+# tasks file for deploy_reflector_chart
+- name: Template the Reflector Helm Chart Repository
+  kubernetes.core.k8s:
+    state: present
+    template: templates/chart-repository.yml.j2
+
+- name: Create the Reflector Project - {{ reflector_namespace }}
+  kubernetes.core.k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ reflector_namespace }}"
+      spec: {}
+
+- name: Deploy the latest version of the Reflector Helm Chart
+  kubernetes.core.helm:
+    name: reflector
+    chart_ref: emberstack/reflector
+    release_namespace: "{{ reflector_namespace }}"

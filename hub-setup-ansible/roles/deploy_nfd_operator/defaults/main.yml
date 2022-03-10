@@ -1,0 +1,4 @@
+---
+# defaults file for deploy_nfd_operator
+operator_channel: stable
+operator_namespace: openshift-nfd
