@@ -2,8 +2,8 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   creationTimestamp: null
-  name: {{ operator_namespace }}
-  namespace: {{ operator_namespace }}
+  name: {{ acm_operator_namespace }}
+  namespace: {{ acm_operator_namespace }}
 spec:
   targetNamespaces:
-    - {{ operator_namespace }}
+    - {{ acm_operator_namespace }}

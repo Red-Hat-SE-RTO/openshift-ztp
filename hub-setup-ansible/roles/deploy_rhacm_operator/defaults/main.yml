@@ -1,3 +1,3 @@
 ---
 # defaults file for deploy_rhacm_operator
-operator_namespace: open-cluster-management
+acm_operator_namespace: open-cluster-management

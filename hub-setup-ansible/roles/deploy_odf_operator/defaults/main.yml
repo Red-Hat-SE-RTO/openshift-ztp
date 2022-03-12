@@ -1,6 +1,6 @@
 ---
 # defaults file for deploy_odf_operator
-operator_namespace: openshift-storage
+odf_operator_namespace: openshift-storage
 odf_storagecluster_name: ocs-storagecluster
 
 aws_storagecluster_storageclass: gp2

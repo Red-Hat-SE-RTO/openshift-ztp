@@ -3,9 +3,9 @@ kind: Subscription
 metadata:
   creationTimestamp: null
   name: nfd
-  namespace: {{ operator_namespace }}
+  namespace: {{ nfd_operator_namespace }}
 spec:
-  channel: {{ operator_channel }}
+  channel: {{ nfd_operator_channel }}
   installPlanApproval: Automatic
   name: nfd
   source: redhat-operators

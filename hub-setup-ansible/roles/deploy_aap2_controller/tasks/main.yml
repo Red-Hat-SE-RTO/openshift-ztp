@@ -1,6 +1,13 @@
 ---
 # tasks file for deploy_aap2_controller
 
+- name: Clear out facts
+  set_fact:
+    operator_csv_version: ""
+    operator_csv_version_index: ""
+    operator_api_definition: ""
+    operator_api_version: ""
+
 - name: Get Cluster Version
   kubernetes.core.k8s_info:
     api_version: config.openshift.io/v1
@@ -65,7 +72,7 @@
       - "Operator API Definition: {{ operator_api_definition }}"
       - "Operator API Version: {{ operator_api_version }}"
 
-- name: Create namespace for {{ operator_namespace }}
+- name: Create namespace for {{ aap_operator_namespace }}
   kubernetes.core.k8s:
     state: present
     kind: Namespace
@@ -75,18 +82,18 @@
     - merge
     definition:
       metadata:
-        name: "{{ operator_namespace }}"
+        name: "{{ aap_operator_namespace }}"
       spec: {}
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
   retries: 30
 
-- name: Query the {{ operator_namespace }} namespace for OperatorGroups
+- name: Query the {{ aap_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1
     kind: OperatorGroup
-    namespace: "{{ operator_namespace }}"
+    namespace: "{{ aap_operator_namespace }}"
   register: r_og_list
 
 - name: Create Operator OperatorGroup

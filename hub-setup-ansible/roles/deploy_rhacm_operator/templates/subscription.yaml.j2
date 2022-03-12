@@ -5,7 +5,7 @@ metadata:
   labels:
     operators.coreos.com/advanced-cluster-management.open-cluster-management: ''
   name: advanced-cluster-management
-  namespace: {{ operator_namespace }}
+  namespace: {{ acm_operator_namespace }}
 spec:
   channel: {{ operator_channel }}
   installPlanApproval: Automatic

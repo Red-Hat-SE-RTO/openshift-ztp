@@ -1,6 +1,13 @@
 ---
 # tasks file for deploy_gitea_operator
 
+- name: Clear out facts
+  set_fact:
+    operator_csv_version: ""
+    operator_csv_version_index: ""
+    operator_api_definition: ""
+    operator_api_version: ""
+
 - name: Add the Gitea Operator CatalogSource
   kubernetes.core.k8s:
     state: present
@@ -41,7 +48,7 @@
     namespace: openshift-marketplace
   register: r_pm
 
-- name: Set the latest CSV version
+- name: Set the latest CSV version for {{ gitea_operator_channel }} channel
   set_fact:
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
@@ -50,11 +57,15 @@
     loop_var: chan_item
     index_var: chan_idx
     label: "{{ chan_item.name }}"
-  when: chan_item.name ==  operator_channel
+  when: chan_item.name == gitea_operator_channel
+
+- name: Debug
+  debug:
+    msg: "{{ operator_csv_version }}"
 
 - name: Fail if the Current Operator CSV was not found
   fail:
-    msg: "Operator CSV for Gitea not found for channel {{ operator_channel }}"
+    msg: "Operator CSV for Gitea not found for channel {{ gitea_operator_channel }}"
   when: operator_csv_version is undefined
 
 - name: Set additional operator specific facts
@@ -70,7 +81,7 @@
       - "Operator API Definition: {{ operator_api_definition }}"
       - "Operator API Version: {{ operator_api_version }}"
 
-- name: Create namespace for {{ operator_namespace }}
+- name: Create namespace for {{ gitea_operator_namespace }}
   kubernetes.core.k8s:
     state: present
     kind: Namespace
@@ -80,18 +91,18 @@
     - merge
     definition:
       metadata:
-        name: "{{ operator_namespace }}"
+        name: "{{ gitea_operator_namespace }}"
       spec: {}
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
   retries: 30
 
-- name: Query the {{ operator_namespace }} namespace for OperatorGroups
+- name: Query the {{ gitea_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1
     kind: OperatorGroup
-    namespace: "{{ operator_namespace }}"
+    namespace: "{{ gitea_operator_namespace }}"
   register: r_og_list
 
 - name: Create Operator OperatorGroup

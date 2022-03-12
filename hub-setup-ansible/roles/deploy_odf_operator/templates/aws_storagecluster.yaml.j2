@@ -6,7 +6,7 @@ metadata:
     uninstall.ocs.openshift.io/cleanup-policy: delete
     uninstall.ocs.openshift.io/mode: graceful
   name: {{ odf_storagecluster_name }}
-  namespace: {{ operator_namespace }}
+  namespace: {{ odf_operator_namespace }}
   #ownerReferences:
   #  - apiVersion: odf.openshift.io/v1alpha1
   #    blockOwnerDeletion: true

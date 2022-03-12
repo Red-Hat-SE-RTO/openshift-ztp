@@ -1,0 +1,8 @@
+---
+# defaults file for configure_rhacm_oas
+acm_operator_namespace: open-cluster-management
+pull_secret_path: ~/ocp-pull-secret
+# release_versions
+release_versions:
+- 4.9.9
+ztp_config_namespace: ztp-config

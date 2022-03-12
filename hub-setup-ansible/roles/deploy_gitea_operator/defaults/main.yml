@@ -1,7 +1,7 @@
 ---
 # defaults file for deploy_gitea_operator
-operator_namespace: gitea
-operator_channel: stable
+gitea_operator_namespace: gitea
+gitea_operator_channel: stable
 
 gitea_admin_username: admin
 gitea_admin_password: "r3dh4t123!"

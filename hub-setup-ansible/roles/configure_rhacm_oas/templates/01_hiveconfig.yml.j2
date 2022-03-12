@@ -1,0 +1,17 @@
+apiVersion: hive.openshift.io/v1
+kind: HiveConfig
+metadata:
+  creationTimestamp: null
+  name: hive
+  namespace: {{ acm_operator_namespace }}
+  labels:
+    installer.name: multiclusterhub
+    installer.namespace: {{ acm_operator_namespace }}
+spec:
+  featureGates:
+    custom:
+      enabled:
+        - AlphaAgentInstallStrategy
+    featureSet: Custom
+  logLevel: debug
+  targetNamespace: hive

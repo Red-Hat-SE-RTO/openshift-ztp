@@ -1,8 +1,8 @@
 ---
 # defaults file for deploy_aap2_controller
-operator_namespace: ansible-automation-platform
+aap_operator_namespace: ansible-automation-platform
 
-controller_storageclass_name: ocs-storagecluster-ceph-rbd
+aap_controller_storageclass_name: ocs-storagecluster-ceph-rbd
 
-controller_admin_username: admin
-controller_admin_email: kmoini@redhat.com
+aap_controller_admin_username: admin
+aap_controller_admin_email: kmoini@redhat.com

@@ -5,8 +5,8 @@ metadata:
   finalizers:
     - storagesystem.odf.openshift.io
   name: {{ odf_storagecluster_name }}-storagesystem
-  namespace: {{ operator_namespace }}
+  namespace: {{ odf_operator_namespace }}
 spec:
   kind: storagecluster.ocs.openshift.io/v1
   name: {{ odf_storagecluster_name }}
-  namespace: {{ operator_namespace }}
+  namespace: {{ odf_operator_namespace }}

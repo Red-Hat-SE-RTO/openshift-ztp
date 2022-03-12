@@ -3,7 +3,7 @@ kind: Gitea
 metadata:
   creationTimestamp: null
   name: gitea
-  namespace: {{ operator_namespace }}
+  namespace: {{ gitea_operator_namespace }}
 spec:
   giteaSsl: true
   giteaAdminUser: {{ gitea_admin_username }}

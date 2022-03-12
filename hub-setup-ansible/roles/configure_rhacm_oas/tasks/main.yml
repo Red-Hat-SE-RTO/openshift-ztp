@@ -1,0 +1,74 @@
+---
+# tasks file for configure_rhacm_oas
+
+- name: Get Cluster Version
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: ClusterVersion
+    name: version
+  register: r_ocp_version
+
+- name: Set cluster version
+  set_fact:
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+
+- name: Make sure the RHACM Subscription is installed
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1
+    kind: Subscription
+    name: advanced-cluster-management
+    namespace: "{{ acm_operator_namespace }}"
+  register: r_subscription
+  retries: 200
+  delay: 10
+  until: r_subscription.resources | list | length == 1
+
+- name: Create namespaces for {{ ztp_config_namespace }}
+  kubernetes.core.k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ ztp_config_namespace }}"
+      spec: {}
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Apply the Cluster Releases
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/02_clusterImageSet.yml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  loop: "{{ release_versions }}"
+  loop_control:
+    loop_var: release_long_version
+
+- name: Apply the Operator configuration
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', file_item ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  loop:
+    - templates/01_hiveconfig.yml.j2
+    - templates/03_assisted_service_configmap.yml.j2
+    - templates/05_agentserviceconfig.yml.yml.j2
+  loop_control:
+    loop_var: file_item
