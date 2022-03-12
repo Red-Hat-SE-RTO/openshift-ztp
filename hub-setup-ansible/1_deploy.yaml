@@ -2,6 +2,7 @@
 - name: Setup a Hub OpenShift Cluster for ZTP
   hosts: localhost
   connection: local
+  gather_facts: no
 
   vars:
     #########################################
@@ -12,16 +13,14 @@
 
     #########################################
     ## Operator Management
-    deploy_nfd: false
-    deploy_lso: false
-    deploy_odf: false
-    deploy_rhacm: false
-    deploy_gitea: false
-
+    deploy_nfd: true
+    deploy_lso: true
+    deploy_odf: true
+    deploy_rhacm: true
+    deploy_gitea: true
     deploy_rh_gitops: true
 
-    deploy_aap_controller: false
-    deploy_aap_hub: false
+    deploy_aap2_controller: true
 
     #########################################
     ## Local Storage Operator Variables
@@ -86,3 +85,8 @@
       include_role:
         name: deploy_rh_gitops_operator
       when: deploy_rh_gitops|bool
+
+    - name: Install the Red Hat Ansible Automation Platform Controller
+      include_role:
+        name: deploy_aap2_controller
+      when: deploy_aap2_controller|bool
