@@ -55,6 +55,7 @@ spec:
         cpu: 125m
         memory: 128Mi
     insecure: true
+    replicas: 1
     route:
       enabled: true
       tls:
@@ -62,11 +63,18 @@ spec:
         insecureEdgeTerminationPolicy: Redirect
   grafana:
     enabled: true
+    size: 1
     route:
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
       enabled: true
   prometheus:
     enabled: true
     route:
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
       enabled: true
   rbac:
     defaultPolicy: 'role:admin'
