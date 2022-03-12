@@ -8,8 +8,8 @@
     #########################################
     ## Secrets Management
     deploy_reflector: true
-    deploy_sealed_secrets: false
-    deploy_hashicorp_vault: false
+    deploy_sealed_secrets: false # not supported yet
+    deploy_hashicorp_vault: false # not supported yet
 
     #########################################
     ## Operator Management
@@ -19,7 +19,6 @@
     deploy_rhacm: true
     deploy_gitea: true
     deploy_rh_gitops: true
-
     deploy_aap2_controller: true
 
     #########################################
