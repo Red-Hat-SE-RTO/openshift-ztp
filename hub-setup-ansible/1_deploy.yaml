@@ -4,17 +4,32 @@
   connection: local
 
   vars:
+    #########################################
+    ## Secrets Management
     deploy_reflector: true
     deploy_sealed_secrets: false
     deploy_hashicorp_vault: false
-    deploy_nfd: true
-    deploy_lso: true
 
-    deploy_odf: true
-    deploy_gitea: true
+    #########################################
+    ## Operator Management
+    deploy_nfd: false
+    deploy_lso: false
+    deploy_odf: false
+    deploy_rhacm: false
+    deploy_gitea: false
+
     deploy_rh_gitops: true
-    deploy_aap_controller: true
+
+    deploy_aap_controller: false
     deploy_aap_hub: false
+
+    #########################################
+    ## Local Storage Operator Variables
+    ## lso_hostname_targets: is a list of hostnames to be used by the lso-operator for a LocalVolumeSet
+    lso_hostname_targets:
+      - app-1
+      - app-2
+      - app-3
 
   tasks:
     - name: Install Reflector for Secret management
@@ -51,3 +66,23 @@
             name: deploy_lso_operator
           when: r_ocp_infra.resources[0].status.platform != "AWS"
       when: deploy_lso|bool
+
+    - name: Install OpenShift Data Foundation
+      include_role:
+        name: deploy_odf_operator
+      when: deploy_odf|bool
+
+    - name: Install Red Hat Advanced Cluster Management
+      include_role:
+        name: deploy_rhacm_operator
+      when: deploy_rhacm|bool
+
+    - name: Install the Gitea Operator
+      include_role:
+        name: deploy_gitea_operator
+      when: deploy_gitea|bool
+
+    - name: Install Red Hat GitOps Operator
+      include_role:
+        name: deploy_rh_gitops_operator
+      when: deploy_rh_gitops|bool
