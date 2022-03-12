@@ -126,6 +126,16 @@
   until: crd_check.resources | list | length == 1
   when: ocp_version is version('4.9.0', operator='ge', strict=True)
 
+- name: Wait for the Console Plugin to become available
+  kubernetes.core.k8s_info:
+    api_version: console.openshift.io/v1alpha1
+    kind: ConsolePlugin
+    name: odf-console
+  register: crd_check
+  retries: 200
+  delay: 10
+  until: crd_check.resources | list | length == 1
+
 - name: Enable ODF Console Plugin
   kubernetes.core.k8s:
     state: patched
