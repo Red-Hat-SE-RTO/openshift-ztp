@@ -1,0 +1,4 @@
+---
+# defaults file for deploy_rh_gitops_operator
+operator_channel: stable
+operator_namespace: argocd
