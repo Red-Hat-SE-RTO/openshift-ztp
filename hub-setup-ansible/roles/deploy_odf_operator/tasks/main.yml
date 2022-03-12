@@ -1,6 +1,13 @@
 ---
 # tasks file for deploy_odf_operator
 
+- name: Get the cluster infrastructure information
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Infrastructure
+    name: cluster
+  register: r_ocp_infra
+
 - name: Get Cluster Version
   kubernetes.core.k8s_info:
     api_version: config.openshift.io/v1
@@ -153,6 +160,19 @@
   until: k8s_run is not failed
   delay: 10
   retries: 30
+
+- name: Create the ODF StorageCluster for AWS
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/aws_storagecluster.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  when: r_ocp_infra.resources[0].status.platform == "AWS"
 
 - name: Create the ODF StorageSystem
   kubernetes.core.k8s:
