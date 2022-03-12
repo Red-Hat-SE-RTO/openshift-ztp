@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  creationTimestamp: null
+  labels:
+    operators.coreos.com/gitea-operator.openshift-operators: ''
+  name: gitea-operator
+  namespace: openshift-operators
+spec:
+  channel: {{ operator_channel }}
+  installPlanApproval: Automatic
+  name: gitea-operator
+  source: redhat-gpte-gitea
+  sourceNamespace: openshift-marketplace
+  startingCSV: {{ operator_csv_version }}

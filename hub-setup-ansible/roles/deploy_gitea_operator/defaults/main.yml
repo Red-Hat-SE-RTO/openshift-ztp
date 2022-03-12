@@ -1,0 +1,20 @@
+---
+# defaults file for deploy_gitea_operator
+operator_namespace: gitea
+operator_channel: stable
+
+gitea_admin_username: admin
+gitea_admin_password: "r3dh4t123!"
+gitea_admin_email: opentlc-mgr@redhat.com
+gitea_storageclass_name: ocs-storagecluster-ceph-rbd
+
+gitea_create_users: true
+gitea_number_of_users: 2
+gitea_generate_user_format: "user-%d"
+gitea_user_password: openshift
+
+gitea_bootstrap_repositories: true
+gitea_bootstrap_repositories_list:
+- repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp.git
+  name: openshift-ztp
+  private: true
