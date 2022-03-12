@@ -1,6 +1,7 @@
 apiVersion: local.storage.openshift.io/v1alpha1
 kind: LocalVolumeSet
 metadata:
+  creationTimestamp: null
   finalizers:
     - storage.openshift.com/local-volume-protection
   name: {{ lso_storage_class_name }}
