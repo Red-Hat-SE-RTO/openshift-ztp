@@ -1,0 +1,11 @@
+apiVersion: odf.openshift.io/v1alpha1
+kind: StorageSystem
+metadata:
+  finalizers:
+    - storagesystem.odf.openshift.io
+  name: {{ odf_storagecluster_name }}-storagesystem
+  namespace: {{ operator_namespace }}
+spec:
+  kind: storagecluster.ocs.openshift.io/v1
+  name: {{ odf_storagecluster_name }}
+  namespace: {{ operator_namespace }}

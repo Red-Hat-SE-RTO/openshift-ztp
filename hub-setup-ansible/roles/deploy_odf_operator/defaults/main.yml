@@ -1,0 +1,4 @@
+---
+# defaults file for deploy_odf_operator
+operator_namespace: openshift-storage
+odf_storagecluster_name: ocs-storagecluster
