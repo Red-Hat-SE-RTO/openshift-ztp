@@ -1,0 +1,20 @@
+---
+- name: Configure a Hub OpenShift Cluster for ZTP
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    #########################################
+    configure_rhacm: true
+    configure_rh_gitops: true
+    configure_aap2_controller: true
+
+    ## Path to the OpenShift Pull Secret
+    pull_secret_path: ~/rh-ocp-pull-secret.json
+
+  tasks:
+    - name: Configure RHACM for ZTP feature gated functions
+      include_role: 
+        name: configure_rhacm_oas
+      when: configure_rhacm|bool

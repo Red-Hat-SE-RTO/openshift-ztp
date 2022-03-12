@@ -1,5 +1,5 @@
 ---
-- name: Setup a Hub OpenShift Cluster for ZTP
+- name: Setup operators and services needed on a Hub OpenShift Cluster for ZTP
   hosts: localhost
   connection: local
   gather_facts: no
@@ -65,6 +65,7 @@
           when: r_ocp_infra.resources[0].status.platform != "AWS"
       when: deploy_lso|bool
 
+    ## TODO: Add logic for ODF to create a StorageSystem from EBS on AWS
     - name: Install OpenShift Data Foundation
       include_role:
         name: deploy_odf_operator

@@ -14,7 +14,7 @@
 
 - name: Make sure the RHACM Subscription is installed
   kubernetes.core.k8s_info:
-    api_version: operators.coreos.com/v1
+    api_version: operators.coreos.com/v1alpha1
     kind: Subscription
     name: advanced-cluster-management
     namespace: "{{ acm_operator_namespace }}"
@@ -69,6 +69,6 @@
   loop:
     - templates/01_hiveconfig.yml.j2
     - templates/03_assisted_service_configmap.yml.j2
-    - templates/05_agentserviceconfig.yml.yml.j2
+    - templates/05_agentserviceconfig.yml.j2
   loop_control:
     loop_var: file_item
