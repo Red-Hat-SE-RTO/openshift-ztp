@@ -1,0 +1,457 @@
+---
+# tasks file for configure_aap2_controller
+- name: Load manifest into variable
+  local_action:
+    module: slurp
+    src: "{{ subscription_manifest_path }}"
+  register: manifest_file
+
+- name: Get the AAP2 Controller Admin Secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ aap2_operator_namespace }}"
+    name: "{{ aap2_admin_secret_name }}"
+  register: aap2_admin_secret
+
+- name: Get the AAP2 Controller Route
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Route
+    namespace: "{{ aap2_operator_namespace }}"
+    name: "{{ aap2_controller_name }}"
+  register: aap2_controller_route
+
+- name: Set facts for AAP 2 Controller
+  set_fact:
+    aap2_route: "https://{{ aap2_controller_route.resources[0].status.ingress[0].host }}"
+    aap2_admin_password: "{{ aap2_admin_secret.resources[0].data.password | b64decode }}"
+
+- name: Create AAP2 RoleBinding
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/rolebinding.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Debug
+  debug:
+    msg:
+      - "AAP 2 Route: {{ aap2_route }}"
+      - "AAP 2 Admin Password: {{ aap2_admin_password }}"
+
+- name: Token cleanup block
+  block:
+    - name: Log into the Controller and get an OAuth Token
+      uri:
+        url: "{{ aap2_route }}/api/v2/tokens/"
+        method: POST
+        status_code: 201
+        url_username: admin
+        url_password: "{{ aap2_admin_password }}"
+        validate_certs: no
+        force_basic_auth: true
+        headers:
+          Content-Type: application/json
+      register: login_response
+
+    - name: Get the current license status
+      uri:
+        url: "{{ aap2_route }}/api/v2/config/"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: config_response
+
+    - name: Post manifest file if not subscribed
+      uri:
+        url: "{{ aap2_route }}/api/v2/config/"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: '{ "eula_accepted": true, "manifest": "{{ manifest_file.content }}" }'
+        body_format: json
+        validate_certs: no
+      when: config_response.json.license_info.date_expired is not defined
+
+    - name: Pause for a few seconds for Tower to parse the license
+      pause:
+        seconds: 5
+      when: config_response.json.license_info.date_expired is not defined
+
+    - name: Get the current User ID
+      uri:
+        url: "{{ aap2_route }}/api/v2/me/"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: user_response
+      ignore_errors: true
+
+    - name: Get the SCM Credential Type ID
+      uri:
+        url: "{{ aap2_route }}/api/v2/credential_types/?name=Source%20Control"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: credential_types_response
+      ignore_errors: true
+
+    ###############################################################################################
+    ## Gitea
+    ###############################################################################################
+
+    - name: Get the Gitea Route
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Route
+        namespace: gitea
+        name: gitea
+      register: gitea_route
+
+    - name: Set the Git Repo fact if defined
+      set_fact:
+        git_repo: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
+      when: gitea_route.resources | length > 0 and git_repo is not defined
+
+    ###############################################################################################
+    ## Job Config
+    ###############################################################################################
+
+    - name: Get the current Job Settings
+      uri:
+        url: "{{ aap2_route }}/api/v2/settings/jobs/"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: job_settings_response
+
+    - name: Set a new JSON object if the GIT_SSL_NO_VERIFY key does not exists
+      set_fact:
+        job_settings_json: "{{ job_settings_response.json['AWX_TASK_ENV'] | combine({\"GIT_SSL_NO_VERIFY\": \"true\"}) }}"
+      when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
+
+    - name: Patch the API with the new JSON setting
+      uri:
+        url: "{{ aap2_route }}/api/v2/settings/jobs/"
+        method: PATCH
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
+        body_format: json
+        validate_certs: no
+      register: job_settings_patch_response
+      when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
+
+    ###############################################################################################
+    ## Organization
+    ###############################################################################################
+
+    - name: Get the Organization ID from the target Organization Name
+      uri:
+        url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization|urlencode() }}/"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: org_response
+      ignore_errors: true
+
+    - name: Create Organization if it is not found
+      when: org_response.status == 404
+      uri:
+        url: "{{ aap2_route }}/api/v2/organizations/"
+        method: POST
+        status_code: 201
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: '{ "name": "{{ aap2_organization }}" }'
+        body_format: json
+        validate_certs: no
+      register: create_org_response
+
+    - name: Set fact for Organization ID when existing
+      set_fact:
+        aap2_organization_id: "{{ org_response.json.id }}"
+        aap2_org: "{{ org_response.json }}"
+      when: org_response.json.id is defined and org_response.status != 404
+
+    - name: Set fact for Organization ID when created
+      set_fact:
+        aap2_organization_id: "{{ create_org_response.json.id }}"
+        aap2_org: "{{ create_org_response.json }}"
+      when: create_org_response.json.id is defined and org_response.status == 404
+
+    ###############################################################################################
+    ## Inventory
+    ###############################################################################################
+
+    - name: Check for an Inventory
+      uri:
+        url: "{{ aap2_route }}/api/v2/inventories/?name={{ aap2_inventory_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: inventory_response
+
+    - name: Set fact for Inventory ID when existing
+      set_fact:
+        aap2_inventory_id: "{{ inventory_response.json.results[0].id }}"
+        aap2_inventory: "{{ inventory_response.json.results[0] }}"
+      when: inventory_response.json.results[0].id is defined and inventory_response.json.count > 0
+
+    - name: Create the Inventory if it does not exist
+      when: inventory_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/inventories/"
+        method: POST
+        status_code: 201
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: '{ "name": "{{ aap2_inventory_name }}", "description": "{{ aap2_inventory_description|default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "variables": {}, "host_filter": "", "host_vars": {}, "group_vars": {}, "groups": [], "hosts": [] }'
+        body_format: json
+        validate_certs: no
+      register: create_inventory_response
+
+    - name: Set fact for Inventory ID when created
+      set_fact:
+        aap2_inventory_id: "{{ create_inventory_response.json.id }}"
+        aap2_inventory: "{{ create_inventory_response.json }}"
+      when: create_inventory_response.json.id is defined and inventory_response.json.count == 0
+
+    ###############################################################################################
+    ## Inventory Host
+    ###############################################################################################
+
+    - name: Check for the localhost in the target Inventory
+      uri:
+        url: "{{ aap2_route }}/api/v2/inventories/{{ aap2_inventory_id }}/hosts/?name=localhost"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_host_response
+
+    - name: Create the localhost in the target Inventory if it does not exist
+      when: check_host_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/inventories/{{ aap2_inventory_id }}/hosts/"
+        method: POST
+        status_code: 201
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: '{"name": "localhost", "description": "", "organization": {{ aap2_organization_id }}, "variables": "---\nansible_connection: local\nansible_python_interpreter: \"{% raw %}{{ ansible_playbook_python }}{% endraw %}\"", "host_filter": "", "kind": ""}'
+        body_format: json
+        validate_certs: no
+      register: create_inventory_host_response
+
+    ###############################################################################################
+    ## Credentials
+    ###############################################################################################
+
+    - name: Check for SCM Credentials
+      uri:
+        url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/?name={{ aap2_scm_credential_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_scm_credential_response
+
+    - name: Create the SCM Credentials if it does not exist - SSH Authentication
+      when: check_scm_credential_response.json.count == 0 and scm_credential_type == "ssh"
+      uri:
+        url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: '{ "name": "{{ aap2_scm_credential_name }}", "description": "{{ aap2_scm_credential_description|default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "inputs": { "ssh_key_data": "{{ lookup("file", scm_credential_private_key) }}" }, "credential_type": {{ credential_types_response.json.results[0].id }} }'
+      register: create_scm_credential_response
+
+    - name: Create the SCM Credentials if it does not exist - Basic Authentication
+      when: check_scm_credential_response.json.count == 0 and scm_credential_type == "basic"
+      uri:
+        url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: '{ "name": "{{ aap2_scm_credential_name }}", "description": "{{ aap2_scm_credential_description|default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "inputs": { "username": "{{ scm_credential_username }}", "password": "{{ scm_credential_password }}" }, "credential_type": {{ credential_types_response.json.results[0].id }} }'
+      register: create_scm_credential_response
+
+    - name: Set fact for SCM Credential ID when created
+      set_fact:
+        aap2_scm_credential_id: "{{ create_scm_credential_response.json.id }}"
+        aap2_scm_credential: "{{ create_scm_credential_response.json }}"
+      when: create_scm_credential_response.json.id is defined and check_scm_credential_response.json.count == 0
+
+    - name: Set fact for SCM Credential ID when exists
+      set_fact:
+        aap2_scm_credential_id: "{{ check_scm_credential_response.json.results[0].id }}"
+        aap2_scm_credential: "{{ check_scm_credential_response.json.results[0] }}"
+      when: check_scm_credential_response.json.count > 0
+
+    ###############################################################################################
+    ## Project
+    ###############################################################################################
+
+    - name: Check for Project
+      uri:
+        url: "{{ aap2_route }}/api/v2/projects/?name={{ aap2_project_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_project_response
+
+    - name: Create the Project if it does not exist
+      when: check_project_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/projects/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: '{ "name": "{{ aap2_project_name }}", "description": "{{ aap2_project_description|default("") }}", "organization": {{ aap2_organization_id }}, "scm_type": "git", "scm_url": "{{ git_repo }}", "scm_clean": true, "scm_track_submodules": false, "scm_delete_on_update": false, "credential": {{ aap2_scm_credential_id }}, "timeout": 0, "scm_update_on_launch": true, "scm_update_cache_timeout": 0, "allow_override": false, "default_environment": null }'
+      register: create_project_response
+
+    - name: Set Project ID when created
+      set_fact:
+        aap2_project_id: "{{ create_project_response.json.id }}"
+        aap2_project: "{{ create_project_response.json }}"
+      when: create_project_response.json.id is defined and check_project_response.json.count == 0
+
+    - name: Set Project ID when exists
+      set_fact:
+        aap2_project_id: "{{ check_project_response.json.results[0].id }}"
+        aap2_project: "{{ check_project_response.json.results[0] }}"
+      when: check_project_response.json.count > 0
+
+    ###############################################################################################
+    ## Application
+    ###############################################################################################
+
+    - name: Check for Application
+      uri:
+        url: "{{ aap2_route }}/api/v2/applications/?name={{ aap2_application_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_application_response
+
+    - name: Create Application if it does not exist
+      when: check_application_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/applications/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: '{ "name": "{{ aap2_application_name }}", "description": "{{ aap2_application_description|default("") }}", "organization": {{ aap2_organization_id }}, "client_type": "confidential", "redirect_uris": "", "authorization_grant_type": "password", "skip_authorization": false }'
+      register: create_application_response
+
+    - name: Set Application ID when created
+      set_fact:
+        aap2_application_id: "{{ create_application_response.json.id }}"
+        aap2_application: "{{ create_application_response.json }}"
+      when: create_application_response.json.id is defined and check_application_response.json.count == 0
+
+    - name: Set Application ID when exists
+      set_fact:
+        aap2_application_id: "{{ check_application_response.json.results[0].id }}"
+        aap2_application: "{{ check_application_response.json.results[0] }}"
+      when: check_application_response.json.count > 0
+
+    ###############################################################################################
+    ## User Application Token
+    ###############################################################################################
+
+    - name: Check for User Application Token
+      uri:
+        url: "{{ aap2_route }}/api/v2/users/{{ user_response.json.results[0].id }}/tokens/?application={{ aap2_application_id }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_user_application_token_response
+
+    - name: Create User Application Token if it does not exist
+      when: check_user_application_token_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/users/{{ user_response.json.results[0].id }}/tokens/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: '{ "application": {{ aap2_application_id }}, "scope": "write", "description": "{{ aap2_application_name }} App Token" }'
+      register: create_user_application_token_response
+
+    - name: Set User Application Token ID when created
+      set_fact:
+        aap2_user_application_token_id: "{{ create_user_application_token_response.json.token }}"
+        aap2_user_application_token: "{{ create_user_application_token_response.json }}"
+      when: create_user_application_token_response.json.token is defined and check_user_application_token_response.json.count == 0
+
+    - name: Create OpenShift Secret for the User Application Token
+      when: aap2_user_application_token_id is defined
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Secret
+        name: "aap2-controller-admin-application-token"
+        namespace: "{{ aap2_operator_namespace }}"
+        definition:
+          stringData:
+            token: "{{ aap2_user_application_token_id }}"
+        state: present
+
+    ###############################################################################################
+    ## Debug
+    ###############################################################################################
+
+    - name: Debug
+      debug:
+        msg:
+          - "User ID: {{ user_response.json.results[0].id }}"
+          - "SCM Credential Type ID: {{ credential_types_response.json.results[0].id }}"
+          - "AAP 2 Organization ID: {{ aap2_organization_id }}"
+          # - "AAP 2 Organization: {{ aap2_org }}"
+          - "AAP 2 Inventory ID: {{ aap2_inventory_id }}"
+          # - "AAP 2 Inventory: {{ aap2_inventory }}"
+          - "AAP 2 SCM Credential ID: {{ aap2_scm_credential_id }}"
+          #- "AAP 2 SCM Credential: {{ aap2_scm_credential }}"
+          - "AAP 2 Project ID: {{ aap2_project_id }}"
+          #- "AAP 2 Project: {{ aap2_project }}"
+          - "AAP 2 Application ID: {{ aap2_application_id }}"
+          #- "AAP 2 Application: {{ aap2_application }}"
+
+  always:
+    - name: Delete on-demand generated OAuth token
+      uri:
+        url: "{{ aap2_route }}/api/v2/tokens/{{ login_response.json.id }}/"
+        method: DELETE
+        validate_certs: no
+        status_code: 204
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
