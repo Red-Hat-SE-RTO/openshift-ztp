@@ -6,15 +6,27 @@
 
   vars:
     #########################################
-    configure_rhacm: true
-    configure_rh_gitops: true
+    configure_rhacm: false
     configure_aap2_controller: true
+    configure_rh_gitops: true
 
     ## Path to the OpenShift Pull Secret
     pull_secret_path: ~/rh-ocp-pull-secret.json
+
+    # git_credential_type: ssh | basic
+    scm_credential_type: basic
+    scm_credential_username: user-1
+    scm_credential_password: openshift
+    scm_credential_private_key: ~/.ssh/id_rsa
+    scm_credential_public_key: ~/.ssh/id_rsa.pub
 
   tasks:
     - name: Configure RHACM for ZTP feature gated functions
       include_role: 
         name: configure_rhacm_oas
       when: configure_rhacm|bool
+
+    - name: Configure Ansible Automation Platform 2 Controller for ZTP stuff
+      include_role: 
+        name: configure_aap2_controller
+      when: configure_aap2_controller|bool
