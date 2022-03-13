@@ -69,6 +69,7 @@
   loop:
     - templates/01_hiveconfig.yml.j2
     - templates/03_assisted_service_configmap.yml.j2
+    - templates/04_assisted-deployment-pull_secret.yml.j2
     - templates/05_agentserviceconfig.yml.j2
   loop_control:
     loop_var: file_item
