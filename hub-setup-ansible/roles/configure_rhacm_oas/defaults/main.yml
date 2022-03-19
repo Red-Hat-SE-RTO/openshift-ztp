@@ -5,4 +5,6 @@ pull_secret_path: ~/ocp-pull-secret
 # release_versions
 release_versions:
 - 4.9.9
+- 4.9.19
+- 4.10.3
 ztp_config_namespace: ztp-config
