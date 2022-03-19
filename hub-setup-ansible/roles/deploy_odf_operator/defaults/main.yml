@@ -5,3 +5,5 @@ odf_storagecluster_name: ocs-storagecluster
 
 aws_storagecluster_storageclass: gp2
 aws_storagecluster_block_size: 512
+
+local_storagecluster_storageclass: odf

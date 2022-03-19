@@ -7,12 +7,6 @@ metadata:
     uninstall.ocs.openshift.io/mode: graceful
   name: {{ odf_storagecluster_name }}
   namespace: {{ odf_operator_namespace }}
-  #ownerReferences:
-  #  - apiVersion: odf.openshift.io/v1alpha1
-  #    blockOwnerDeletion: true
-  #    controller: true
-  #    kind: StorageSystem
-  #    name: {{ odf_storagecluster_name }}-storagesystem
   finalizers:
     - storagecluster.ocs.openshift.io
 spec:
