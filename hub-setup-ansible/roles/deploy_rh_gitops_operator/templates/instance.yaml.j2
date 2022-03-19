@@ -2,10 +2,11 @@ kind: ArgoCD
 apiVersion: argoproj.io/v1alpha1
 metadata:
   creationTimestamp: null
-  name: argocd
+  name: openshift-gitops
   namespace: {{ argo_operator_namespace }}
 spec:
   controller:
+    processors: {}
     resources:
       limits:
         cpu: 2000m
@@ -13,6 +14,7 @@ spec:
       requests:
         cpu: 250m
         memory: 1024Mi
+    sharding: {}
   dex:
     openShiftOAuth: true
     resources:
@@ -43,11 +45,18 @@ spec:
     resources:
       limits:
         cpu: 1000m
-        memory: 512Mi
+        memory: 1Gi
       requests:
         cpu: 250m
         memory: 256Mi
   server:
+    autoscale:
+      enabled: false
+    grpc:
+      ingress:
+        enabled: false
+    ingress:
+      enabled: false
     resources:
       limits:
         cpu: 500m
@@ -62,21 +71,36 @@ spec:
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
+    service:
+      type: ''
   grafana:
     enabled: false
     size: 1
+    ingress:
+      enabled: false
     route:
+      enabled: false
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
-      enabled: true
   prometheus:
-    enabled: true
+    enabled: false
+    ingress:
+      enabled: false
     route:
+      enabled: false
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
-      enabled: true
+  initialSSHKnownHosts: {}
+  applicationSet:
+    resources:
+      limits:
+        cpu: '2'
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
   rbac:
     defaultPolicy: 'role:admin'
     policy: |
@@ -90,3 +114,10 @@ spec:
       - ManagedClusterInfo
       clusters:
       - "*"
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun
