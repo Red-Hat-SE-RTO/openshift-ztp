@@ -13,7 +13,7 @@
 
     #########################################
     ## Operator Management
-    deploy_nfd: true
+    deploy_nfd: false
     deploy_lso: true
     deploy_odf: true
     deploy_rhacm: true
