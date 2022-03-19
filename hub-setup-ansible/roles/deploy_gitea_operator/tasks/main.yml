@@ -27,7 +27,7 @@
   register: cs_check
   retries: 200
   delay: 10
-  until: cs_check.resources[0].status.connectionState.lastObservedState == "READY"
+  until: (cs_check.resources[0].status.connectionState.lastObservedState is defined) and (cs_check.resources[0].status.connectionState.lastObservedState == "READY")
 
 - name: Get Cluster Version
   kubernetes.core.k8s_info:
