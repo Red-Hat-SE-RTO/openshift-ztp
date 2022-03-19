@@ -28,7 +28,7 @@ spec:
   image_pull_policy: IfNotPresent
   projects_storage_size: 8Gi
   admin_email: {{ aap_controller_admin_email }}
-  task_privileged: false
+  task_privileged: true
   projects_storage_class: {{ aap_controller_storageclass_name }}
   projects_storage_access_mode: ReadWriteOnce
   web_resource_requirements:
@@ -41,3 +41,5 @@ spec:
   admin_user: {{ aap_controller_admin_username }}
   loadbalancer_protocol: http
   nodeport_port: 30080
+  #postgres_data_path: /var/tmp
+  postgres_storage_class: {{ aap_controller_storageclass_name }}

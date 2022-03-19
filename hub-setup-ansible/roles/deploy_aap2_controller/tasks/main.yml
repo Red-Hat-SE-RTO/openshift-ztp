@@ -152,3 +152,22 @@
   until: k8s_run is not failed
   delay: 10
   retries: 30
+
+- name: Provide RBAC for the Tower/Controller
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', file_item ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  loop:
+    - 'templates/rolebindings.yaml.j2'
+    - 'templates/scc.yaml.j2'
+  loop_control:
+    loop_var: file_item
+    index_var: idx
+    label: "{{ file_item }}"
