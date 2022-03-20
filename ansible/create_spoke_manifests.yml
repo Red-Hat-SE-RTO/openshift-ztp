@@ -20,12 +20,14 @@
     credential_namespace: "ztp-credentials"
     ansible_tower_secret_name: "ansible-tower-credentials"
     pull_secret_secret_name: "assisted-deployment-pull-secret"
-    ansible_job_template_name: vsphere-infra-ztp
+    ansible_job_template_name: create-vsphere-infra-ztp
 
     create_argo_application: true
     argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
     argocd_namespace: openshift-gitops
     argocd_project_name: ztp-clusters
+
+    node_boot_timeout: 300
 
   tasks:
   #######################################################
@@ -211,13 +213,20 @@
 
   #######################################################
   ## Set Fact logic
+
+  - name: Set facts for cluster network info
+    block:
+    - name: Set general facts
+      set_fact:
+        node_network_type: "{{ cluster_node_network_ipam }}"
+
   - name: Set facts
     block:
     - name: Set general facts for vips
       set_fact:
         api_vip: "{{ cluster_api_vip }}"
         ingress_vip: "{{ cluster_load_balancer_vip }}"
-      when:  node_count >= 1 && node_network_type == 'static'
+      when: (cluster_nodes | length > 1) and (node_network_type == 'static')
 
   - name: Set facts for cluster network info
     block:
@@ -225,12 +234,6 @@
       set_fact:
         machine_network_cidr: "{{ cluster_node_cidr }}"
       when: cluster_type  == 'sno'
-
-  - name: Set facts for cluster network info
-    block:
-    - name: Set general facts
-      set_fact:
-        node_network_type: "{{ cluster_node_network_ipam }}"
 
 
   #######################################################
@@ -303,7 +306,7 @@
       block:
       - name: Template the ArgoCD Application
         template:
-          src: templates/argo_application.yml.j2
+          src: templates/99_argocd_application.yml.j2
           dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
         vars:
           application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
@@ -334,6 +337,7 @@
       - name: Git add the new cluster
         shell: |
           git add {{ target_spoke_git_path }}
+          git add {{ argo_application_git_repo_path }}
         args:
           chdir: "{{ temp_dir.path }}/git"
 
@@ -379,53 +383,53 @@
       - name: extract git url
         shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
         register: extract_output
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: save git url
         set_fact: 
           git_url_https: "{{ extract_output.stdout }}"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: extract git path
         shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
         register: extract_path_output
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: save git path
         set_fact: 
           extract_path_output: "{{ extract_path_output.stdout }}"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: extract git repo 
         shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
         register: extract_repo_output
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: save git repo
         set_fact: 
           extract_repo_output: "{{ extract_repo_output.stdout }}"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: Git set new remote
         shell: |
           git remote add private "https://{{ push_git_username }}:{{ push_git_password }}@{{ git_url_https }}/{{ extract_path_output }}/{{ extract_repo_output }}"
         args:
           chdir: "{{ temp_dir.path }}/git"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: git config --list
         shell: |
           git config --list
         args:
           chdir: "{{ temp_dir.path }}/git"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: Git push the new cluster
         shell: |
-          git push private main  
+          git -c http.sslVerify=false push private main  
         args:
           chdir: "{{ temp_dir.path }}/git"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
   #######################################################
   ## Cleanup
@@ -434,3 +438,5 @@
       path: "{{ temp_dir.path }}"
       state: absent
       force: yes
+    tags:
+      - always
