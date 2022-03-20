@@ -37,7 +37,7 @@ spec:
 {% endfor -%}
 {% endif %}
           dhcp: {{ iface.dhcp }}
-{% if iface.dhcp|bool %}
+{% if iface.dhcp|bool and (cluster_node_network_static_dns_search_domains is not defined) and (cluster_node_network_static_dns_servers is not defined) %}
           auto-dns: true
 {% endif %}
           enabled: true
