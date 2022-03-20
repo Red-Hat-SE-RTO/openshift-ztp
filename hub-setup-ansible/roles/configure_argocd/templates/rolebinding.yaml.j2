@@ -1,9 +1,9 @@
 ---
-kind: RoleBinding
+kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   creationTimestamp: null
-  name: cluster-admin
+  name: {{ argocd_instance_name }}-argocd-cluster-admin
   namespace: {{ argocd_namespace }}
 subjects:
   - kind: ServiceAccount
@@ -11,6 +11,9 @@ subjects:
     namespace: {{ argocd_namespace }}
   - kind: ServiceAccount
     name: {{ argocd_instance_name }}-argocd-application-controller
+    namespace: {{ argocd_namespace }}
+  - kind: ServiceAccount
+    name: {{ argocd_instance_name }}-applicationset-controller
     namespace: {{ argocd_namespace }}
   - kind: ServiceAccount
     name: {{ argocd_instance_name }}-argocd-dex-server

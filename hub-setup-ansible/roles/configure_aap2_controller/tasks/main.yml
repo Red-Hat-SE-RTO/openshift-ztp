@@ -105,6 +105,16 @@
       register: credential_types_response
       ignore_errors: true
 
+    - name: Get the Ansible Galaxy Credential Type ID
+      uri:
+        url: "{{ aap2_route }}/api/v2/credential_types/?name={{ 'Ansible Galaxy/Automation Hub API Token' | urlencode }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: galaxy_credential_types_response
+      ignore_errors: true
+
     ###############################################################################################
     ## Gitea
     ###############################################################################################
@@ -190,6 +200,21 @@
         aap2_organization_id: "{{ create_org_response.json.id }}"
         aap2_org: "{{ create_org_response.json }}"
       when: create_org_response.json.id is defined and org_response.status == 404
+
+    #### TODO
+    
+    #- name: Create Organization Galaxy Credentials if it is not found
+    #  when: org_response.status == 404
+    #  uri:
+    #    url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/galaxy_credentials/"
+    #    method: POST
+    #    status_code: 201
+    #    headers:
+    #      Authorization: "Bearer {{ login_response.json.token }}"
+    #    #body: '{ "name": "{{ aap2_organization }}" }'
+    #    body_format: json
+    #    validate_certs: no
+    #  register: create_org_galaxy_creds_response
 
     ###############################################################################################
     ## Inventory

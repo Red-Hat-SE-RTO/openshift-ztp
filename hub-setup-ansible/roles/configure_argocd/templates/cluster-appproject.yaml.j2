@@ -2,12 +2,12 @@ apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   creationTimestamp: null
-  name: {{ argocd_appproject_name }}
+  name: {{ argocd_appproject_name }}-cluster-apps
   namespace: {{ argocd_namespace }}
 spec:
   clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
+    - group: 'argoproj.io/v1alpha1'
+      kind: 'Application'
   destinations:
     - namespace: '*'
       server: '*'

@@ -34,13 +34,25 @@
   delay: 10
   retries: 30
 
-- name: Create ArgoCD AppProject for Cluster Application Sync
+- name: Create ArgoCD AppProject for Cluster Sync
   kubernetes.core.k8s:
     state: present
     merge_type:
     - strategic-merge
     - merge
     definition: "{{ lookup('template', 'templates/appproject.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create ArgoCD AppProject for Cluster Application Sync
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/cluster-appproject.yaml.j2' ) | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
