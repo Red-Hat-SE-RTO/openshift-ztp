@@ -115,6 +115,16 @@
       register: galaxy_credential_types_response
       ignore_errors: true
 
+    - name: Get the Ansible Galaxy Credential ID
+      uri:
+        url: "{{ aap2_route }}/api/v2/credential_types/{{ galaxy_credential_types_response.json.results[0].id }}/credentials/?order_by=created"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: galaxy_credentials_response
+      ignore_errors: true
+
     ###############################################################################################
     ## Gitea
     ###############################################################################################
@@ -203,18 +213,19 @@
 
     #### TODO
     
-    #- name: Create Organization Galaxy Credentials if it is not found
-    #  when: org_response.status == 404
-    #  uri:
-    #    url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/galaxy_credentials/"
-    #    method: POST
-    #    status_code: 201
-    #    headers:
-    #      Authorization: "Bearer {{ login_response.json.token }}"
-    #    #body: '{ "name": "{{ aap2_organization }}" }'
-    #    body_format: json
-    #    validate_certs: no
-    #  register: create_org_galaxy_creds_response
+    - name: Create Organization Galaxy Credentials
+      uri:
+        url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/galaxy_credentials/"
+        method: POST
+        status_code:
+          - 201
+          - 204
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: '{ "name": "Galaxy Credentials", "description": "Galaxy Credentials", "credential_type": {{ galaxy_credential_types_response.json.results[0].id }}, "id": {{ galaxy_credentials_response.json.results[0].id }} }'
+        body_format: json
+        validate_certs: no
+      register: create_org_galaxy_creds_response
 
     ###############################################################################################
     ## Inventory
