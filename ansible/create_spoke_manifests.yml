@@ -22,6 +22,11 @@
     pull_secret_secret_name: "assisted-deployment-pull-secret"
     ansible_job_template_name: vsphere-infra-ztp
 
+    create_argo_application: true
+    argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+    argocd_namespace: openshift-gitops
+    argocd_project_name: ztp-clusters
+
   tasks:
   #######################################################
   ## Tower Preflight
@@ -168,6 +173,11 @@
     file:
       path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
       state: directory
+  
+  - name: Create a directory for the spoke cluster ArgoCD application
+    file:
+      path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
+      state: directory
 
   #######################################################
   ## Cluster SSH Key Operations
@@ -284,10 +294,22 @@
       template:
         src: templates/11_nmstate_config.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
-
       loop: "{{ cluster_nodes }}"
       loop_control:
         loop_var: node_item
+
+    - name: Add the ArgoCD Application
+      when: create_argo_application|bool
+      block:
+      - name: Template the ArgoCD Application
+        template:
+          src: templates/argo_application.yml.j2
+          dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
+        vars:
+          application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
+          git_repo_path: "{{ target_spoke_git_path }}"
+          git_repo_url: "{{ push_git_url }}"
+          project_name: "{{ argocd_project_name }}"
 
   #######################################################
   ## Git Push
