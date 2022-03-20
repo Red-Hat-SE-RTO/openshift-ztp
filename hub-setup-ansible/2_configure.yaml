@@ -6,7 +6,7 @@
 
   vars:
     #########################################
-    configure_rhacm: false
+    configure_rhacm: true
     configure_aap2_controller: true
     configure_rh_gitops: true
 
@@ -19,6 +19,7 @@
     scm_credential_password: openshift
     scm_credential_private_key: ~/.ssh/id_rsa
     scm_credential_public_key: ~/.ssh/id_rsa.pub
+    scm_repo_name: openshift-ztp
 
   tasks:
     - name: Configure RHACM for ZTP feature gated functions
@@ -30,3 +31,8 @@
       include_role: 
         name: configure_aap2_controller
       when: configure_aap2_controller|bool
+
+    - name: Configure ArgoCD/Red Hat GitOps for syncing ZTP Spoke Clusters
+      include_role: 
+        name: configure_argocd
+      when: configure_rh_gitops|bool

@@ -1,0 +1,6 @@
+---
+# defaults file for configure_argocd
+argocd_namespace: openshift-gitops
+argocd_instance_name: openshift-gitops
+
+argocd_appproject_name: ztp-clusters
