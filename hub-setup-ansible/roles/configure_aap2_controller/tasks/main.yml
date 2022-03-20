@@ -427,6 +427,134 @@
         state: present
 
     ###############################################################################################
+    ## Templates - Create vSphere Infrastructure
+    ###############################################################################################
+
+    - name: Check for "Create vSphere Infrastructure" Job Template
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_infra_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_create_infra_job_template_response
+
+    - name: Add "Create vSphere Infrastructure" Job Template when it does not exist
+      when: check_create_infra_job_template_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
+      register: create_infra_response
+      vars:
+        job_template_name: "{{ aap2_job_template_create_infra_name }}"
+        aap2_inventory_id: "{{ aap2_inventory_id }}"
+        aap2_project_id: "{{ aap2_project_id }}"
+        job_template_playbook: "{{ aap2_job_template_create_infra_playbook }}"
+      until: create_infra_response.status == 201
+
+    ###############################################################################################
+    ## Templates - Delete vSphere Infrastructure
+    ###############################################################################################
+
+    - name: Check for "Delete vSphere Infrastructure" Job Template
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_delete_infra_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_delete_infra_job_template_response
+
+    - name: Add "Delete vSphere Infrastructure" Job Template when it does not exist
+      when: check_delete_infra_job_template_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
+      register: delete_infra_response
+      vars:
+        job_template_name: "{{ aap2_job_template_delete_infra_name }}"
+        aap2_inventory_id: "{{ aap2_inventory_id }}"
+        aap2_project_id: "{{ aap2_project_id }}"
+        job_template_playbook: "{{ aap2_job_template_delete_infra_playbook }}"
+      until: delete_infra_response.status == 201
+
+    ###############################################################################################
+    ## Templates - Create Spoke Manifests
+    ###############################################################################################
+
+    - name: Check for "Create Spoke Manifests" Job Template
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_spoke_manifests_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_create_spoke_manifests_job_template_response
+
+    - name: Add "Create Spoke Manifests" Job Template when it does not exist
+      when: check_create_spoke_manifests_job_template_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
+      register: create_spoke_manifests_response
+      vars:
+        job_template_name: "{{ aap2_job_template_create_spoke_manifests_name }}"
+        aap2_inventory_id: "{{ aap2_inventory_id }}"
+        aap2_project_id: "{{ aap2_project_id }}"
+        job_template_playbook: "{{ aap2_job_template_create_spoke_manifests_playbook }}"
+      until: create_spoke_manifests_response.status == 201
+
+    ###############################################################################################
+    ## Templates - Create Credentials
+    ###############################################################################################
+
+    - name: Check for "Create Credentials" Job Template
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_credentials_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: check_create_credentials_job_template_response
+
+    - name: Add "Create Credentials" Job Template when it does not exist
+      when: check_create_credentials_job_template_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/job_templates/"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body_format: json
+        body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
+      register: create_credentials_response
+      vars:
+        job_template_name: "{{ aap2_job_template_create_credentials_name }}"
+        aap2_inventory_id: "{{ aap2_inventory_id }}"
+        aap2_project_id: "{{ aap2_project_id }}"
+        job_template_playbook: "{{ aap2_job_template_create_credentials_playbook }}"
+      until: create_credentials_response.status == 201
+
+    ###############################################################################################
     ## Debug
     ###############################################################################################
 
