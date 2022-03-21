@@ -6,8 +6,6 @@ metadata:
   namespace: {{ argocd_namespace }}
 spec:
   destination:
-    name: ''
-    namespace: ''
     server: 'https://kubernetes.default.svc'
   source:
     repoURL: '{{ git_repo_url }}'
