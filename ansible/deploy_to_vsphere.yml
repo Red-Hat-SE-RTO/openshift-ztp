@@ -23,6 +23,7 @@
           - kubernetes
           - openshift==0.12.1
           - pyvmomi
+          - jmespath
         extra_args: --upgrade
       delegate_to: localhost
     when: tower_job_id is defined
@@ -166,4 +167,4 @@
     loop_control:
       loop_var: node_item
       label: "{{ node_item.name }}"
-    when: cluster_type != "sno"
+    when: cluster_configmap_info.resources[0].data.cluster_type != "sno"

@@ -4,3 +4,4 @@ collections:
   - name: kubernetes.core
   - name: community.crypto
   - name: community.vmware
+  - name: community.general
