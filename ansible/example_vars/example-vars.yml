@@ -6,7 +6,7 @@ ssh_public_key_path: /opt/id_rsa.pub
 
 ## deployment_type specifies which deployment to use - maps to root directory of this repo, e.g. "aws", "vsphere", etc
 deployment_type: vsphere
-## cluster_type specifies what type of cluster, sno/converged/full
+## cluster_type specifies what type of cluster, sno | converged | full
 cluster_type: sno
 ## cluster_name is the name of the OCP cluster
 cluster_name: sno-ocp
