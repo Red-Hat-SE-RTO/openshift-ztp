@@ -1,0 +1,120 @@
+vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+cluster_type: converged
+cluster_name: vsphere-ocp-ha
+base_domain: kemo.labs
+cluster_location: loe-rdu
+
+cluster_api_vip: 192.168.42.88
+cluster_load_balancer_vip: 192.168.42.89
+
+source_git_repo: https://gitea-gitea.apps.core-ocp.lab.kemo.network/user-1/openshift-ztp.git
+git_push_credentials_secret_name: "git-push-credentials"
+cluster_node_network_ipam: "static"
+cluster_node_cidr: "192.168.42.0/24"
+
+## If you want to use static DNS, uncomment the following lines
+cluster_node_network_static_dns_search_domains:
+  - kemo.labs
+  - kemo.network
+cluster_node_network_static_dns_servers:
+  - 192.168.42.9
+  - 192.168.42.10
+
+vcenter_datacenter: LabDC
+vcenter_cluster: LabCluster
+vcenter_datastore: nvme
+vcenter_network: VMNetwork
+template_secrets: true
+
+cluster_nodes:
+  - name: cp-one
+    type: control-plane
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 16384
+      disks:
+        - size: 120
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:30
+        dhcp: true
+  - name: cp-two
+    type: control-plane
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 16384
+      disks:
+        - size: 120
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:31
+        dhcp: true
+  - name: cp-three
+    type: control-plane
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 16384
+      disks:
+        - size: 120
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:32
+        dhcp: true
+
+  - name: app-one
+    type: application-node
+    vm:
+      cpu_cores: 6
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 32768
+      disks:
+        - size: 120
+          name: boot
+        - size: 120
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:33
+        dhcp: true
+  - name: app-two
+    type: application-node
+    vm:
+      cpu_cores: 6
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 32768
+      disks:
+        - size: 120
+          name: boot
+        - size: 120
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:34
+        dhcp: true
+  - name: app-three
+    type: application-node
+    vm:
+      cpu_cores: 6
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 32768
+      disks:
+        - size: 120
+          name: boot
+        - size: 120
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:35
+        dhcp: true

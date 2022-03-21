@@ -58,3 +58,13 @@ ansible-playbook \
 ```
 
 See the Playbook for other default variables being passed.
+
+## Spoke Cluster Manifest Generation
+
+Once the Hub has been set up and configured, with Credentials available, you can create a set of Spoke Cluster manifests.  The **Spoke Cluster Manifest Generation** Ansible Playbook can be run locally or via Ansible Tower/AAP 2 Controller.  The previously run `2_configure.yaml` Playbook will set up a Job Template.
+
+There are a set of example variables that would be passed to the **Spoke Cluster Manifest Generation** Playbook in `example_vars` - use it as such:
+
+```bash
+ansible-playbook -i inv_localhost -e "@example_vars/create_spoke_manifests-haCluster.yaml" create_spoke_manifests.yml
+```
