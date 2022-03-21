@@ -45,56 +45,104 @@ Cluster composition, Discovery ISO download link, and other variables are passed
 
 Once the intended systems report in and are discoverable by the InfraEnv, the AnsibleJob kicks back over to OAS/ZTP to continue the installation.
 
-## Quickstart - tl;dr
+### Install Quick Start
+[Quick Start Guide for Blank OpenShift Cluster](docs/README.md)
 
-There are two processes that are needed to deploy OpenShift to vSphere via ZTP:
+### tl;dr
 
-- One-time setup of a Hub Cluster
-- Individual GitOps-based deployment templating of manifests into a Git repo, per Spoke Clusters
-
-### Setting up the Hub Cluster
-
-Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer Service (OAS), you can simply run the following to bootstrap it into a Hub Cluster:
+Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer Service (OAS), you can simply run the following:
 
 ```bash
-## Install needed pip modules
-pip3 install -r ./requirements.txt
-
-## Install needed Ansible Collections
-ansible-galaxy collection install -r ./collections/requirements.yml
+## Set the Git Repo if your would not like a genreated on via Gitea
+export GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
+## Set the path to the SSH Key that has access to the Git repo
+SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
+## Create pull Secret
+## https://console.redhat.com/openshift/create
+vim "$HOME/rh-ocp-pull-secret.json"
 
 ## Log into the Hub cluster with a cluster-admin user:
 oc login ...
 
-## Bootstrap the Hub cluster with needed Operators and Workloads
-ansible-playbook ansible/1_deploy.yaml
+## Bootstrap the Hub cluster with needed Operators and Configuration
+./bootstrap-hub.sh
 
-## Configure the Hub cluster Operators and Workloads, namely RHACM, AAP2, and RH GitOps (ArgoCD)
-ansible-playbook ansible/2_configure.yaml
+## Log into the AAP2 Controller/Tower and attach a subscription
+oc get secret/ac-tower-admin-password -n ansible-automation-platform -o jsonpath='{.data.password}' | echo "$(base64 -d)"
+echo "https://$(oc get -n ansible-automation-platform route/ac-tower -o jsonpath='{.spec.host}')"
 
-## Create credentials for vSphere Infrastructure, Pull Secret, Git credentials, etc
-ansible-playbook \
- -e vcenter_username="administrator@vsphere.local" \
- -e vcenter_password='somePass!' \
- -e vcenter_fqdn="vcenter.example.com" \
- ansible/3_create_credentials.yaml
+## Attach a RH Subscription
+
+## Bootstrap the Ansible Automation Platform 2 instance
+./bootstrap-aap2.sh
+
+## Bootstrap the ArgoCD instance
+./bootstrap-argocd.sh
 ```
 
-### Creating Spoke Clusters
-
-To set up a Spoke cluster, you would just create Spoke Cluster definitions, generate the manifests, and push to the Git repo that RH GitOps is syncing to:
-
-Once the Hub has been set up and configured, with Credentials available, you can create a set of Spoke Cluster manifests.  The **Spoke Cluster Manifest Generation** Ansible Playbook can be run locally or via Ansible Tower/AAP 2 Controller.  The previously run `2_configure.yaml` Playbook will set up a Job Template.
-
-There are a set of example variables that would be passed to the **Spoke Cluster Manifest Generation** Playbook in `example_vars` - use it as such:
+From this point, you would just create Spoke Cluster definitions, generate the manifests, and push to the Git repo:
 
 ```bash
-ansible-playbook -i ansible/inv_localhost -e "@ansible/example_vars/create_spoke_manifests-haCluster.yaml" ansible/create_spoke_manifests.yml
+## Copy the example-spoke-vars for the target cluster type, ./*.env-vars.sh files are in the .gitignore and will not be pushed to a repo by accident
+cp ./example-spoke-vars/single-node-openshift.sh ./vsphere-sno.env-vars.sh
+cp ./example-spoke-vars/three-node-openshift.sh ./vsphere-converged.env-vars.sh
+
+## Create the Spoke Cluster Manifests
+## Set the Git Repo if not using this one
+export GIT_REPO="git@github.com:kenmoini/wg-serto-ztp.git"
+./bootstrap-spoke.sh ./vsphere-sno.env-vars.sh
+
+## Check the newly made manifests into the repository
+git add ztp-clusters/
+git commit -m "added a new cluster"
+git push
 ```
 
-Now you just need to click the ***Sync*** button in RH GitOps!
+From here ArgoCD will pick up the new manifests, apply it to the Hub Cluster, which will use RHACM and AAP2 to deploy a cluster to vSphere automatically.
 
-From here RH GitOps will pick up the new manifests, apply it to the Hub Cluster, which will use RHACM and AAP2 to deploy a cluster to vSphere automatically.
+### 1. Deploy the Hub Cluster
+
+- OCP 4.9+ deployed with OpenShift Assisted Installer Service (OAS) - can use this Ansible Automation for deploying to Libvirt: https://github.com/kenmoini/ocp4-ai-svc-libvirt
+- Each application node needs an additional disk at /dev/vdb for ODF RWX StorageClass - or however you need to provision storage for ODF
+
+1. Save your OCP Registry Pull Secret to a file at `$HOME/rh-ocp-pull-secret.json`
+2. Log into your Hub OpenShift Cluster via the CLI `oc login ...`
+3. Run `./bootstrap-hub.sh`
+
+The `./bootstrap-hub.sh` script will label and configure the OpenShift cluster, install Operators, and setup OAS for ZTP.
+
+### 2. Configure Ansible Automation Platform 2.0 Controller/Tower
+
+Being that the Cloud Infrastructure Providers built into RHACM use Hive, which uses IPI under the covers, another automation tool needs to be used to provision the infrastructure for SNO and 3-node clusters to vSphere.  This is acheived with AAP2's AnsibleJob CRD.
+
+With the Ansible Automation Platform 2 Controller/Tower that was deployed by the `./bootstrap-hub.sh` script, you can simply run the `./bootstrap-aap2.sh` script after logging in and attaching a Red Hat Subscription.
+
+### 3. Configuring ArgoCD
+
+ArgoCD takes Spoke Cluster definitions from a Git repo and syncs them to the Hub Cluster in order to kick off the ZTP processes.
+
+You can find expanded step-by-step documentation here: [ArgoCD Setup](./docs/argocd-setup.md)
+
+### 4. Creating a Spoke Cluster
+
+With Ansible, ArgoCD, RHACM, and OpenShift properly configured and set up you can now create the OpenShift Spoke Cluster manifests.
+
+```bash
+## Copy the example-spoke-vars for the target cluster type, ./*.env-vars.sh files are in the .gitignore and will not be pushed to a repo by accident
+cp ./example-spoke-vars/single-node-openshift.sh ./vsphere-sno.env-vars.sh
+
+## Modify the env-vars files as needed to match the deployment and vSphere target
+
+## Create the Spoke Cluster Manifests
+./bootstrap-spoke.sh ./vsphere-sno.env-vars.sh
+
+## Check the newly made manifests into the repository
+git add ztp-clusters/
+git commit -m "added a new cluster"
+git push
+```
+
+Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully automated deployment of OpenShift to vSphere!
 
 ---
 
@@ -105,16 +153,13 @@ From here RH GitOps will pick up the new manifests, apply it to the Hub Cluster,
 - [Deploying Gitea to OpenShift](./docs/deploying-gitea-to-openshift.md)
 
 ## For Issues see Troubleshooting doc
-
 * [Troubleshooting Doc](legacy-files/deployment-examples/troubleshooting.md)
 
-## Asides & Additional Notes
+## Additional Notes
 
 - Gitea is based on Gogs, however [both are susceptible to RCE](https://github.com/gogs/gogs/issues/6536) - it would be ideal to transition to another Git repository platform that isn't so easily pwned.
 
 ## Helpful Links
-
-In case you're wanting to learn more, or get stuck down the way with some oddities, here are some links that we found helpful along the way:
 
 - [Red Hat Hybrid Cloud OpenShift Assisted Installer Service](https://console.redhat.com/openshift/assisted-installer/clusters)
 - [OpenShift Assisted Service on GitHub](https://github.com/openshift/assisted-service)
@@ -125,13 +170,12 @@ In case you're wanting to learn more, or get stuck down the way with some odditi
 - [ArgoCD Namespaced mode as default?](https://github.com/argoproj-labs/argocd-operator/issues/523)
 
 ## TO-DO/WishList
-
 - Disconnected deployments (In progress)
 - Video on ZTP to vSphere deployments
 - Expand to Nutanix
 - Expand to Hyper-V
-- External-Secrets & Vault integration
-- Quick start Script
+- Vault integration
+- Quick start Script 
 - [DONE] Swap ArgoCD out for Red Hat GitOps
 - [DONE] Add HA OpenShift cluster examples and workflows (Fix tagging of machines when it populates in cluster)
 - [DONE] Convert Bash script templating of Spoke Clusters to Ansible
