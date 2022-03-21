@@ -1,0 +1,47 @@
+vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+cluster_type: sno
+cluster_name: sno-ocp
+base_domain: lab.kemo.network
+cluster_location: loe-rdu
+
+git_push_credentials_secret_name: "git-push-credentials"
+cluster_node_network_ipam: "static"
+cluster_node_cidr: "192.168.42.0/24"
+
+cluster_node_network_static_dns_search_domains:
+  - kemo.labs
+  - kemo.network
+
+cluster_node_network_static_dns_servers:
+  - 192.168.42.9
+  - 192.168.42.10
+
+vcenter_datacenter: LabDC
+vcenter_cluster: LabCluster
+vcenter_datastore: nvme
+vcenter_network: VMNetwork
+template_secrets: true
+
+cluster_nodes:
+  - name: sno-white
+    type: sno-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:09
+        dhcp: false
+        ipv4:
+          - address: 192.168.42.71
+            prefix: 24
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
