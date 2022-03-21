@@ -39,6 +39,7 @@
         name:
           - kubernetes
           - openshift==0.12.1
+          - jmespath
         extra_args: --upgrade
       delegate_to: localhost
 

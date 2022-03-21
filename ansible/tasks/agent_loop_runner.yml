@@ -6,6 +6,7 @@
 - name: Set empty facts
   set_fact:
     newly_approved_agents: "{{ task_approved_agents }}"
+    total_approved_agents: []
   #when: task_approved_agents | length < node_count | int
 
 - name: Query the Hub OpenShift Cluster for Agent CRDs
