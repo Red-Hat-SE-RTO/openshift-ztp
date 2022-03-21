@@ -1,7 +1,7 @@
 ---
 - name: Wait for node to populate in the assisted installer dashboard
   wait_for:
-    timeout: 60
+    timeout: 30
 
 - name: Set empty facts
   set_fact:
@@ -70,4 +70,3 @@
   vars:
     task_approved_agents: "{{ newly_approved_agents }}"
   when: cluster_nodes|length != total_approved_agents|length
-  
