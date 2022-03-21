@@ -155,13 +155,10 @@
   - name: Loop through Agents
     include_tasks: tasks/agent_loop_runner.yml
     vars:
-      task_agent_names: "{{ agent_names }}"
       task_approved_agents: "{{ approved_agents }}"
-      node_count: "{{ cluster_nodes | length }}"
-      approved_node_count: 0
 
-  - name: Loop through Agents
-    include_tasks: tasks/agent_loop_runner.yml
+  #- name: Loop through Agents
+  #  include_tasks: tasks/agent_loop_runner.yml
 
   - name: Loop through Agents and Set Hostname and Role
     include_tasks: tasks/set_hostname.yml

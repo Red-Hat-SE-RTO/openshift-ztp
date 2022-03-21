@@ -45,14 +45,10 @@
     when: agent_item.spec.approved == false
   when: agent_crd_info.resources | length > 0
 
-
-- name: Checking the number of task_agent_names
-  debug:
-    msg: "Number of task_agent_names {{ task_agent_names | length }} count "
-    
-- name: Checking the number of task_approved_agents
-  debug:
-    msg: "Number of task_approved_agents {{ task_approved_agents }}"
+- name: Debug
+  msg:
+    - "newly_approved_agents: {{ newly_approved_agents | length }}"
+    - "task_approved_agents: {{ task_approved_agents | length }}"
 
 #- name: All Nodes have been registered
 #  meta: end_host
