@@ -142,7 +142,7 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 - [Deploying Gitea to OpenShift](./docs/deploying-gitea-to-openshift.md)
 
 ## For Issues see Troubleshooting doc
-* [Troubleshooting Doc](deployment-examples/troubleshooting.md)
+* [Troubleshooting Doc](legacy-files/deployment-examples/troubleshooting.md)
 
 ## Additional Notes
 
@@ -160,15 +160,15 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 
 ## TO-DO/WishList
 - Disconnected deployments (In progress)
-- Swap ArgoCD out for Red Hat GitOps
-- Add HA OpenShift cluster examples and workflows (Fix tagging of machines when it populates in cluster)
-- Convert Bash script templating of Spoke Clusters to Ansible
 - Video on ZTP to vSphere deployments
 - Expand to Nutanix
 - Expand to Hyper-V
 - Vault integration
 - Quick start Script 
-- bootstrap-hub.sh (bug-fixs and Optimizations)
+- [DONE] Swap ArgoCD out for Red Hat GitOps
+- [DONE] Add HA OpenShift cluster examples and workflows (Fix tagging of machines when it populates in cluster)
+- [DONE] Convert Bash script templating of Spoke Clusters to Ansible
+- [DONE, Superseded by Ansibleization] bootstrap-hub.sh (bug-fixs and Optimizations)
 
 ## Special Thanks
 
