@@ -4,6 +4,17 @@ This repository houses assets for deploying OpenShift via ZTP (Zero-Touch Provis
 
 This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a function of GitOps where clusters and their states and supporting automation are defined in a Git repository for end-to-end provisioning of OpenShift clusters, their governance, policies, and applications.
 
+**Featured Technologies:**
+
+- [Red Hat OpenShift Container Platform](https://cloud.redhat.com/products/container-platform)
+  - [Local Storage Operator](https://docs.openshift.com/container-platform/4.10/storage/persistent_storage/persistent-storage-local.html)
+  - [Red Hat OpenShift Data Foundation](https://www.redhat.com/en/technologies/cloud-computing/openshift-data-foundation)
+- [Red Hat Advanced Cluster Management](https://www.redhat.com/en/technologies/management/advanced-cluster-management)
+- [Red Hat Ansible Automation Platform 2.x](https://www.redhat.com/en/technologies/management/ansible)
+- [Red Hat GitOps](https://cloud.redhat.com/blog/announcing-openshift-gitops) (ArgoCD)
+- [Reflector](https://github.com/emberstack/kubernetes-reflector) to manage secrets
+- [Gitea](https://gitea.io/en-us/) for a cluster-hosted Git server
+
 ## Primer Information
 
 - ZTP operates in a ***Hub-and-Spoke*** model - there is a primary Hub cluster that runs RHACM and other supporting services to conduct the deployment of Spoke clusters.
