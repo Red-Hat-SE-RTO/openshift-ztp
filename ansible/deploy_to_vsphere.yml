@@ -84,10 +84,6 @@
     set_fact:
       cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
 
-  - name: Debug
-    debug:
-      msg: "{{ cluster_nodes }}"
-
   - name: Create the ISOs directory on the datacenter/datastore
     community.vmware.vsphere_file:
       host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
@@ -161,12 +157,12 @@
     vars:
       task_agent_names: "{{ agent_names }}"
       task_approved_agents: "{{ approved_agents }}"
-      boot_timeout: "{{ cluster_configmap_info.resources[0].data.node_boot_timeout | int }}"
-      node_count: "{{ cluster_configmap_info.resources[0].data.node_count  }}"
+      node_count: "{{ cluster_nodes | length }}"
+      approved_node_count: 0
 
   - name: Loop through Agents
     include_tasks: tasks/agent_loop_runner.yml
-    
+
   - name: Loop through Agents and Set Hostname and Role
     include_tasks: tasks/set_hostname.yml
     loop: "{{ cluster_nodes }}"

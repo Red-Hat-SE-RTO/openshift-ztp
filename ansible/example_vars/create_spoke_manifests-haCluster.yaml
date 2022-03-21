@@ -3,6 +3,7 @@ cluster_type: full
 cluster_name: vsphere-ocp-ha
 base_domain: kemo.labs
 cluster_location: loe-rdu
+node_boot_timeout: 30
 
 cluster_api_vip: 192.168.42.88
 cluster_load_balancer_vip: 192.168.42.89
