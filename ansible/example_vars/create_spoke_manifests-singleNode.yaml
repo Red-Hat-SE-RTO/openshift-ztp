@@ -4,6 +4,7 @@ cluster_name: sno-ocp
 base_domain: lab.kemo.network
 cluster_location: loe-rdu
 
+source_git_repo: https://gitea-gitea.apps.core-ocp.lab.kemo.network/user-1/openshift-ztp.git
 git_push_credentials_secret_name: "git-push-credentials"
 cluster_node_network_ipam: "static"
 cluster_node_cidr: "192.168.42.0/24"
