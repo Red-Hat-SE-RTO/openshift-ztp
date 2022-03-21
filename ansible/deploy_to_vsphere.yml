@@ -168,4 +168,4 @@
 
   - name: Start the cluster install
     include_tasks: tasks/start_cluster_install.yml
-    when: cluster_configmap_info.resources[0].data.cluster_type != "sno"
+    when: cluster_configmap_info.resources[0].data.cluster_type == "full"
