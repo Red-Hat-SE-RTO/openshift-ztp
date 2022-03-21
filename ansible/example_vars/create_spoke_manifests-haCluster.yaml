@@ -1,5 +1,5 @@
 vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
-cluster_type: converged
+cluster_type: full
 cluster_name: vsphere-ocp-ha
 base_domain: kemo.labs
 cluster_location: loe-rdu
