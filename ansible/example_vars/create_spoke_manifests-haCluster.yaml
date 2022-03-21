@@ -13,12 +13,12 @@ cluster_node_network_ipam: "static"
 cluster_node_cidr: "192.168.42.0/24"
 
 ## If you want to use static DNS, uncomment the following lines
-cluster_node_network_static_dns_search_domains:
-  - kemo.labs
-  - kemo.network
-cluster_node_network_static_dns_servers:
-  - 192.168.42.9
-  - 192.168.42.10
+#cluster_node_network_static_dns_search_domains:
+#  - kemo.labs
+#  - kemo.network
+#cluster_node_network_static_dns_servers:
+#  - 192.168.42.9
+#  - 192.168.42.10
 
 vcenter_datacenter: LabDC
 vcenter_cluster: LabCluster
