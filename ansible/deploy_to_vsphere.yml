@@ -126,6 +126,7 @@
       datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
       path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
       state: absent
+    ignore_errors: true
 
   - name: Upload Discovery ISO to the target Cluster Host
     community.vmware.vsphere_copy:
@@ -137,6 +138,7 @@
       datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
       datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
       path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+    ignore_errors: true
 
   - name: Delete local Discovery ISO
     file:
