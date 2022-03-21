@@ -46,9 +46,10 @@
   when: agent_crd_info.resources | length > 0
 
 - name: Debug
-  msg:
-    - "newly_approved_agents: {{ newly_approved_agents | length }}"
-    - "task_approved_agents: {{ task_approved_agents | length }}"
+  debug:
+    msg:
+      - "newly_approved_agents: {{ newly_approved_agents | length }}"
+      - "task_approved_agents: {{ task_approved_agents | length }}"
 
 #- name: All Nodes have been registered
 #  meta: end_host
