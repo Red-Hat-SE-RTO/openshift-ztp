@@ -20,7 +20,7 @@ aap2_job_template_create_spoke_manifests_name: create-vsphere-spoke-manifests-zt
 aap2_job_template_create_spoke_manifests_playbook: ansible/create_spoke_manifests.yml
 
 aap2_job_template_create_credentials_name: create-credentials
-aap2_job_template_create_credentials_playbook: hub-setup-ansible/3_create_credentials.yaml
+aap2_job_template_create_credentials_playbook: ansible/3_create_credentials.yaml
 
 subscription_manifest_path: ~/aap2-subscription-manifest.zip
 
