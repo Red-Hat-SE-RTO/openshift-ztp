@@ -148,7 +148,7 @@
       
     - name: Debug
       debug:
-        msg: "{{ push_git_url_combined }}
+        msg: "{{ push_git_url_combined }}"
     when: use_https_repo|bool 
 
   #######################################################
