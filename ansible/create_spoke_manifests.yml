@@ -12,7 +12,7 @@
     git_push_credentials_secret_namespace: "ztp-credentials"
 
     generate_ssh_keys: true
-    use_https_repo: false
+    #use_https_repo: false
     deployment_type: vsphere
     openshift_release: "4.9.9"
     template_secrets: true
