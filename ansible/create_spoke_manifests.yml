@@ -404,39 +404,39 @@
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "ssh"
 
-      - name: extract git url
-        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
-        register: extract_output
-        when: push_git_auth_method == "basic"
+      #- name: extract git url
+      #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
+      #  register: extract_output
+      #  when: push_git_auth_method == "basic"
 
-      - name: save git url
-        set_fact: 
-          git_url_https: "{{ extract_output.stdout }}"
-        when: push_git_auth_method == "basic"
+      #- name: save git url
+      #  set_fact: 
+      #    git_url_https: "{{ extract_output.stdout }}"
+      #  when: push_git_auth_method == "basic"
 
-      - name: extract git path
-        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
-        register: extract_path_output
-        when: push_git_auth_method == "basic"
+      #- name: extract git path
+      #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
+      #  register: extract_path_output
+      #  when: push_git_auth_method == "basic"
 
-      - name: save git path
-        set_fact: 
-          extract_path_output: "{{ extract_path_output.stdout }}"
-        when: push_git_auth_method == "basic"
+      #- name: save git path
+      #  set_fact: 
+      #    extract_path_output: "{{ extract_path_output.stdout }}"
+      #  when: push_git_auth_method == "basic"
 
-      - name: extract git repo 
-        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
-        register: extract_repo_output
-        when: push_git_auth_method == "basic"
+      #- name: extract git repo 
+      #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
+      #  register: extract_repo_output
+      #  when: push_git_auth_method == "basic"
 
-      - name: save git repo
-        set_fact: 
-          extract_repo_output: "{{ extract_repo_output.stdout }}"
-        when: push_git_auth_method == "basic"
+      #- name: save git repo
+      #  set_fact: 
+      #    extract_repo_output: "{{ extract_repo_output.stdout }}"
+      #  when: push_git_auth_method == "basic"
 
       - name: Git set new remote
         shell: |
-          git remote add private "https://{{ push_git_username | urlencode }}:{{ push_git_password | urlencode }}@{{ git_url_https }}/{{ extract_path_output }}/{{ extract_repo_output }}"
+          git remote add private "{{ push_git_url_combined }}"
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "basic"
