@@ -142,8 +142,13 @@
         push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
         push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
         push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
+        push_git_url_combined: "https://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace(/^https?:\/\//, '') }}"
       no_log: true
-      when: use_https_repo|bool 
+      when: use_https_repo|bool
+      
+    - name: Debug
+      debug:
+        msg: "{{ push_git_url_combined }}
     when: use_https_repo|bool 
 
   #######################################################
@@ -171,6 +176,14 @@
       repo: "{{ source_git_repo }}"
       dest: "{{ temp_dir.path }}/git"
       clone: yes
+    when: source_git_repo != push_git_url
+  
+  - name: Clone down the repo
+    ansible.builtin.git:
+      repo: "{{ push_git_url_combined }}"
+      dest: "{{ temp_dir.path }}/git"
+      clone: yes
+    when: source_git_repo == push_git_url
   
   - name: Create a directory for the spoke cluster
     file:
@@ -329,8 +342,8 @@
 
       - name: Git set push user token info
         shell: |
-          git config --global github.user  user1
-          git config --global github.token d4a1fa03f3ecdd6aab0775b42547e4da94f01ee0
+          git config --global github.user {{ push_git_username }}
+          git config --global github.token {{ push_git_password }}
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "https"
@@ -413,7 +426,7 @@
 
       - name: Git set new remote
         shell: |
-          git remote add private "https://{{ push_git_username }}:{{ push_git_password }}@{{ git_url_https }}/{{ extract_path_output }}/{{ extract_repo_output }}"
+          git remote add private "https://{{ push_git_username | urlencode }}:{{ push_git_password | urlencode }}@{{ git_url_https }}/{{ extract_path_output }}/{{ extract_repo_output }}"
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "basic"
