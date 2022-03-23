@@ -493,6 +493,8 @@
         aap2_project_id: "{{ aap2_project_id }}"
         job_template_playbook: "{{ aap2_job_template_create_infra_playbook }}"
       until: create_infra_response.status == 201
+      delay: 10
+      retries: 30
 
     ###############################################################################################
     ## Templates - Delete vSphere Infrastructure
@@ -525,6 +527,8 @@
         aap2_project_id: "{{ aap2_project_id }}"
         job_template_playbook: "{{ aap2_job_template_delete_infra_playbook }}"
       until: delete_infra_response.status == 201
+      delay: 10
+      retries: 30
 
     ###############################################################################################
     ## Templates - Create Spoke Manifests
@@ -557,6 +561,8 @@
         aap2_project_id: "{{ aap2_project_id }}"
         job_template_playbook: "{{ aap2_job_template_create_spoke_manifests_playbook }}"
       until: create_spoke_manifests_response.status == 201
+      delay: 10
+      retries: 30
 
     ###############################################################################################
     ## Templates - Create Credentials
@@ -589,6 +595,8 @@
         aap2_project_id: "{{ aap2_project_id }}"
         job_template_playbook: "{{ aap2_job_template_create_credentials_playbook }}"
       until: create_credentials_response.status == 201
+      delay: 10
+      retries: 30
 
     ###############################################################################################
     ## Debug
