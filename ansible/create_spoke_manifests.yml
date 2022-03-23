@@ -86,21 +86,34 @@
 
   #######################################################
   ## OpenShift Query Preflights
+  - name: Get the Git Credentials
+    kubernetes.core.k8s_info:
+      api_version: v1
+      kind: Secret
+      namespace: "{{ git_push_credentials_secret_namespace }}"
+      name: "{{ git_push_credentials_secret_name }}"
+    register: git_secret
+    when: generate_ssh_keys|bool 
+
+  - name: Fail if the Git credentials secret is not found
+    fail:
+      msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
+    when: git_secret.resources | length == 0
+
+  - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
+    set_fact:
+      git_repo_push_target: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+
+  - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
+    set_fact:
+      use_https_repo: "{{ git_repo_push_target.startswith('https') }}"
+
+  - name: debug
+    debug:
+      msg: "use_https_repo: {{ use_https_repo }}"
+
   - name: Query OpenShift for needed Configs & Secrets with ssh key
     block:
-    - name: Get the Git Credentials
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Secret
-        namespace: "{{ git_push_credentials_secret_namespace }}"
-        name: "{{ git_push_credentials_secret_name }}"
-      register: git_secret
-      when: generate_ssh_keys|bool 
-
-    - name: Fail if the Git credentials secret is not found
-      fail:
-        msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
-      when: git_secret.resources | length == 0
 
     - name: Read in the Git Push Information
       set_fact:
@@ -142,13 +155,10 @@
         push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
         push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
         push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
-        push_git_url_combined: "https://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace(/^https?:\/\//, '') }}"
+        push_git_url_combined: "https://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace('^https?://') }}"
       no_log: true
       when: use_https_repo|bool
-      
-    - name: Debug
-      debug:
-        msg: "{{ push_git_url_combined }}"
+
     when: use_https_repo|bool 
 
   #######################################################
