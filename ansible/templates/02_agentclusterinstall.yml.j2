@@ -36,3 +36,12 @@ spec:
   provisionRequirements:
     controlPlaneAgents: {{ (cluster_type == 'sno') | ternary('1', '3') }}
   sshPublicKey: "{{ ssh_public_key }}"
+{% if (httpProxy is defined) or (httpsProxy is defined) %}
+  proxy:
+{% if httpProxy is defined %}
+    httpProxy: {{ httpProxy }}
+{% endif %}
+{% if httpsProxy is defined %}
+    httpsProxy: {{ httpsProxy }}
+{% endif %}
+{% endif %}
