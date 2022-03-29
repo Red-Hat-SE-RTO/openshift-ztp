@@ -45,6 +45,14 @@ Cluster composition, Discovery ISO download link, and other variables are passed
 
 Once the intended systems report in and are discoverable by the InfraEnv, the AnsibleJob kicks back over to OAS/ZTP to continue the installation.
 
+## Directory Structure
+
+- `./ansible` - All the Ansible Automation used to bootstrap the hub, template credentials and spoke cluster manifests, and handle vSphere infrastructure automation
+- `./docs` - Extra topic specific documentation
+- `./legacy-files` - Legacy files such as Bash-based bootstrap scripts
+- `./ztp-cluster-applications` - The path for the ZTP Clusters ArgoCD Applications for each Spoke Cluster that are generated per-spoke
+- `./ztp-clusters` - The path for the ZTP Cluster manifests that are generated, synced by the ArgoCD Applications in `./ztp-cluster-applications`
+
 ## Quickstart - tl;dr
 
 There are two processes that are needed to deploy OpenShift to vSphere via ZTP:
