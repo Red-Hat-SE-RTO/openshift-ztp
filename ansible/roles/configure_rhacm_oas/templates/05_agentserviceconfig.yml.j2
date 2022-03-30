@@ -25,8 +25,18 @@ spec:
   ###   name: "lab-index-mirror"
   ###
   osImages:
-    - openshiftVersion: "4.9"
-      version: "49.84.202111231504-0"
-      url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live.x86_64.iso"
-      rootFSUrl: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live-rootfs.x86_64.img"
+{% for version in major_release_versions %}
+{% set releaseData = lookup('url', 'https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-'+version+'/release.txt', wantlist=True) %}
+{% set ns = namespace() %}
+{% set ns.version = "" %}
+{% for line_item in releaseData %}
+{% if ('machine-os ' in line_item) %}
+{% set ns.version = (line_item | regex_replace('^(\\s*)machine-os ')).split(' ')[0] %}
+{% endif %}
+{% endfor %}
+    - openshiftVersion: "{{ version }}"
+      version: "{{ ns.version }}"
+      url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live.x86_64.iso"
+      rootFSUrl: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live-rootfs.x86_64.img"
       cpuArchitecture: x86_64
+{% endfor %}
