@@ -22,6 +22,14 @@
     name: version
   register: r_ocp_version
 
+- name: Query the odf-operator PackageManifest for the latest version of the OpenShift Data Foundation Operator
+  kubernetes.core.k8s_info:
+    api_version: packages.operators.coreos.com/v1
+    kind: PackageManifest
+    name: odf-operator
+    namespace: openshift-marketplace
+  register: r_pm
+
 - name: Set cluster version
   set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version }}"
@@ -32,15 +40,8 @@
 
 - name: Set Operator channel version
   set_fact:
-    operator_channel: "stable-{{ ocp_version_slice[0] }}.{{ ocp_version_slice[1] }}"
-
-- name: Query the odf-operator PackageManifest for the latest version of the OpenShift Data Foundation Operator
-  kubernetes.core.k8s_info:
-    api_version: packages.operators.coreos.com/v1
-    kind: PackageManifest
-    name: odf-operator
-    namespace: openshift-marketplace
-  register: r_pm
+    #operator_channel: "stable-{{ ocp_version_slice[0] }}.{{ ocp_version_slice[1] }}"
+    operator_channel: "{{ r_pm.resources[0].status.defaultChannel }}"
 
 - name: Set the latest CSV version
   set_fact:
