@@ -14,7 +14,7 @@
     generate_ssh_keys: true
     #use_https_repo: false
     deployment_type: vsphere
-    openshift_release: "4.9.9"
+    openshift_release: "4.10.3"
     template_secrets: true
     secret_management: reflector
     credential_namespace: "ztp-credentials"
@@ -244,20 +244,20 @@
       set_fact:
         node_network_type: "{{ cluster_node_network_ipam }}"
 
-  - name: Set facts
-    block:
-    - name: Set general facts for vips
-      set_fact:
-        api_vip: "{{ cluster_api_vip }}"
-        ingress_vip: "{{ cluster_load_balancer_vip }}"
-      when: (cluster_nodes | length > 1) and (node_network_type == 'static')
+  #- name: Set facts
+  #  block:
+  #  - name: Set general facts for vips
+  #    set_fact:
+  #      api_vip: "{{ cluster_api_vip }}"
+  #      ingress_vip: "{{ cluster_load_balancer_vip }}"
+  #    when: (cluster_nodes | length > 1) and (node_network_type == 'static')
 
-  - name: Set facts for cluster network info
-    block:
-    - name: Set general facts
-      set_fact:
-        machine_network_cidr: "{{ cluster_node_cidr }}"
-      when: cluster_type  == 'sno'
+  #- name: Set facts for cluster network info
+  #  block:
+  #  - name: Set general facts
+  #    set_fact:
+  #      machine_network_cidr: "{{ cluster_node_cidr }}"
+  #    when: cluster_type  == 'sno'
 
 
   #######################################################
