@@ -66,5 +66,12 @@ Once the Hub has been set up and configured, with Credentials available, you can
 There are a set of example variables that would be passed to the **Spoke Cluster Manifest Generation** Playbook in `example_vars` - use it as such:
 
 ```bash
+# Single Node OpenShift
+ansible-playbook -i inv_localhost -e "@example_vars/create_spoke_manifests-singleNode.yaml" create_spoke_manifests.yml
+
+# 3 Node Converged Control Plane + Application Node Cluster
+ansible-playbook -i inv_localhost -e "@example_vars/create_spoke_manifests-3nodeConverged.yaml" create_spoke_manifests.yml
+
+# 3 Control Plane + 3+ Application Node Cluster
 ansible-playbook -i inv_localhost -e "@example_vars/create_spoke_manifests-haCluster.yaml" create_spoke_manifests.yml
 ```
