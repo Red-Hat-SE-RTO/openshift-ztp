@@ -29,7 +29,7 @@ spec:
         hostPrefix: 23
     serviceNetwork:
       - "172.30.0.0/16"
-{% if machine_network_cidr is not none  %}
+{% if machine_network_cidr is defined  %}
     machineNetwork:
       - cidr: "{{ machine_network_cidr }}"
 {% endif %}
