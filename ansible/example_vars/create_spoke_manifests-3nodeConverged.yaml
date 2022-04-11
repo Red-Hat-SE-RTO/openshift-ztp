@@ -26,7 +26,7 @@ vcenter_datastore: nvme
 vcenter_network: VMNetwork
 template_secrets: true
 
-converged_nodes_config:
+cluster_nodes:
   - name: node-one
     type: converged-node
     vm:
