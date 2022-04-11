@@ -23,7 +23,7 @@ vcenter_datastore: nvme
 vcenter_network: VMNetwork
 template_secrets: true
 
-cluster_nodes:
+sno_node_config:
   - name: sno-white
     type: sno-node
     vm:
