@@ -1,0 +1,92 @@
+---
+- name: Setup operators and services needed on a Hub OpenShift Cluster for ZTP
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    #########################################
+    ## Secrets Management
+    deploy_reflector: true
+    deploy_sealed_secrets: false # not supported yet
+    deploy_hashicorp_vault: false # not supported yet
+
+    #########################################
+    ## Operator Management
+    deploy_nfd: false
+    deploy_lso: true
+    deploy_odf: true
+    deploy_rhacm: true
+    deploy_gitea: true
+    deploy_rh_gitops: true
+    deploy_aap2_controller: true
+
+    #########################################
+    ## Local Storage Operator Variables
+    ## lso_hostname_targets: is a list of hostnames to be used by the lso-operator for a LocalVolumeSet
+    lso_hostname_targets:
+      - app-1
+      - app-2
+      - app-3
+
+  tasks:
+    - name: Install Reflector for Secret management
+      include_role: 
+        name: deploy_reflector_chart
+      when: deploy_reflector|bool
+
+    - name: Install Bitnami SealedSecrets for Secret management
+      include_role:
+        name: deploy_sealedsecrets_chart
+      when: deploy_sealed_secrets|bool
+
+    - name: Install Hashicorp Vault for Secret management
+      include_role:
+        name: deploy_vault_chart
+      when: deploy_hashicorp_vault|bool
+
+    - name: Install Node Feature Discovery
+      include_role:
+        name: deploy_nfd_operator
+      when: deploy_nfd|bool
+
+    - name: Install Local Storage Operator
+      block:
+        - name: Get the cluster infrastructure information
+          kubernetes.core.k8s_info:
+            api_version: config.openshift.io/v1
+            kind: Infrastructure
+            name: cluster
+          register: r_ocp_infra
+
+        - name: Start the role if not on AWS
+          include_role:
+            name: deploy_lso_operator
+          when: r_ocp_infra.resources[0].status.platform != "AWS"
+      when: deploy_lso|bool
+
+    ## TODO: Add logic for ODF to create a StorageSystem from EBS on AWS
+    - name: Install OpenShift Data Foundation
+      include_role:
+        name: deploy_odf_operator
+      when: deploy_odf|bool
+
+    - name: Install Red Hat Advanced Cluster Management
+      include_role:
+        name: deploy_rhacm_operator
+      when: deploy_rhacm|bool
+
+    - name: Install the Gitea Operator
+      include_role:
+        name: deploy_gitea_operator
+      when: deploy_gitea|bool
+
+    - name: Install Red Hat GitOps Operator
+      include_role:
+        name: deploy_rh_gitops_operator
+      when: deploy_rh_gitops|bool
+
+    - name: Install the Red Hat Ansible Automation Platform Controller
+      include_role:
+        name: deploy_aap2_controller
+      when: deploy_aap2_controller|bool

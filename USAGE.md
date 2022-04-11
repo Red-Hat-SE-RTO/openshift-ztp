@@ -191,6 +191,7 @@ type: Opaque
 stringData:
   .dockerconfigjson: '$(cat ${PULL_SECRET_PATH})'
 EOF
+```
 
 ### vCenter Credentials
 

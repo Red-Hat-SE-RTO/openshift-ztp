@@ -1,0 +1,16 @@
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  creationTimestamp: null
+  name: multiclusterhub
+  namespace: {{ acm_operator_namespace }}
+spec:
+  availabilityConfig: Basic
+  enableClusterBackup: false
+  ingress:
+    sslCiphers:
+      - ECDHE-ECDSA-AES256-GCM-SHA384
+      - ECDHE-RSA-AES256-GCM-SHA384
+      - ECDHE-ECDSA-AES128-GCM-SHA256
+      - ECDHE-RSA-AES128-GCM-SHA256
+  separateCertificateManagement: false

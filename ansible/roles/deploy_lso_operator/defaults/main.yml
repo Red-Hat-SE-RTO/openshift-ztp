@@ -1,0 +1,5 @@
+---
+# defaults file for deploy_lso_operator
+lso_operator_channel: stable
+lso_operator_namespace: openshift-local-storage
+lso_storage_class_name: odf

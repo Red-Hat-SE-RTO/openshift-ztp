@@ -1,0 +1,67 @@
+apiVersion: ocs.openshift.io/v1
+kind: StorageCluster
+metadata:
+  annotations:
+    storagesystem.odf.openshift.io/watched-by: ocs-storagecluster-storagesystem
+    uninstall.ocs.openshift.io/cleanup-policy: delete
+    uninstall.ocs.openshift.io/mode: graceful
+  name: {{ odf_storagecluster_name }}
+  namespace: {{ odf_operator_namespace }}
+  finalizers:
+    - storagecluster.ocs.openshift.io
+spec:
+  storageDeviceSets:
+    - config: {}
+      resources:
+        limits:
+          cpu: '2'
+          memory: 5Gi
+        requests:
+          cpu: '1'
+          memory: 5Gi
+      placement: {}
+      name: ocs-deviceset-{{ aws_storagecluster_storageclass }}
+      dataPVCTemplate:
+        metadata: {}
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ aws_storagecluster_block_size }}Gi
+          storageClassName: {{ aws_storagecluster_storageclass }}
+          volumeMode: Block
+        status: {}
+      count: 1
+      replica: 3
+      portable: true
+      preparePlacement: {}
+  encryption:
+    kms: {}
+  mirroring: {}
+  resources:
+    mds:
+      limits:
+        cpu: '3'
+        memory: 8Gi
+      requests:
+        cpu: '1'
+        memory: 8Gi
+    rgw:
+      limits:
+        cpu: '2'
+        memory: 4Gi
+      requests:
+        cpu: '1'
+        memory: 4Gi
+  managedResources:
+    cephBlockPools: {}
+    cephConfig: {}
+    cephDashboard: {}
+    cephFilesystems: {}
+    cephObjectStoreUsers: {}
+    cephObjectStores: {}
+  arbiter: {}
+  nodeTopologies: {}
+  externalStorage: {}
+  version: {{ ocp_version_slice[0] }}.{{ ocp_version_slice[1] }}.0

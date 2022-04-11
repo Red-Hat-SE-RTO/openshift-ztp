@@ -1,0 +1,27 @@
+apiVersion: gpte.opentlc.com/v1
+kind: Gitea
+metadata:
+  creationTimestamp: null
+  name: gitea
+  namespace: {{ gitea_operator_namespace }}
+spec:
+  giteaSsl: true
+  giteaAdminUser: {{ gitea_admin_username }}
+  giteaAdminPassword: "{{ gitea_admin_password }}"
+  giteaAdminEmail: {{ gitea_admin_email }}
+  giteaImageTag: latest
+  giteaVolumeSize: 10Gi
+  giteaVolumeStorageClass: {{ gitea_storageclass_name }}
+  postgresqlVolumeSize: 4Gi
+  postgresqlVolumeStorageClass: {{ gitea_storageclass_name }}
+  giteaCreateUsers: {{ gitea_create_users }}
+  giteaGenerateUserFormat: "{{ gitea_generate_user_format }}"
+  giteaUserNumber: {{ gitea_number_of_users }}
+  giteaUserPassword: {{ gitea_user_password }}
+  giteaMigrateRepositories: {{ gitea_bootstrap_repositories }}
+  giteaRepositoriesList:
+{% for repo in gitea_bootstrap_repositories_list %}
+  - repo: {{ repo.repo }}
+    name: {{ repo.name }}
+    private: {{ repo.private }}
+{% endfor %}

@@ -1,0 +1,32 @@
+---
+# defaults file for configure_aap2_controller
+aap2_operator_namespace: ansible-automation-platform
+aap2_controller_name: ac-tower
+aap2_admin_secret_name: "{{ aap2_controller_name }}-admin-password"
+
+aap2_organization: ZTP Org
+aap2_inventory_name: localhost-ee
+aap2_project_name: vSphere ZTP
+aap2_application_name: ZTP RHACM
+aap2_scm_credential_name: SCM Credentials
+
+aap2_job_template_create_infra_name: create-vsphere-infra-ztp
+aap2_job_template_create_infra_playbook: ansible/deploy_to_vsphere.yml
+
+aap2_job_template_delete_infra_name: delete-vsphere-infra-ztp
+aap2_job_template_delete_infra_playbook: ansible/delete_vmware_deployment.yml
+
+aap2_job_template_create_spoke_manifests_name: create-vsphere-spoke-manifests-ztp
+aap2_job_template_create_spoke_manifests_playbook: ansible/create_spoke_manifests.yml
+
+aap2_job_template_create_credentials_name: create-credentials
+aap2_job_template_create_credentials_playbook: ansible/3_create_credentials.yaml
+
+subscription_manifest_path: ~/aap2-subscription-manifest.zip
+
+# git_credential_type: ssh | basic
+scm_credential_type: basic
+scm_credential_username: user-1
+scm_credential_password: openshift
+scm_credential_private_key: ~/.ssh/id_rsa
+scm_credential_public_key: ~/.ssh/id_rsa.pub

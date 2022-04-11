@@ -1,0 +1,13 @@
+---
+# tasks file for deploy_sealedsecrets_chart
+- name: Template the Sealed Secrets Helm Chart Repository
+  kubernetes.core.k8s:
+    state: present
+    template: templates/chart-repository.yml.j2
+
+- name: Deploy the latest version of the Sealed Secrets Helm Chart
+  kubernetes.core.helm:
+    name: sealed-secrets
+    chart_ref: sealed-secrets/sealed-secrets
+    chart_version: "{{ sealedsecrets_version }}"
+    release_namespace: "{{ sealedsecrets_namespace }}"

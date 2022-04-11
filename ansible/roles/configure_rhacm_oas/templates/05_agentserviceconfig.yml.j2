@@ -1,0 +1,42 @@
+apiVersion: agent-install.openshift.io/v1beta1
+kind: AgentServiceConfig
+metadata:
+  name: agent
+  namespace: {{ acm_operator_namespace }}
+  ### This is the annotation that injects modifications in the Assisted Service pod
+  annotations:
+    unsupported.agent-install.openshift.io/assisted-service-configmap: "assisted-service-config"
+###
+spec:
+  databaseStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  filesystemStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  ### This is a ConfigMap that only will make sense on Disconnected environments
+  ### mirrorRegistryRef:
+  ###   name: "lab-index-mirror"
+  ###
+  osImages:
+{% for version in major_release_versions %}
+{% set releaseData = lookup('url', 'https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-'+version+'/release.txt', wantlist=True) %}
+{% set ns = namespace() %}
+{% set ns.version = "" %}
+{% for line_item in releaseData %}
+{% if ('machine-os ' in line_item) %}
+{% set ns.version = (line_item | regex_replace('^(\\s*)machine-os ')).split(' ')[0] %}
+{% endif %}
+{% endfor %}
+    - openshiftVersion: "{{ version }}"
+      version: "{{ ns.version }}"
+      url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live.x86_64.iso"
+      rootFSUrl: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live-rootfs.x86_64.img"
+      cpuArchitecture: x86_64
+{% endfor %}

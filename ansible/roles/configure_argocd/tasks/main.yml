@@ -1,0 +1,87 @@
+---
+# tasks file for configure_argocd
+
+###############################################################################################
+## Gitea
+###############################################################################################
+
+- name: Get the Gitea Route
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Route
+    namespace: gitea
+    name: gitea
+  register: gitea_route
+
+- name: Set the Git Repo fact if defined
+  set_fact:
+    git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
+  when: gitea_route.resources | length > 0 and git_repo_url is not defined
+
+###############################################################################################
+## ArgoCD
+###############################################################################################
+
+- name: Give ArgoCD cluster-admin
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/rolebinding.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create ArgoCD AppProject for Cluster Sync
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/appproject.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create ArgoCD AppProject for Cluster Application Sync
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/cluster-appproject.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create ArgoCD Git Credentials Secret for Cluster Application Sync
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/repo-secret.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create ArgoCD Application for Cluster Application Sync
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/cluster-applications.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+  vars:
+    application_name: ztp-cluster-applications
+    project_name: "{{ argocd_appproject_name }}"
+    git_repo_path: ztp-cluster-applications

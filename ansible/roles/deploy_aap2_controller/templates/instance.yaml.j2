@@ -1,0 +1,45 @@
+apiVersion: automationcontroller.ansible.com/v1beta1
+kind: AutomationController
+metadata:
+  labels:
+    app.kubernetes.io/component: automationcontroller
+    app.kubernetes.io/managed-by: automationcontroller-operator
+    app.kubernetes.io/name: ac-tower
+    app.kubernetes.io/operator-version: ''
+    app.kubernetes.io/part-of: ac-tower
+  name: ac-tower
+  namespace: {{ aap_operator_namespace }}
+spec:
+  ee_resource_requirements:
+    limits:
+      cpu: 2000m
+    requests:
+      cpu: 500m
+  create_preload_data: true
+  route_tls_termination_mechanism: Edge
+  garbage_collect_secrets: false
+  loadbalancer_port: 80
+  projects_use_existing_claim: _No_
+  task_resource_requirements:
+    limits:
+      cpu: 2000m
+    requests:
+      cpu: 500m
+  image_pull_policy: IfNotPresent
+  projects_storage_size: 8Gi
+  admin_email: {{ aap_controller_admin_email }}
+  task_privileged: true
+  projects_storage_class: {{ aap_controller_storageclass_name }}
+  projects_storage_access_mode: ReadWriteOnce
+  web_resource_requirements:
+    limits:
+      cpu: 2000m
+    requests:
+      cpu: 500m
+  projects_persistence: true
+  replicas: 1
+  admin_user: {{ aap_controller_admin_username }}
+  loadbalancer_protocol: http
+  nodeport_port: 30080
+  #postgres_data_path: /var/tmp
+  postgres_storage_class: {{ aap_controller_storageclass_name }}

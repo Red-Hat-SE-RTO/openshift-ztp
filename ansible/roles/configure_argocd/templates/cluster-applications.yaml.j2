@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  creationTimestamp: null
+  name: {{ application_name }}
+  namespace: {{ argocd_namespace }}
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc'
+  source:
+    repoURL: '{{ git_repo_url }}'
+    targetRevision: HEAD
+    ## Path is the repo directory that containers the cluster(s) configuration and deployment manifests
+    path: {{ git_repo_path }}
+    #path: ztp-clusters/${INFRA}/${DEPLOYMENT_TYPE}/${CLUSTER_NAME}
+    #path: ztp-cluster-applications
+    ## Enable recursive sub-directory search to enable management of multiple cluster from this single Application
+    directory:
+      recurse: true
+  project: {{ project_name }}
+  syncPolicy: {}

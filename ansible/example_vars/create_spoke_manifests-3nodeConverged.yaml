@@ -1,0 +1,71 @@
+vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+cluster_type: converged
+cluster_name: vsphere-ocp
+base_domain: kemo.labs
+cluster_location: loe-rdu
+
+cluster_api_vip: 192.168.42.78
+cluster_load_balancer_vip: 192.168.42.79
+
+source_git_repo: https://gitea-gitea.apps.core-ocp.lab.kemo.network/user-1/openshift-ztp.git
+git_push_credentials_secret_name: "git-push-credentials"
+cluster_node_network_ipam: "static"
+cluster_node_cidr: "192.168.42.0/24"
+
+## If you want to use static DNS, uncomment the following lines
+#cluster_node_network_static_dns_search_domains:
+#  - kemo.labs
+#  - kemo.network
+#cluster_node_network_static_dns_servers:
+#  - 192.168.42.9
+#  - 192.168.42.10
+
+vcenter_datacenter: LabDC
+vcenter_cluster: LabCluster
+vcenter_datastore: nvme
+vcenter_network: VMNetwork
+template_secrets: true
+
+cluster_nodes:
+  - name: node-one
+    type: converged-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 120
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:10
+        dhcp: true
+  - name: node-two
+    type: converged-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 120
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:11
+        dhcp: true
+  - name: node-three
+    type: converged-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 120
+          name: boot
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:41:56:12
+        dhcp: true

@@ -1,12 +1,13 @@
 ---
-- name: Wait for node to populate int assisted installer dashboard
+- name: Wait for node to populate in the assisted installer dashboard
   wait_for:
-    timeout: "{{ boot_timeout }}"
+    timeout: 30
 
 - name: Set empty facts
   set_fact:
     newly_approved_agents: "{{ task_approved_agents }}"
-  when: task_approved_agents | length < node_count | int
+    total_approved_agents: []
+  #when: task_approved_agents | length < node_count | int
 
 - name: Query the Hub OpenShift Cluster for Agent CRDs
   kubernetes.core.k8s_info:
@@ -16,6 +17,15 @@
     label_selectors:
       - "infraenvs.agent-install.openshift.io = {{ infraenv.name }}"
   register: agent_crd_info
+
+- name: Add the approved nodes to the list of approved agents
+  set_fact:
+    total_approved_agents: "{{ total_approved_agents | default([]) + [agent_item.metadata.name] }}"
+  loop: "{{ agent_crd_info.resources }}"
+  loop_control:
+    loop_var: agent_item
+    label: "{{ agent_item.metadata.name }}"
+  when: agent_item.spec.approved == true
 
 - name: Process an Agent
   block:
@@ -33,6 +43,7 @@
     loop_control:
       loop_var: agent_item
       label: "{{ agent_item.metadata.name }}"
+    when: agent_item.spec.approved == false
 
   - name: Add the approved node to the list
     set_fact:
@@ -41,23 +52,22 @@
     loop_control:
       loop_var: agent_item
       label: "{{ agent_item.metadata.name }}"
+    when: agent_item.spec.approved == false
   when: agent_crd_info.resources | length > 0
 
-
-- name: Checking the number of task_agent_names
+- name: Debug
   debug:
-    msg: "Number of task_agent_names {{ task_agent_names | length }} count "
-    
-- name: Checking the number of task_approved_agents
-  debug:
-    msg: "Number of task_approved_agents {{ task_approved_agents }}"
+    msg:
+      - "newly_approved_agents: {{ newly_approved_agents | length }}"
+      - "task_approved_agents: {{ task_approved_agents | length }}"
+      - "total_approved_agents: {{ total_approved_agents | length }}"
 
-- name: All Nodes have been registered
-  meta: end_host
-  when: agent_crd_info.resources | length ==  node_count | int
+#- name: All Nodes have been registered
+#  meta: end_host
+#  when: agent_crd_info.resources | length ==  node_count | int
 
 - name: INCEPTION
   include_tasks: tasks/agent_loop_runner.yml
   vars:
     task_approved_agents: "{{ newly_approved_agents }}"
-  when: task_agent_names|length != task_approved_agents | length
+  when: cluster_nodes|length != total_approved_agents|length

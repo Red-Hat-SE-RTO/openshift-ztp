@@ -1,0 +1,24 @@
+apiVersion: gpte.opentlc.com/v1
+kind: Gitea
+metadata:
+  name: gitea
+  namespace: gitea
+spec:
+  giteaSsl: true
+  giteaAdminUser: opentlc-mgr
+  giteaAdminPassword: "r3dh4t123!"
+  giteaAdminEmail: opentlc-mgr@redhat.com
+  giteaImageTag: latest
+  giteaVolumeSize: 10Gi
+  giteaVolumeStorageClass: ocs-storagecluster-ceph-rbd
+  postgresqlVolumeSize: 4Gi
+  postgresqlVolumeStorageClass: ocs-storagecluster-ceph-rbd
+  giteaCreateUsers: true
+  giteaGenerateUserFormat: "user-%d"
+  giteaUserNumber: 2
+  giteaUserPassword: openshift
+  giteaMigrateRepositories: true
+  giteaRepositoriesList:
+  - repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp.git
+    name: openshift-ztp
+    private: true

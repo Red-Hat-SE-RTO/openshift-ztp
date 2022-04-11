@@ -1,0 +1,11 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  creationTimestamp: null
+  name: openshift-v{{ release_long_version }}
+  namespace: {{ acm_operator_namespace }}
+  labels:
+    channel: fast
+    visible: 'true'
+spec:
+  releaseImage: quay.io/openshift-release-dev/ocp-release:{{ release_long_version }}-x86_64

@@ -1,0 +1,189 @@
+---
+## SSH Key Options
+generate_ssh_keys: true
+ssh_private_key_path: /opt/id_rsa
+ssh_public_key_path: /opt/id_rsa.pub
+
+## deployment_type specifies which deployment to use - maps to root directory of this repo, e.g. "aws", "vsphere", etc
+deployment_type: vsphere
+## cluster_type specifies what type of cluster, sno | converged | full
+cluster_type: sno
+## cluster_name is the name of the OCP cluster
+cluster_name: sno-ocp
+## BASE_DOMAIN is the base domain for the OCP cluster
+base_domain: kemo.labs
+## cluster_location is the location of the OCP cluster, extra metadata required by OAS
+cluster_location: loe-1
+# openshift_release_version needs to be formatted as a string
+openshift_release: "4.9.9"
+
+###############################################################################
+## Cluster Network Configuration
+
+# cluster_api_vip: an IP or "auto" if your DHCP+DNS is configured correctly for dynamic hostname resolution
+cluster_api_vip: 192.168.42.71
+# cluster_load_balancer_vip: an IP or "auto"
+cluster_load_balancer_vip: 192.168.42.71
+# cluster_node_cidr: A CIDR definition of the network the nodes are connected to
+cluster_node_cidr: 192.168.42.0/24
+
+# cluster_node_network_ipam: dhcp or static
+cluster_node_network_ipam: static
+######################### If cluster_node_network_ipam == static:
+cluster_node_network_static_dns_servers:
+  - 192.168.42.9
+  - 192.168.42.10
+cluster_node_network_static_dns_search_domains:
+  - kemo.labs
+
+###############################################################################
+## Cluster Node Configuration
+#### If cluster_type == sno then the IP Address of the SNO node needs to match both the API and Ingress VIPs
+cluster_nodes:
+  - name: sno-white
+    ## type can be control-plane, application-node, or sno-node
+    type: sno-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:91
+        dhcp: false
+        ipv4:
+          - address: 192.168.42.71
+            prefix: 24
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+
+
+sno_node_config:
+  - name: sno-white
+    type: sno-node
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:91
+        dhcp: false
+        ipv4:
+          - address: 192.168.42.71
+            prefix: 24
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+
+converged_nodes_config:
+  - name: ocp-1
+    type: control-plane
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:92
+        dhcp: true
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+  - name: ocp-2
+    type: control-plane
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:93
+        dhcp: true
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+  - name: ocp-3
+    type: control-plane
+    vm:
+      cpu_cores: 8
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+        - size: 240
+          name: odf
+    interfaces:
+      - name: ens192
+        mac_address: 00:51:56:42:06:94
+        dhcp: true
+        routes:
+          - destination: 0.0.0.0/0
+            next_hop_address: 192.168.42.1
+            next_hop_interface: ens192
+            table_id: 254
+
+###############################################################################
+## Secret Configuration
+###############################################################################
+## Secrets are managed by Reflector and are mirrored into the Spoke Cluster
+## namespaces via empty Secrets that are then updated with the contents of the
+## original secret.
+
+## secret_management: reflector
+secret_management: reflector
+## credential_namespace is the namespace that holds the credentials and Secrets
+credential_namespace: "ztp-credentials"
+
+## The names of the credentials to be mirrored into the Spoke Cluster Namespace
+## from the credential_namespace
+ansible_tower_secret_name: "ansible-tower-credentials"
+pull_secret_secret_name: "assisted-deployment-pull-secret"
+vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+
+###############################################################################
+## vSphere Configuration Options
+vcenter_datacenter: LabDC
+vcenter_datastore: nvme
+vcenter_cluster: LabCluster
+vcenter_network: VM Network
+
+###############################################################################
+## Do not edit past this point unless you know what you're doing
+###############################################################################
+ansible_job_template_name: vsphere-infra-ztp

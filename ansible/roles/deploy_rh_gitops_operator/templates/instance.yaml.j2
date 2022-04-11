@@ -1,0 +1,123 @@
+kind: ArgoCD
+apiVersion: argoproj.io/v1alpha1
+metadata:
+  creationTimestamp: null
+  name: openshift-gitops
+  namespace: {{ argo_operator_namespace }}
+spec:
+  controller:
+    processors: {}
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2048Mi
+      requests:
+        cpu: 250m
+        memory: 1024Mi
+    sharding: {}
+  dex:
+    openShiftOAuth: true
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  ha:
+    enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  redis:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  repo:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  server:
+    autoscale:
+      enabled: false
+    grpc:
+      ingress:
+        enabled: false
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 125m
+        memory: 128Mi
+    insecure: true
+    replicas: 1
+    route:
+      enabled: true
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+    service:
+      type: ''
+  grafana:
+    enabled: false
+    size: 1
+    ingress:
+      enabled: false
+    route:
+      enabled: false
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+  prometheus:
+    enabled: false
+    ingress:
+      enabled: false
+    route:
+      enabled: false
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+  initialSSHKnownHosts: {}
+  applicationSet:
+    resources:
+      limits:
+        cpu: '2'
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  rbac:
+    defaultPolicy: 'role:admin'
+    policy: |
+      g, cluster-admins, role:admin
+      g, admins, role:admin
+    scopes: '[groups]'
+  resourceExclusions: |
+    - apiGroups:
+      - internal.open-cluster-management.io
+      kinds:
+      - ManagedClusterInfo
+      clusters:
+      - "*"
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun

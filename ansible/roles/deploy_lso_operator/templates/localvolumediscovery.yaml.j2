@@ -1,0 +1,21 @@
+apiVersion: local.storage.openshift.io/v1alpha1
+kind: LocalVolumeDiscovery
+metadata:
+  creationTimestamp: null
+  name: auto-discover-devices
+  namespace: {{ lso_operator_namespace }}
+spec:
+  nodeSelector:
+    nodeSelectorTerms:
+      - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+{% for host in lso_hostname_targets %}
+              - {{ host }}
+{% endfor %}
+  tolerations:
+    - effect: NoSchedule
+      key: node.ocs.openshift.io/storage
+      operator: Equal
+      value: 'true'

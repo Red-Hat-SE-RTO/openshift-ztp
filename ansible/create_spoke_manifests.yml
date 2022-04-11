@@ -12,15 +12,22 @@
     git_push_credentials_secret_namespace: "ztp-credentials"
 
     generate_ssh_keys: true
-    use_https_repo: false
+    #use_https_repo: false
     deployment_type: vsphere
-    openshift_release: "4.9.9"
+    openshift_release: "4.10.3"
     template_secrets: true
     secret_management: reflector
     credential_namespace: "ztp-credentials"
     ansible_tower_secret_name: "ansible-tower-credentials"
     pull_secret_secret_name: "assisted-deployment-pull-secret"
-    ansible_job_template_name: vsphere-infra-ztp
+    ansible_job_template_name: create-vsphere-infra-ztp
+
+    create_argo_application: true
+    argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+    argocd_namespace: openshift-gitops
+    argocd_project_name: ztp-clusters
+
+    node_boot_timeout: 300
 
   tasks:
   #######################################################
@@ -32,6 +39,7 @@
         name:
           - kubernetes
           - openshift==0.12.1
+          - jmespath
         extra_args: --upgrade
       delegate_to: localhost
 
@@ -78,21 +86,34 @@
 
   #######################################################
   ## OpenShift Query Preflights
+  - name: Get the Git Credentials
+    kubernetes.core.k8s_info:
+      api_version: v1
+      kind: Secret
+      namespace: "{{ git_push_credentials_secret_namespace }}"
+      name: "{{ git_push_credentials_secret_name }}"
+    register: git_secret
+    when: generate_ssh_keys|bool 
+
+  - name: Fail if the Git credentials secret is not found
+    fail:
+      msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
+    when: git_secret.resources | length == 0
+
+  - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
+    set_fact:
+      git_repo_push_target: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+
+  - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
+    set_fact:
+      use_https_repo: "{{ git_repo_push_target.startswith('https') }}"
+
+  - name: debug
+    debug:
+      msg: "use_https_repo: {{ use_https_repo }}"
+
   - name: Query OpenShift for needed Configs & Secrets with ssh key
     block:
-    - name: Get the Git Credentials
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Secret
-        namespace: "{{ git_push_credentials_secret_namespace }}"
-        name: "{{ git_push_credentials_secret_name }}"
-      register: git_secret
-      when: generate_ssh_keys|bool 
-
-    - name: Fail if the Git credentials secret is not found
-      fail:
-        msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
-      when: git_secret.resources | length == 0
 
     - name: Read in the Git Push Information
       set_fact:
@@ -134,8 +155,10 @@
         push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
         push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
         push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
+        push_git_url_combined: "https://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace('^https?://') }}"
       no_log: true
-      when: use_https_repo|bool 
+      when: use_https_repo|bool
+
     when: use_https_repo|bool 
 
   #######################################################
@@ -163,10 +186,23 @@
       repo: "{{ source_git_repo }}"
       dest: "{{ temp_dir.path }}/git"
       clone: yes
+    when: source_git_repo != push_git_url
+  
+  - name: Clone down the repo
+    ansible.builtin.git:
+      repo: "{{ push_git_url_combined }}"
+      dest: "{{ temp_dir.path }}/git"
+      clone: yes
+    when: source_git_repo == push_git_url
   
   - name: Create a directory for the spoke cluster
     file:
       path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
+      state: directory
+  
+  - name: Create a directory for the spoke cluster ArgoCD application
+    file:
+      path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
       state: directory
 
   #######################################################
@@ -201,26 +237,27 @@
 
   #######################################################
   ## Set Fact logic
-  - name: Set facts
-    block:
-    - name: Set general facts for vips
-      set_fact:
-        api_vip: "{{ cluster_api_vip }}"
-        ingress_vip: "{{ cluster_load_balancer_vip }}"
-      when:  node_count >= 1 && node_network_type == 'static'
-
-  - name: Set facts for cluster network info
-    block:
-    - name: Set general facts
-      set_fact:
-        machine_network_cidr: "{{ cluster_node_cidr }}"
-      when: cluster_type  == 'sno'
 
   - name: Set facts for cluster network info
     block:
     - name: Set general facts
       set_fact:
         node_network_type: "{{ cluster_node_network_ipam }}"
+
+  #- name: Set facts
+  #  block:
+  #  - name: Set general facts for vips
+  #    set_fact:
+  #      api_vip: "{{ cluster_api_vip }}"
+  #      ingress_vip: "{{ cluster_load_balancer_vip }}"
+  #    when: (cluster_nodes | length > 1) and (node_network_type == 'static')
+
+  #- name: Set facts for cluster network info
+  #  block:
+  #  - name: Set general facts
+  #    set_fact:
+  #      machine_network_cidr: "{{ cluster_node_cidr }}"
+  #    when: cluster_type  == 'sno'
 
 
   #######################################################
@@ -284,10 +321,22 @@
       template:
         src: templates/11_nmstate_config.yml.j2
         dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
-
       loop: "{{ cluster_nodes }}"
       loop_control:
         loop_var: node_item
+
+    - name: Add the ArgoCD Application
+      when: create_argo_application|bool
+      block:
+      - name: Template the ArgoCD Application
+        template:
+          src: templates/99_argocd_application.yml.j2
+          dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
+        vars:
+          application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
+          git_repo_path: "{{ target_spoke_git_path }}"
+          git_repo_url: "{{ push_git_url }}"
+          project_name: "{{ argocd_project_name }}"
 
   #######################################################
   ## Git Push
@@ -303,8 +352,8 @@
 
       - name: Git set push user token info
         shell: |
-          git config --global github.user  user1
-          git config --global github.token d4a1fa03f3ecdd6aab0775b42547e4da94f01ee0
+          git config --global github.user {{ push_git_username }}
+          git config --global github.token {{ push_git_password }}
         args:
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "https"
@@ -312,6 +361,7 @@
       - name: Git add the new cluster
         shell: |
           git add {{ target_spoke_git_path }}
+          git add {{ argo_application_git_repo_path }}
         args:
           chdir: "{{ temp_dir.path }}/git"
 
@@ -354,56 +404,56 @@
           chdir: "{{ temp_dir.path }}/git"
         when: push_git_auth_method == "ssh"
 
-      - name: extract git url
-        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
-        register: extract_output
-        when: push_git_auth_method == "https"
+      #- name: extract git url
+      #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
+      #  register: extract_output
+      #  when: push_git_auth_method == "basic"
 
-      - name: save git url
-        set_fact: 
-          git_url_https: "{{ extract_output.stdout }}"
-        when: push_git_auth_method == "https"
+      #- name: save git url
+      #  set_fact: 
+      #    git_url_https: "{{ extract_output.stdout }}"
+      #  when: push_git_auth_method == "basic"
 
-      - name: extract git path
-        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
-        register: extract_path_output
-        when: push_git_auth_method == "https"
+      #- name: extract git path
+      #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
+      #  register: extract_path_output
+      #  when: push_git_auth_method == "basic"
 
-      - name: save git path
-        set_fact: 
-          extract_path_output: "{{ extract_path_output.stdout }}"
-        when: push_git_auth_method == "https"
+      #- name: save git path
+      #  set_fact: 
+      #    extract_path_output: "{{ extract_path_output.stdout }}"
+      #  when: push_git_auth_method == "basic"
 
-      - name: extract git repo 
-        shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
-        register: extract_repo_output
-        when: push_git_auth_method == "https"
+      #- name: extract git repo 
+      #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
+      #  register: extract_repo_output
+      #  when: push_git_auth_method == "basic"
 
-      - name: save git repo
-        set_fact: 
-          extract_repo_output: "{{ extract_repo_output.stdout }}"
-        when: push_git_auth_method == "https"
+      #- name: save git repo
+      #  set_fact: 
+      #    extract_repo_output: "{{ extract_repo_output.stdout }}"
+      #  when: push_git_auth_method == "basic"
 
       - name: Git set new remote
         shell: |
-          git remote add private "https://{{ push_git_username }}:{{ push_git_password }}@{{ git_url_https }}/{{ extract_path_output }}/{{ extract_repo_output }}"
+          git remote add private "{{ push_git_url_combined }}"
         args:
           chdir: "{{ temp_dir.path }}/git"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: git config --list
         shell: |
           git config --list
         args:
           chdir: "{{ temp_dir.path }}/git"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
       - name: Git push the new cluster
         shell: |
-          git push private main  
+          git -c http.sslVerify=false push private main  
         args:
           chdir: "{{ temp_dir.path }}/git"
-        when: push_git_auth_method == "https"
+        when: push_git_auth_method == "basic"
 
   #######################################################
   ## Cleanup
@@ -412,3 +462,5 @@
       path: "{{ temp_dir.path }}"
       state: absent
       force: yes
+    tags:
+      - always

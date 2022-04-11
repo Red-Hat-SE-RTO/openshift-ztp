@@ -26,3 +26,19 @@ spec:
   nmStateConfigLabelSelector:
     matchLabels:
       cluster-name: {{ cluster_name }}
+{% if additionalNTPSources is defined %}
+  additionalNTPSources:
+{% for ntp in additionalNTPSources %}
+    - {{ ntp }}
+{% endfor %}
+{% endif %}
+{% if (httpProxy is defined) or (httpsProxy is defined) %}
+  proxy:
+{% if httpProxy is defined %}
+    httpProxy: {{ httpProxy }}
+{% endif %}
+{% if httpsProxy is defined %}
+    httpsProxy: {{ httpsProxy }}
+{% endif %}
+{% endif %}
+

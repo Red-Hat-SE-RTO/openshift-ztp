@@ -1,0 +1,4 @@
+---
+# defaults file for deploy_sealedsecrets_chart
+sealedsecrets_namespace: kube-system
+sealedsecrets_version: 2.1.0

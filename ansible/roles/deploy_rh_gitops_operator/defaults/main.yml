@@ -1,0 +1,4 @@
+---
+# defaults file for deploy_rh_gitops_operator
+argo_operator_channel: stable
+argo_operator_namespace: openshift-gitops

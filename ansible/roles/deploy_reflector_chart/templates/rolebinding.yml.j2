@@ -1,0 +1,17 @@
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: 'system:openshift:scc:privileged'
+  namespace: {{ reflector_namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{ reflector_namespace }}
+  - kind: ServiceAccount
+    name: {{ reflector_namespace }}
+    namespace: {{ reflector_namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: 'system:openshift:scc:privileged'

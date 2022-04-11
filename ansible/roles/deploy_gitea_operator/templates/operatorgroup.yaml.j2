@@ -1,0 +1,9 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  creationTimestamp: null
+  name: {{ gitea_operator_namespace }}
+  namespace: {{ gitea_operator_namespace }}
+spec:
+  targetNamespaces:
+    - {{ gitea_operator_namespace }}

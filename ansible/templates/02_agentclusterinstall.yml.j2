@@ -4,6 +4,12 @@ kind: AgentClusterInstall
 metadata:
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
+  annotations:
+{% if (deployment_type == "vsphere") or (deployment_type == "vcenter") %}
+    agent-install.openshift.io/install-config-overrides: '{"platform":{"type":"vsphere"}}'
+{% else %}
+    agent-install.openshift.io/install-config-overrides: '{"platform":{"type":"baremetal"}}'
+{% endif %}
   labels:
     name: {{ cluster_name }}
     cloud: vSphere
@@ -17,8 +23,8 @@ spec:
   imageSetRef:
     name: openshift-v{{ openshift_release }}
 {% if cluster_type != 'sno' %}
-  apiVIP: "{{ api_vip }}"
-  ingressVIP: "{{ ingress_vip }}"
+  apiVIP: "{{ cluster_api_vip }}"
+  ingressVIP: "{{ cluster_load_balancer_vip }}"
 {% endif %}
   holdInstallation: false
   networking:
@@ -29,10 +35,19 @@ spec:
         hostPrefix: 23
     serviceNetwork:
       - "172.30.0.0/16"
-{% if machine_network_cidr is defined  %}
+{% if cluster_node_cidr is defined  %}
     machineNetwork:
-      - cidr: "{{ machine_network_cidr }}"
+      - cidr: "{{ cluster_node_cidr }}"
 {% endif %}
   provisionRequirements:
     controlPlaneAgents: {{ (cluster_type == 'sno') | ternary('1', '3') }}
   sshPublicKey: "{{ ssh_public_key }}"
+{% if (httpProxy is defined) or (httpsProxy is defined) %}
+  proxy:
+{% if httpProxy is defined %}
+    httpProxy: {{ httpProxy }}
+{% endif %}
+{% if httpsProxy is defined %}
+    httpsProxy: {{ httpsProxy }}
+{% endif %}
+{% endif %}
