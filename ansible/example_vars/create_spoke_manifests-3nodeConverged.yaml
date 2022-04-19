@@ -1,4 +1,5 @@
 vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+pull_secret_secret_name: assisted-deployment-pull-secret
 cluster_type: converged
 cluster_name: vsphere-ocp
 base_domain: kemo.labs
@@ -8,7 +9,7 @@ cluster_api_vip: 192.168.42.78
 cluster_load_balancer_vip: 192.168.42.79
 
 source_git_repo: https://gitea-gitea.apps.core-ocp.lab.kemo.network/user-1/openshift-ztp.git
-git_push_credentials_secret_name: "git-push-credentials"
+git_push_credentials_secret_name: "ztp-git-push-credentials"
 cluster_node_network_ipam: "static"
 cluster_node_cidr: "192.168.42.0/24"
 

@@ -181,11 +181,11 @@ cat <<EOF | oc create -f -
 apiVersion: v1
 kind: Secret
 metadata:
-  name: assisted-deployment-merged-pull-secret
+  name: tosinslab-jfrog-assisted-deployment-merged-pull-secret
   namespace: ztp-credentials
   annotations:
     reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
-    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: 'loe.*,.*ocp'
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: '.*'
     reflector.v1.k8s.emberstack.com/reflection-auto-enabled: 'true'
 type: Opaque
 stringData:
@@ -234,3 +234,7 @@ The recommended way to do this is via Ansible Tower - if you used the `./bootstr
 
 ## For Issues see Troubleshooting doc
 * [Troubleshooting Doc](deployment-examples/troubleshooting.md)
+* Toggle TLS Check on Assisted Image Service
+```
+oc annotate --overwrite AgentServiceConfig agent unsupported.agent-install.openshift.io/assisted-image-service-skip-verify-tls=true
+```

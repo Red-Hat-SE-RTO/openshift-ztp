@@ -30,4 +30,4 @@ spec:
         matchLabels:
           cluster-name: {{ cluster_name }}
   pullSecretRef:
-    name: assisted-deployment-pull-secret
+    name: {{ pull_secret_secret_name }}
