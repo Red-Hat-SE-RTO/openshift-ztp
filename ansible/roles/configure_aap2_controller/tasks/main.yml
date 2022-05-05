@@ -179,6 +179,158 @@
       when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
 
     ###############################################################################################
+    ## Proxy Config - HTTP
+    ###############################################################################################
+
+    - name: Configure the HTTP Proxy Configuration
+      when: proxy_config.http_proxy is defined
+      block:
+      - name: Get the current Job Settings
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: GET
+          validate_certs: no
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+        register: http_job_settings_response
+
+      - name: Create the update objects
+        set_fact:
+          big_http_proxy_object:
+            HTTP_PROXY: "{{ proxy_config.http_proxy }}"
+
+      - name: Set a new JSON object if the HTTP_PROXY key does not exists
+        set_fact:
+          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(big_http_proxy_object) }}"
+        when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
+
+      - name: Patch the API with the new JSON setting - HTTP_PROXY
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: PATCH
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+          body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
+          body_format: json
+          validate_certs: no
+        register: job_settings_patch_response
+        when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
+
+    ###############################################################################################
+    ## Proxy Config - HTTPS
+    ###############################################################################################
+
+    - name: Configure the HTTPS Proxy Configuration
+      when: proxy_config.https_proxy is defined
+      block:
+      - name: Get the current Job Settings
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: GET
+          validate_certs: no
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+        register: http_job_settings_response
+
+      - name: Create the update objects
+        set_fact:
+          big_https_proxy_object:
+            HTTPS_PROXY: "{{ proxy_config.https_proxy }}"
+
+      - name: Set a new JSON object if the HTTPS_PROXY key does not exists
+        set_fact:
+          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(big_https_proxy_object) }}"
+        when: http_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
+
+      - name: Patch the API with the new JSON setting - HTTP_PROXY
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: PATCH
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+          body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
+          body_format: json
+          validate_certs: no
+        register: job_settings_patch_response
+        when: http_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
+
+    ###############################################################################################
+    ## Proxy Config - http
+    ###############################################################################################
+
+    - name: Configure the HTTP Proxy Configuration
+      when: proxy_config.http_proxy is defined
+      block:
+      - name: Get the current Job Settings
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: GET
+          validate_certs: no
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+        register: http_job_settings_response
+
+      - name: Create the update objects
+        set_fact:
+          http_proxy_object:
+            http_proxy: "{{ proxy_config.http_proxy }}"
+
+      - name: Set a new JSON object if the http_proxy key does not exists
+        set_fact:
+          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(http_proxy_object) }}"
+        when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
+
+      - name: Patch the API with the new JSON setting - http_proxy
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: PATCH
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+          body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
+          body_format: json
+          validate_certs: no
+        register: job_settings_patch_response
+        when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
+
+    ###############################################################################################
+    ## Proxy Config - https
+    ###############################################################################################
+
+    - name: Configure the https Proxy Configuration
+      when: proxy_config.https_proxy is defined
+      block:
+      - name: Get the current Job Settings
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: GET
+          validate_certs: no
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+        register: http_job_settings_response
+
+      - name: Create the update objects
+        set_fact:
+          https_proxy_object:
+            https_proxy: "{{ proxy_config.https_proxy }}"
+
+      - name: Set a new JSON object if the https_proxy key does not exists
+        set_fact:
+          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(https_proxy_object) }}"
+        when: http_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
+
+      - name: Patch the API with the new JSON setting - https_proxy
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: PATCH
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+          body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
+          body_format: json
+          validate_certs: no
+        register: job_settings_patch_response
+        when: http_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
+
+    ###############################################################################################
     ## Organization
     ###############################################################################################
 

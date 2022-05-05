@@ -52,6 +52,12 @@ The configuration playbook will do the following:
 ansible-playbook 2_configure.yaml
 ```
 
+Additionally, you can pass Outbound Proxy configuration to the configuration playbook if required:
+
+```bash
+ansible-playbook -e "@example_proxy_config.yaml" 2_configure.yaml
+```
+
 ### Configure the Hub Cluster - Create Credentials
 
 The `3_create_credentials.yaml` Playbook will create a set of credentials that will be needed to perform ZTP functions, such as:
