@@ -8,7 +8,7 @@
     operator_api_definition: ""
     operator_api_version: ""
 
-- name: Add the Gitea Operator CatalogSource
+- name: Add the RH GPTE Gitea Operator CatalogSource
   kubernetes.core.k8s:
     state: present
     apply: yes
@@ -17,12 +17,24 @@
   until: k8s_run is not failed
   delay: 10
   retries: 30
+  when: gitea_operator_source != "kenmoini-gitea"
+
+- name: Add Ken Moini's Gitea Operator CatalogSource
+  kubernetes.core.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', 'templates/kenmoini-gitea-catalogsource.yaml.j2' ) | from_yaml }}"
+  register: kemo_k8s_run
+  until: kemo_k8s_run is not failed
+  delay: 10
+  retries: 30
+  when: gitea_operator_source == "kenmoini-gitea"
 
 - name: Wait for the CatalogSource to sync
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1alpha1
     kind: CatalogSource
-    name: redhat-gpte-gitea
+    name: "{{ gitea_operator_source }}"
     namespace: openshift-marketplace
   register: cs_check
   retries: 200
@@ -47,6 +59,7 @@
     name: gitea-operator
     namespace: openshift-marketplace
   register: r_pm
+  until: r_pm.resources | length > 0
 
 - name: Set the latest CSV version for {{ gitea_operator_channel }} channel
   set_fact:

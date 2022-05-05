@@ -25,3 +25,18 @@ spec:
     name: {{ repo.name }}
     private: {{ repo.private }}
 {% endfor %}
+{% if proxy_config is defined %}
+  giteaEnvVars:
+{% if proxy_config.http_proxy is defined %}
+    - name: http_proxy
+      value: "{{ proxy_config.http_proxy }}"
+{% endif %}
+{% if proxy_config.https_proxy is defined %}
+    - name: https_proxy
+      value: "{{ proxy_config.https_proxy }}"
+{% endif %}
+{% if proxy_config.no_proxy is defined %}
+    - name: no_proxy
+      value: "{{ proxy_config.no_proxy }}"
+{% endif %}
+{% endif %}

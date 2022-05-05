@@ -10,6 +10,6 @@ spec:
   channel: {{ gitea_operator_channel }}
   installPlanApproval: Automatic
   name: gitea-operator
-  source: redhat-gpte-gitea
+  source: {{ gitea_operator_source }}
   sourceNamespace: openshift-marketplace
   startingCSV: {{ operator_csv_version }}

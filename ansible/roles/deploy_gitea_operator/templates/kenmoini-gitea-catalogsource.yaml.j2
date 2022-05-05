@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  creationTimestamp: null
+  name: kenmoini-gitea
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/kenmoini/gitea-catalog:latest
+  displayName: Gitea
+  publisher: Ken Moini
