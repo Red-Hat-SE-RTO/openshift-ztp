@@ -28,6 +28,18 @@ The following Playbook will take a fresh OpenShift 4.9+ cluster and deploy:
 ansible-playbook 1_deploy.yaml
 ```
 
+#### Using an Outbound Proxy
+
+If you require an outbound proxy for connectivity then you can specify it with an additional set of variables - an example can be found in the `example_proxy_config.yaml` file and included as such:
+
+```bash
+ansible-playbook -e "@example_proxy_config.yaml" 1_deploy.yaml
+```
+
+This will configure the workloads with the proxy configuration for those that do not inherit the cluster-wide proxy settings, such as the AAP2 Controller and Gitea.
+
+The Red Hat GPTE distributed Gitea operator currently does not support the needed capabilities to set the environmental variables on the Gitea container for proxy information - you can use the fork maintained by Ken Moini, as is the default currently.  You can switch to the RH GPTE distributed operator by setting the Ansible variable `gitea_operator_source: redhat-gpte-gitea`.
+
 ### Configure the Hub Cluster - Configure Operators & Workloads
 
 The configuration playbook will do the following:
