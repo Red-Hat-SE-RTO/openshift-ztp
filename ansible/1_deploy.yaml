@@ -31,12 +31,12 @@
 
   tasks:
     - name: Check for Helm
-      include_role: 
+      include_role:
         name: setup_helm
       when: deploy_reflector|bool or deploy_sealed_secrets|bool or deploy_hashicorp_vault|bool
 
     - name: Install Reflector for Secret management
-      include_role: 
+      include_role:
         name: deploy_reflector_chart
       when: deploy_reflector|bool
 
