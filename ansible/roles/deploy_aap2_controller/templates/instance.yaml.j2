@@ -43,3 +43,6 @@ spec:
   nodeport_port: 30080
   #postgres_data_path: /var/tmp
   postgres_storage_class: {{ aap_controller_storageclass_name }}
+{% if (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name != '') %}
+  bundle_cacert_secret: cluster-root-ca-aap2-bundle
+{% endif %}

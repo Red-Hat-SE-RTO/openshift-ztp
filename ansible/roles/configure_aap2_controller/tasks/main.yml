@@ -6,6 +6,13 @@
     src: "{{ subscription_manifest_path }}"
   register: manifest_file
 
+- name: Check to see if the cluster-wide certificates are set
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Proxy
+    name: cluster
+  register: r_cluster_root_ca_aap2
+
 - name: Get the AAP2 Controller Admin Secret
   kubernetes.core.k8s_info:
     api_version: v1
@@ -152,31 +159,46 @@
     ## Job Config
     ###############################################################################################
 
-    - name: Get the current Job Settings
-      uri:
-        url: "{{ aap2_route }}/api/v2/settings/jobs/"
-        method: GET
-        validate_certs: no
-        headers:
-          Authorization: "Bearer {{ login_response.json.token }}"
-      register: job_settings_response
+    - name: Disable Git SSL verification
+      block:
+      - name: Get the current Job Settings
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: GET
+          validate_certs: no
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+        register: job_settings_response
 
-    - name: Set a new JSON object if the GIT_SSL_NO_VERIFY key does not exists
-      set_fact:
-        job_settings_json: "{{ job_settings_response.json['AWX_TASK_ENV'] | combine({\"GIT_SSL_NO_VERIFY\": \"true\"}) }}"
-      when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
+      - name: Set a new JSON object if the GIT_SSL_NO_VERIFY key does not exists
+        set_fact:
+          job_settings_json: "{{ job_settings_response.json['AWX_TASK_ENV'] | combine({\"GIT_SSL_NO_VERIFY\": \"true\"}) }}"
+        when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
 
-    - name: Patch the API with the new JSON setting
-      uri:
-        url: "{{ aap2_route }}/api/v2/settings/jobs/"
-        method: PATCH
-        headers:
-          Authorization: "Bearer {{ login_response.json.token }}"
-        body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
-        body_format: json
-        validate_certs: no
-      register: job_settings_patch_response
-      when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
+      - name: Patch the API with the new JSON setting
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: PATCH
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+          body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
+          body_format: json
+          validate_certs: no
+        register: job_settings_patch_response
+        when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
+
+    - name: Disable the Ansible Galaxy SSL verification
+      block:
+      - name: Patch the API with the new JSON setting for disabling Galaxy SSL verification
+        uri:
+          url: "{{ aap2_route }}/api/v2/settings/jobs/"
+          method: PATCH
+          headers:
+            Authorization: "Bearer {{ login_response.json.token }}"
+          body: "{ \"GALAXY_IGNORE_CERTS\": true }"
+          body_format: json
+          validate_certs: no
+        register: galaxy_job_settings_patch_response
 
     ###############################################################################################
     ## Proxy Config - HTTP
@@ -384,6 +406,9 @@
         body_format: json
         validate_certs: no
       register: create_org_galaxy_creds_response
+      until: create_org_galaxy_creds_response is not failed
+      retries: 10
+      delay: 10
 
     ###############################################################################################
     ## Inventory
