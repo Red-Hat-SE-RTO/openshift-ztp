@@ -60,6 +60,8 @@
     namespace: openshift-marketplace
   register: r_pm
   until: r_pm.resources | length > 0
+  delay: 10
+  retries: 30
 
 - name: Set the latest CSV version for {{ gitea_operator_channel }} channel
   set_fact:
@@ -110,6 +112,34 @@
   until: k8s_run is not failed
   delay: 10
   retries: 30
+
+# ===============================================================================================
+# Add the custom Root CAs
+# ===============================================================================================
+
+- name: Check to see if the cluster-wide certificates are set
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Proxy
+    name: cluster
+  register: r_cluster_root_ca_gitea
+
+- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ gitea_operator_namespace }}"
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: cluster-root-ca-bundle
+        labels:
+          config.openshift.io/inject-trusted-cabundle: 'true'
+      data: {}
+  when: (r_cluster_root_ca_gitea.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_gitea.resources[0].spec.trustedCA.name != '')
 
 - name: Query the {{ gitea_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
