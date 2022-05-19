@@ -12,9 +12,9 @@ metadata:
 spec:
   ee_resource_requirements:
     limits:
-      cpu: 2000m
+      cpu: 1000m
     requests:
-      cpu: 500m
+      cpu: 250m
   create_preload_data: true
   route_tls_termination_mechanism: Edge
   garbage_collect_secrets: false
@@ -22,9 +22,9 @@ spec:
   projects_use_existing_claim: _No_
   task_resource_requirements:
     limits:
-      cpu: 2000m
+      cpu: 1000m
     requests:
-      cpu: 500m
+      cpu: 250m
   image_pull_policy: IfNotPresent
   projects_storage_size: 8Gi
   admin_email: {{ aap_controller_admin_email }}
@@ -33,9 +33,9 @@ spec:
   projects_storage_access_mode: ReadWriteOnce
   web_resource_requirements:
     limits:
-      cpu: 2000m
+      cpu: 1000m
     requests:
-      cpu: 500m
+      cpu: 250m
   projects_persistence: true
   replicas: 1
   admin_user: {{ aap_controller_admin_username }}
