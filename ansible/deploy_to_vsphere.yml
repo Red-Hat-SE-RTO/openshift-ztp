@@ -93,7 +93,7 @@
       validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
       datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
       datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
-      path: /ISOs
+      path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('/ISOs') }}"
       state: directory
 
   - name: Create a VM folder on given datacenter
@@ -103,7 +103,7 @@
       password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
       validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
       datacenter_name: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
-      folder_name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+      folder_name: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
       folder_type: vm
       state: present
 
@@ -121,7 +121,7 @@
       validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
       datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
       datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
-      path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+      path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
       state: absent
     ignore_errors: true
 
@@ -134,7 +134,7 @@
       src: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
       datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
       datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
-      path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+      path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
     ignore_errors: true
 
   - name: Delete local Discovery ISO
