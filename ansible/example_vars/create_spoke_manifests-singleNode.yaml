@@ -28,8 +28,8 @@ cluster_nodes:
   - name: sno-white
     type: sno-node
     # resource_pool is optional, define a Resource Pool for the VM
-    resource_pool: vsphere-cluster-rp
     vm:
+      resource_pool: vsphere-cluster-rp
       cpu_cores: 8
       cpu_sockets: 1
       cpu_threads: 1
