@@ -25,3 +25,9 @@ data:
   vsphere_network: {{ vcenter_network }}
 
   cluster_nodes: '{{ cluster_nodes | to_json }}'
+{% if vsphere_iso_folder is defined %}
+  vsphere_iso_folder: {{ vsphere_iso_folder }}
+{% endif %}
+{% if vsphere_vm_folder is defined %}
+  vsphere_vm_folder: {{ vsphere_vm_folder }}
+{% endif %}
