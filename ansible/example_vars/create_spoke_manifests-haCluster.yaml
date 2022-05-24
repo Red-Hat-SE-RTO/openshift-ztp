@@ -26,12 +26,16 @@ vcenter_datacenter: LabDC
 vcenter_cluster: LabCluster
 vcenter_datastore: nvme
 vcenter_network: VMNetwork
+#vsphere_iso_folder: OptionalFolderForISOs # defaults to /ISOs
+#vsphere_vm_folder: OptionalFolderForVMs # defaults to the cluster_name
 template_secrets: true
 
 cluster_nodes:
   - name: cp-one
     type: control-plane
     vm:
+      # resource_pool is optional, define a Resource Pool for the VM
+      #resource_pool: vsphere-cluster-rp
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -60,6 +64,8 @@ cluster_nodes:
   - name: cp-three
     type: control-plane
     vm:
+      # resource_pool is optional, define a Resource Pool for the VM
+      #resource_pool: vsphere-cluster-rp
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -75,6 +81,8 @@ cluster_nodes:
   - name: app-one
     type: application-node
     vm:
+      # resource_pool is optional, define a Resource Pool for the VM
+      #resource_pool: vsphere-cluster-rp
       cpu_cores: 6
       cpu_sockets: 1
       cpu_threads: 1

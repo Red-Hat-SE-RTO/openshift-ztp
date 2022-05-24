@@ -182,6 +182,8 @@ vcenter_datacenter: LabDC
 vcenter_datastore: nvme
 vcenter_cluster: LabCluster
 vcenter_network: VM Network
+#vsphere_iso_folder: OptionalFolderForISOs # defaults to /ISOs
+#vsphere_vm_folder: OptionalFolderForVMs # defaults to the cluster_name
 
 ###############################################################################
 ## Do not edit past this point unless you know what you're doing
