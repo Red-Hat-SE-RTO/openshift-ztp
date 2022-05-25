@@ -10,7 +10,7 @@
 - name: Setup VMWare network dictionary
   set_fact:
     networks: "{{ networks | default([]) + [{ 'name' : cluster_configmap_info.resources[0].data.vsphere_network, 'device_type' : 'vmxnet3', 'mac' : iface_item.mac_address }] }}"
-  loop: "{{ node_item.interfaces }}"
+  loop: "{{ node_item.network.interfaces }}"
   loop_control:
     loop_var: iface_item
 

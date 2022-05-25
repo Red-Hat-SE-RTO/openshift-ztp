@@ -16,7 +16,7 @@
 - name: Set the mac address list for this looped node item
   set_fact:
     node_mac_addresses: "{{ node_mac_addresses + [node_iface.mac_address] }}"
-  loop: "{{ node_item.interfaces }}"
+  loop: "{{ node_item.network.interfaces }}"
   loop_control:
     loop_var: node_iface
     label: "{{ node_iface.name }}"

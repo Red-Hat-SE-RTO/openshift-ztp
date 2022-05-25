@@ -15,7 +15,7 @@
   when: iface_item.mac_address is defined
   set_fact:
     mac_interfaces_count: "{{ (mac_interfaces_count|int + 1) }}"
-  loop: "{{ node_item.interfaces }}"
+  loop: "{{ node_item.network.interfaces }}"
   loop_control:
     loop_var: iface_item
 

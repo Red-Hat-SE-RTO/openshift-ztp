@@ -106,7 +106,7 @@
 
     - name: Create a total array of interfaces and set dynamic_mac to false
       set_fact:
-        cluster_interfaces: "{{ cluster_interfaces|default([]) + node_item.interfaces }}"
+        cluster_interfaces: "{{ cluster_interfaces|default([]) + node_item.network.interfaces }}"
         dynamic_mac: false
       loop: "{{ cluster_nodes }}"
       loop_control:

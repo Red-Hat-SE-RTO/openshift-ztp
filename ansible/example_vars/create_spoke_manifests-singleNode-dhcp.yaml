@@ -31,7 +31,8 @@ cluster_nodes:
       disks:
         - size: 240
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:50:56:68:47:10
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:50:56:68:47:10
+          dhcp: true

@@ -5,7 +5,7 @@
 - name: Setup VMWare network dictionary
   set_fact:
     networks: "{{ networks | default([]) + [{ 'name' : cluster_configmap_info.resources[0].data.vsphere_network, 'device_type' : 'vmxnet3' }] }}"
-  loop: "{{ node_item.interfaces }}"
+  loop: "{{ node_item.network.interfaces }}"
   loop_control:
     loop_var: iface_item
 
@@ -80,7 +80,7 @@
 #    msg: "{{ vm_guest_info }}"
 #
 #- name: Power on the VM if it has all interfaces defined with mac addresses
-#  when: mac_interfaces_count|int == node_item.interfaces|length
+#  when: mac_interfaces_count|int == node_item.network.interfaces|length
 #  community.vmware.vmware_guest:
 #    hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
 #    username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
@@ -95,7 +95,7 @@
 #    state: poweredon
 
 #- name: Get the VM Configuration and reconfigure NMState otherwise
-#  when: mac_interfaces_count|int != node_item.interfaces|length
+#  when: mac_interfaces_count|int != node_item.network.interfaces|length
 #  block:
 #
 #    - name: debug vm_guest_info

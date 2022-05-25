@@ -22,8 +22,8 @@ vcenter_datacenter: LabDC
 vcenter_cluster: LabCluster
 vcenter_datastore: nvme
 vcenter_network: VMNetwork
-vsphere_iso_folder: OptionalFolderForISOs # defaults to /ISOs
-vsphere_vm_folder: OptionalFolderForVMs # defaults to the cluster_name
+#vsphere_iso_folder: OptionalFolderForISOs # defaults to /ISOs
+#vsphere_vm_folder: OptionalFolderForVMs # defaults to the cluster_name
 template_secrets: true
 
 cluster_nodes:
@@ -39,15 +39,16 @@ cluster_nodes:
       disks:
         - size: 240
           name: boot
-    interfaces:
-      - name: ens192
-        #mac_address: 00:51:56:41:56:09
-        dhcp: false
-        ipv4:
-          - address: 192.168.42.71
-            prefix: 24
-        routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: ens192
-            table_id: 254
+    network:
+      interfaces:
+        - name: ens192
+          #mac_address: 00:51:56:41:56:09
+          dhcp: false
+          ipv4:
+            - address: 192.168.42.71
+              prefix: 24
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.42.1
+          next_hop_interface: ens192
+          table_id: 254

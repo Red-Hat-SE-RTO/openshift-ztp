@@ -43,10 +43,11 @@ cluster_nodes:
       disks:
         - size: 120
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:30
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:30
+          dhcp: true
   - name: cp-two
     type: control-plane
     vm:
@@ -57,10 +58,11 @@ cluster_nodes:
       disks:
         - size: 120
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:31
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:31
+          dhcp: true
   - name: cp-three
     type: control-plane
     vm:
@@ -73,10 +75,11 @@ cluster_nodes:
       disks:
         - size: 120
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:32
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:32
+          dhcp: true
 
   - name: app-one
     type: application-node
@@ -92,10 +95,11 @@ cluster_nodes:
           name: boot
         - size: 120
           name: odf
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:33
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:33
+          dhcp: true
   - name: app-two
     type: application-node
     vm:
@@ -108,10 +112,11 @@ cluster_nodes:
           name: boot
         - size: 120
           name: odf
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:34
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:34
+          dhcp: true
   - name: app-three
     type: application-node
     vm:
@@ -124,7 +129,8 @@ cluster_nodes:
           name: boot
         - size: 120
           name: odf
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:35
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:35
+          dhcp: true

@@ -42,10 +42,11 @@ cluster_nodes:
       disks:
         - size: 120
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:10
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:10
+          dhcp: true
   - name: node-two
     type: converged-node
     vm:
@@ -58,10 +59,11 @@ cluster_nodes:
       disks:
         - size: 120
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:11
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:11
+          dhcp: true
   - name: node-three
     type: converged-node
     vm:
@@ -74,7 +76,8 @@ cluster_nodes:
       disks:
         - size: 120
           name: boot
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:41:56:12
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:41:56:12
+          dhcp: true
