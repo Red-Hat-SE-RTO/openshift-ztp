@@ -12,9 +12,20 @@
     cluster_configmap:
       namespace: "{{ cluster_configmap_namespace }}"
       name: "{{ cluster_configmap_name }}"
+    # git_push_secret is required when using dynamic mac address as created by vSphere
+    #git_push_secret:
+    #  namespace: "{{ git_push_secret_namespace }}"
+    #  name: "{{ git_push_secret_name }}"
     auto_approve_hosts: true
+    agent_names: []
+    approved_agents: []
 
   tasks:
+
+  #===================================================================================
+  # Preflight
+  #===================================================================================
+
   - name: Preflight for Tower
     block:
     - name: Install needed pip modules
@@ -27,6 +38,10 @@
         extra_args: --upgrade
       delegate_to: localhost
     when: tower_job_id is defined
+
+  #===================================================================================
+  # Query the needed OpenShift objects
+  #===================================================================================
 
   - name: Query OpenShift for needed Configs & Secrets
     block:
@@ -43,6 +58,35 @@
         msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
       when: vsphere_secret.resources | length == 0
 
+    - name: Get the Git Push Secret
+      when: git_push_secret is defined
+      block:
+        - name: Get the Git Push Secret
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Secret
+            namespace: "{{ git_push_secret.namespace }}"
+            name: "{{ git_push_secret.name }}"
+          register: git_push_secret_object
+
+        - name: Fail if the Git Push Secret is not found
+          fail:
+            msg: "No Git Push Secret found! Looking for {{ git_push_secret.namespace }}/{{ git_push_secret.name }}"
+          when: git_push_secret_object.resources | length == 0
+
+    - name: Query vCenter for a connectivity test
+      community.vmware.vmware_datacenter_info:
+        hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+        username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
+        password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
+        validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+      register: vcenter_test_info
+
+    - name: Fail if the vCenter instance cannot be connected to
+      fail:
+        msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
+      when: vcenter_test_info.datacenter_info | length == 0
+
     - name: Get the Cluster Configuration
       kubernetes.core.k8s_info:
         api_version: v1
@@ -56,34 +100,31 @@
         msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
       when: cluster_configmap_info.resources | length == 0
 
-    - name: Query the RHACM OAS InfraEnv for the Discovery ISO
-      kubernetes.core.k8s_info:
-        api_version: agent-install.openshift.io/v1beta1
-        kind: InfraEnv
-        namespace: "{{ infraenv.namespace }}"
-        name: "{{ infraenv.name }}"
-      register: infraenv_info
-      retries: 30
-      delay: 10
-      until: infraenv_info.resources[0].status.isoDownloadURL != ""
-      ignore_errors: true
+    - name: Unmarshal the Cluster ConfigMap
+      set_fact:
+        cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
 
-  - name: Query vCenter for a connectivity test
-    community.vmware.vmware_datacenter_info:
-      hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
-      username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
-      password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
-    register: vcenter_test_info
+    - name: Create a total array of interfaces and set dynamic_mac to false
+      set_fact:
+        cluster_interfaces: "{{ cluster_interfaces|default([]) + [node_item.interfaces] }}"
+        dynamic_mac: false
+      loop: "{{ cluster_nodes }}"
+      loop_control:
+        loop_var: node_item
+        label: "{{ node_item.name }}"
 
-  - name: Fail if the vCenter instance cannot be connected to
-    fail:
-      msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
-    when: vcenter_test_info.datacenter_info | length == 0
+    - name: Loop through all of the interfaces and set dynamic_mac to true if there is no MAC address defined on an interface
+      set_fact:
+        dynamic_mac: true
+      loop: "{{ cluster_interfaces }}"
+      loop_control:
+        loop_var: interface_item
+        label: "{{ interface_item.name }}"
+      when: interface_item.mac_address is not defined
 
-  - name: Unmarshal the Cluster ConfigMap
-    set_fact:
-      cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
+  #===================================================================================
+  # Create infra organizational items
+  #===================================================================================
 
   - name: Create the ISOs directory on the datacenter/datastore
     community.vmware.vsphere_file:
@@ -107,51 +148,38 @@
       folder_type: vm
       state: present
 
-  - name: Download Discovery ISO
-    get_url:
-      url: "{{ infraenv_info.resources[0].status.isoDownloadURL }}"
-      dest: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
-      validate_certs: false
+  #===================================================================================
+  # Create infra when the cluster is using dynamic mac addresses
+  #===================================================================================
 
-  - name: Delete the previous iso if present
-    community.vmware.vsphere_file:
-      host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
-      username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
-      password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
-      datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
-      datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
-      path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
-      state: absent
-    ignore_errors: true
+  - name: Run loop divergence when dynamic mac addresses are used
+    when: dynamic_mac|bool
+    block:
+      - name: Create the VMs without a CDROM defined
+        include_tasks: tasks/create_vmware_infra_no_cdrom_mac.yml
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node_item
 
-  - name: Upload Discovery ISO to the target Cluster Host
-    community.vmware.vsphere_copy:
-      hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
-      username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
-      password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
-      src: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
-      datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
-      datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
-      path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
-    ignore_errors: true
+  #===================================================================================
+  # Create infra when the cluster is not using dynamic mac addresses
+  #===================================================================================
 
-  - name: Delete local Discovery ISO
-    file:
-      path: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
-      state: absent
+  - name: Process infrastructure when dynamic mac addresses are not used
+    when: not dynamic_mac|bool
+    block:
+      - name: Process ISO downloading and uploading
+        include_tasks: tasks/create_vmware_infra_iso.yml
 
-  - name: Set empty facts
-    set_fact:
-      agent_names: []
-      approved_agents: []
+      - name: Process VMs when dynamic mac addresses are not used
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node_item
+        include_tasks: tasks/create_vmware_infra.yml
 
-  - name: Process VMs
-    loop: "{{ cluster_nodes }}"
-    loop_control:
-      loop_var: node_item
-    include_tasks: tasks/create_vmware_infra.yml
+  #===========================================================
+  # Agent Approval, Metadata Setting
+  #===========================================================
 
   - name: Loop through Agents
     include_tasks: tasks/agent_loop_runner.yml
@@ -165,6 +193,10 @@
       loop_var: node_item
       label: "{{ node_item.name }}"
     when: cluster_configmap_info.resources[0].data.cluster_type != "sno"
+
+  #===========================================================
+  # Start Cluster Install
+  #===========================================================
 
   - name: Start the cluster install
     include_tasks: tasks/start_cluster_install.yml

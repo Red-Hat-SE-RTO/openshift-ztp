@@ -1,11 +1,10 @@
 ---
-
 - name: Include common create vmware infra tasks
   include_tasks: tasks/create_vmware_infra_common.yml
 
 - name: Setup VMWare network dictionary
   set_fact:
-    networks: "{{ networks | default([]) + [{ 'name' : cluster_configmap_info.resources[0].data.vsphere_network, 'device_type' : 'vmxnet3', 'mac' : iface_item.mac_address|default('') }] }}"
+    networks: "{{ networks | default([]) + [{ 'name' : cluster_configmap_info.resources[0].data.vsphere_network, 'device_type' : 'vmxnet3' }] }}"
   loop: "{{ node_item.interfaces }}"
   loop_control:
     loop_var: iface_item
@@ -29,13 +28,13 @@
       memory_mb: "{{ node_item.vm.memory }}"
       num_cpu_cores_per_socket : "{{ node_item.vm.cpu_cores * node_item.vm.cpu_threads|int }}"
       num_cpus : "{{ (node_item.vm.cpu_sockets|int * node_item.vm.cpu_cores|int * node_item.vm.cpu_threads|int ) }}"
-    cdrom:
-    - controller_number: 0
-      unit_number: 0
-      state: present
-      type: iso
-      iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] {{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
     networks: "{{ networks }}"
+    #cdrom:
+    #- controller_number: 0
+    #  unit_number: 0
+    #  state: present
+    #  type: iso
+    #  iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] {{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
 
 - name: Create VM when a resource pool is defined
   when: node_item.vm.resource_pool is defined
@@ -57,13 +56,13 @@
       memory_mb: "{{ node_item.vm.memory }}"
       num_cpu_cores_per_socket : "{{ node_item.vm.cpu_cores * node_item.vm.cpu_threads|int }}"
       num_cpus : "{{ (node_item.vm.cpu_sockets|int * node_item.vm.cpu_cores|int * node_item.vm.cpu_threads|int ) }}"
-    cdrom:
-    - controller_number: 0
-      unit_number: 0
-      state: present
-      type: iso
-      iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] {{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
     networks: "{{ networks }}"
+    #cdrom:
+    #- controller_number: 0
+    #  unit_number: 0
+    #  state: present
+    #  type: iso
+    #  iso_path: "[{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}] {{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
 
 - name: Get the VM Information
   community.vmware.vmware_guest_info:
