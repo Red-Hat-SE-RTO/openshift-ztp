@@ -20,6 +20,14 @@
     agent_names: []
     approved_agents: []
 
+  environment:
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+    no_proxy: "{{ no_proxy | default('') }}"
+    HTTP_PROXY: "{{ http_proxy | default('') }}"
+    HTTPS_PROXY: "{{ https_proxy | default('') }}"
+    NO_PROXY: "{{ no_proxy | default('') }}"
+  
   tasks:
 
   #===================================================================================
@@ -35,7 +43,7 @@
           - openshift==0.12.1
           - pyvmomi
           - jmespath
-        extra_args: --upgrade
+        extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
       delegate_to: localhost
     when: tower_job_id is defined
 

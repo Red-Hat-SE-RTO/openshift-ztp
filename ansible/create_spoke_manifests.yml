@@ -29,6 +29,14 @@
 
     node_boot_timeout: 300
 
+  environment:
+    http_proxy: "{{ proxy_config.http_proxy | default('') }}"
+    https_proxy: "{{ proxy_config.https_proxy | default('') }}"
+    no_proxy: "{{ proxy_config.no_proxy | default('') }}"
+    HTTP_PROXY: "{{ proxy_config.http_proxy | default('') }}"
+    HTTPS_PROXY: "{{ proxy_config.https_proxy | default('') }}"
+    NO_PROXY: "{{ proxy_config.no_proxy | default('') }}"
+  
   tasks:
   #######################################################
   ## Tower Preflight

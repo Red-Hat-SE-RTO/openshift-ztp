@@ -23,3 +23,7 @@ spec:
 
     cluster_configmap_namespace: {{ cluster_name }}
     cluster_configmap_name: {{ cluster_name }}-cluster-config
+
+    http_proxy: "{{ proxy_config.http_proxy | default('') }}"
+    https_proxy: "{{ proxy_config.https_proxy | default('') }}"
+    no_proxy: "{{ proxy_config.no_proxy | default('') }}"
