@@ -58,5 +58,5 @@ spec:
   interfaces:
 {% for iface in node_item.interfaces %}
     - name: {{ iface.name }}
-      macAddress: {{ iface.mac_address }}
+      macAddress: {{ iface.mac_address | default('MAC_NOT_DEFINED') }}
 {% endfor %}
