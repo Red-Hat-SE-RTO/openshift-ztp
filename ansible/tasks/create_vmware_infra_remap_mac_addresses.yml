@@ -1,0 +1,24 @@
+---
+
+- name: Get the VM Information
+  community.vmware.vmware_guest_info:
+    hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+    username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
+    password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
+    validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+    name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
+    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+    folder: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
+  register: vm_guest_info
+
+- name: debug vm_guest_info
+  debug:
+    msg: "{{ vm_guest_info }}"
+
+- name: debug vm_guest_info.instance
+  debug:
+    msg: "{{ vm_guest_info.instance }}"
+
+- name: debug vm_guest_info.instance
+  debug:
+    msg: "{{ vm_guest_info.instance }}"

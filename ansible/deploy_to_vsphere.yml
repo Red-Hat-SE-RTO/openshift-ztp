@@ -106,7 +106,7 @@
 
     - name: Create a total array of interfaces and set dynamic_mac to false
       set_fact:
-        cluster_interfaces: "{{ cluster_interfaces|default([]) + [node_item.interfaces] }}"
+        cluster_interfaces: "{{ cluster_interfaces|default([]) + node_item.interfaces }}"
         dynamic_mac: false
       loop: "{{ cluster_nodes }}"
       loop_control:
@@ -160,6 +160,27 @@
         loop: "{{ cluster_nodes }}"
         loop_control:
           loop_var: node_item
+
+      - name: Remap the MAC addresses on the interfaces and NMState Configs
+        include_tasks: tasks/create_vmware_infra_remap_mac_addresses.yml
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node_item
+          label: "{{ node_item.name }}"
+
+      - name: Pause for 5 seconds for the Assisted Service to regenerate the ISO
+        pause:
+          seconds: 5
+
+      - name: Process ISO downloading and uploading
+        include_tasks: tasks/create_vmware_infra_iso.yml
+
+      - name: Attach the ISOs to the VMs and boot
+        include_tasks: tasks/create_vmware_infra_attach_iso.yml
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node_item
+          label: "{{ node_item.name }}"
 
   #===================================================================================
   # Create infra when the cluster is not using dynamic mac addresses
