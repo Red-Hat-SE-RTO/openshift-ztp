@@ -40,7 +40,7 @@
           - kubernetes
           - openshift==0.12.1
           - jmespath
-        extra_args: --upgrade
+        extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
       delegate_to: localhost
 
     - name: Install needed packages in Ansible EE
