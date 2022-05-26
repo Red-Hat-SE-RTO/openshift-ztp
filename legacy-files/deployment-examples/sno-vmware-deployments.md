@@ -44,10 +44,11 @@ cluster_nodes:
           name: odf
         - size: 100
           name: odf
-    interfaces:
-      - name: ens192
-        mac_address: 00:50:56:68:47:10
-        dhcp: true
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:50:56:68:47:10
+          dhcp: true
 ```
 **Additional Settings**
 * Job Slicing `1`  
@@ -96,18 +97,19 @@ cluster_nodes:
           name: odf
         - size: 100
           name: odf
-    interfaces:
-      - name: ens192
-        mac_address: 00:51:56:42:06:91
-        dhcp: false
-        ipv4:
-          - address: 192.168.1.71
-            prefix: 24
-        routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.1.1
-            next_hop_interface: ens192
-            table_id: 254
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:51:56:42:06:91
+          dhcp: false
+          ipv4:
+            - address: 192.168.1.71
+              prefix: 24
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.1.1
+          next_hop_interface: ens192
+          table_id: 254
 ```
 
 ### VMWARE DHCP Static Configuration with Multi Nic - WIP
@@ -147,18 +149,19 @@ cluster_nodes:
           name: odf
         - size: 100
           name: odf
-    interfaces:
-      - name: ens192
-        mac_address: 00:50:56:68:47:10
-        dhcp: true
-      - name: ens224
-        mac_address: 00:51:56:42:06:91
-        ipv4:
-          - address: 192.168.10.21
-            prefix: 24
-        dhcp: false
-        state: up
-        type: ethernet
+    network:
+      interfaces:
+        - name: ens192
+          mac_address: 00:50:56:68:47:10
+          dhcp: true
+        - name: ens224
+          mac_address: 00:51:56:42:06:91
+          ipv4:
+            - address: 192.168.10.21
+              prefix: 24
+          dhcp: false
+          state: up
+          type: ethernet
 ```
 
 ## For Issues see Troubleshooting doc
