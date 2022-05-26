@@ -8,6 +8,62 @@
     name: version
   register: r_ocp_version
 
+- name: Check to see if the cluster-wide certificates and proxy config are set
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Proxy
+    name: cluster
+  register: r_cluster_proxy_config
+
+- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ acm_operator_namespace }}"
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: cluster-root-ca-bundle
+        labels:
+          config.openshift.io/inject-trusted-cabundle: 'true'
+      data: {}
+  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+  register: cm_k8s_run
+
+- name: Query the cluster-wide Root CAs ConfigMap
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ acm_operator_namespace }}"
+    name: cluster-root-ca-bundle
+  until: cm_k8s_info_run.resources | length > 0
+  register: cm_k8s_info_run
+  delay: 10
+  retries: 30
+
+- name: Copy data over to a secret formatted for Assisted Service
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: Secret
+    namespace: "{{ acm_operator_namespace }}"
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: root-ca
+      stringData:
+        ca.crt: "{{ cm_k8s_info_run.resources[0].data['ca-bundle.crt'] }}"
+  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+  register: cm_new_k8s_run
+  until: cm_new_k8s_run is not failed
+  delay: 10
+  retries: 30
+
 - name: Set cluster version
   set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"

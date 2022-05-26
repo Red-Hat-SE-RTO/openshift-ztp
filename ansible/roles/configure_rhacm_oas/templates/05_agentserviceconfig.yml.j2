@@ -6,6 +6,8 @@ metadata:
   ### This is the annotation that injects modifications in the Assisted Service pod
   annotations:
     unsupported.agent-install.openshift.io/assisted-service-configmap: "assisted-service-config"
+    unsupported.agent-install.openshift.io/assisted-image-service-skip-verify-tls: "true"
+    service.beta.openshift.io/inject-cabundle: "true"
 ###
 spec:
   databaseStorage:

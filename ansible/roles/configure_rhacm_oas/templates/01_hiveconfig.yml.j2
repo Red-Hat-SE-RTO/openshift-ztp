@@ -15,3 +15,7 @@ spec:
     featureSet: Custom
   logLevel: debug
   targetNamespace: hive
+{% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
+  additionalCertificateAuthoritiesSecretRef:
+    - name: root-ca
+{% endif %}
