@@ -257,6 +257,11 @@
         register: job_settings_patch_response
         when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
 
+      - name: Reset facts
+        set_fact:
+          job_settings_json: ""
+          http_job_settings_response: {}
+
     ###############################################################################################
     ## Proxy Config - HTTPS
     ###############################################################################################
@@ -271,7 +276,7 @@
           validate_certs: no
           headers:
             Authorization: "Bearer {{ login_response.json.token }}"
-        register: http_job_settings_response
+        register: https_job_settings_response
 
       - name: Create the update objects
         set_fact:
@@ -280,10 +285,10 @@
 
       - name: Set a new JSON object if the HTTPS_PROXY key does not exists
         set_fact:
-          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(big_https_proxy_object) }}"
-        when: http_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
+          job_settings_json: "{{ https_job_settings_response.json['AWX_TASK_ENV'] | combine(big_https_proxy_object) }}"
+        when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
 
-      - name: Patch the API with the new JSON setting - HTTP_PROXY
+      - name: Patch the API with the new JSON setting - HTTPS_PROXY
         uri:
           url: "{{ aap2_route }}/api/v2/settings/jobs/"
           method: PATCH
@@ -293,7 +298,12 @@
           body_format: json
           validate_certs: no
         register: job_settings_patch_response
-        when: http_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
+        when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
+
+      - name: Reset facts
+        set_fact:
+          job_settings_json: ""
+          https_job_settings_response: {}
 
     ###############################################################################################
     ## Proxy Config - NO_PROXY
@@ -318,8 +328,8 @@
 
       - name: Set a new JSON object if the NO_PROXY key does not exists
         set_fact:
-          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(big_no_proxy_object) }}"
-        when: http_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
+          job_settings_json: "{{ no_proxy_job_settings_response.json['AWX_TASK_ENV'] | combine(big_no_proxy_object) }}"
+        when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
 
       - name: Patch the API with the new JSON setting - NO_PROXY
         uri:
@@ -331,7 +341,12 @@
           body_format: json
           validate_certs: no
         register: job_settings_patch_response
-        when: http_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
+        when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
+
+      - name: Reset facts
+        set_fact:
+          job_settings_json: ""
+          no_proxy_job_settings_response: {}
 
     ###############################################################################################
     ## Proxy Config - http
@@ -371,6 +386,11 @@
         register: job_settings_patch_response
         when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
 
+      - name: Reset facts
+        set_fact:
+          job_settings_json: ""
+          http_job_settings_response: {}
+
     ###############################################################################################
     ## Proxy Config - https
     ###############################################################################################
@@ -385,7 +405,7 @@
           validate_certs: no
           headers:
             Authorization: "Bearer {{ login_response.json.token }}"
-        register: http_job_settings_response
+        register: https_job_settings_response
 
       - name: Create the update objects
         set_fact:
@@ -394,8 +414,8 @@
 
       - name: Set a new JSON object if the https_proxy key does not exists
         set_fact:
-          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(https_proxy_object) }}"
-        when: http_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
+          job_settings_json: "{{ https_job_settings_response.json['AWX_TASK_ENV'] | combine(https_proxy_object) }}"
+        when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
 
       - name: Patch the API with the new JSON setting - https_proxy
         uri:
@@ -407,7 +427,12 @@
           body_format: json
           validate_certs: no
         register: job_settings_patch_response
-        when: http_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
+        when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
+
+      - name: Reset facts
+        set_fact:
+          job_settings_json: ""
+          https_job_settings_response: {}
 
     ###############################################################################################
     ## Proxy Config - no_proxy
@@ -432,8 +457,8 @@
 
       - name: Set a new JSON object if the no_proxy key does not exists
         set_fact:
-          job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(no_proxy_object) }}"
-        when: http_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
+          job_settings_json: "{{ no_proxy_job_settings_response.json['AWX_TASK_ENV'] | combine(no_proxy_object) }}"
+        when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
 
       - name: Patch the API with the new JSON setting - no_proxy
         uri:
@@ -445,7 +470,12 @@
           body_format: json
           validate_certs: no
         register: job_settings_patch_response
-        when: http_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
+        when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
+
+      - name: Reset facts
+        set_fact:
+          job_settings_json: ""
+          no_proxy_job_settings_response: {}
 
     ###############################################################################################
     ## Organization
