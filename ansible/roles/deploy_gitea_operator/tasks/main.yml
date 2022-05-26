@@ -159,6 +159,24 @@
   retries: 30
   when: r_og_list.resources | length == 0
 
+- name: Create Operator RBAC
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', rbac_item) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  loop:
+    - "templates/subscription.yaml.j2"
+    - "templates/operator-rbac-clusterrole.yaml.j2"
+    - "templates/operator-rbac-rolebinding.yaml.j2"
+  loop_control:
+    loop_var: rbac_item
+
 - name: Create Operator subscription
   kubernetes.core.k8s:
     state: present
