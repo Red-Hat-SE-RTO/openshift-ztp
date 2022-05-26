@@ -30,15 +30,11 @@ ansible-playbook 1_deploy.yaml
 
 #### Using an Outbound Proxy
 
-If you require an outbound proxy for connectivity then you can specify it with an additional set of variables - an example can be found in the `example_proxy_config.yaml` file and included as such:
+If you require an outbound proxy for connectivity then the workloads should automatically pick them up from the cluster configuration.
 
-```bash
-ansible-playbook -e "@example_proxy_config.yaml" 1_deploy.yaml
-```
+The Red Hat GPTE distributed Gitea operator currently does not support the needed capabilities to set the environmental variables on the Gitea container for proxy information - you can use the fork maintained by Ken Moini, as is the default currently.
 
-This will configure the workloads with the proxy configuration for those that do not inherit the cluster-wide proxy settings, such as the AAP2 Controller and Gitea.
-
-The Red Hat GPTE distributed Gitea operator currently does not support the needed capabilities to set the environmental variables on the Gitea container for proxy information - you can use the fork maintained by Ken Moini, as is the default currently.  You can switch to the RH GPTE distributed operator by setting the Ansible variable `gitea_operator_source: redhat-gpte-gitea`.
+You can switch to the RH GPTE distributed operator by setting the Ansible variable `gitea_operator_source: redhat-gpte-gitea`.
 
 ### Configure the Hub Cluster - Configure Operators & Workloads
 
@@ -50,12 +46,6 @@ The configuration playbook will do the following:
 
 ```bash
 ansible-playbook 2_configure.yaml
-```
-
-Additionally, you can pass Outbound Proxy configuration to the configuration playbook if required:
-
-```bash
-ansible-playbook -e "@example_proxy_config.yaml" 2_configure.yaml
 ```
 
 ### Configure the Hub Cluster - Create Credentials
