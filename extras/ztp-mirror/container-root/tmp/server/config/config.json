@@ -1,0 +1,8 @@
+{
+  "assets": [  
+    {"src_url": "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live.x86_64.iso", "target_path": "/tmp/server/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live.x86_64.iso"},
+    {"src_url": "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live-rootfs.x86_64.img", "target_path": "/tmp/server/pub/openshift-v4/x86_64/dependencies/rhcos/4.9/latest/rhcos-live-rootfs.x86_64.img"},
+    {"src_url": "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.10/latest/rhcos-live.x86_64.iso", "target_path": "/tmp/server/pub/openshift-v4/x86_64/dependencies/rhcos/4.10/latest/rhcos-live.x86_64.iso"},
+    {"src_url": "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.10/latest/rhcos-live-rootfs.x86_64.img", "target_path": "/tmp/server/pub/openshift-v4/x86_64/dependencies/rhcos/4.10/latest/rhcos-live-rootfs.x86_64.img"}
+  ]
+}

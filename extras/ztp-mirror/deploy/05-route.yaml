@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ztp-mirror
+  namespace: ztp-mirror
+spec:
+  host: ztp-mirror-ztp-mirror.apps.core-ocp.lab.kemo.network
+  path: /
+  to:
+    kind: Service
+    name: ztp-mirror
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  wildcardPolicy: None

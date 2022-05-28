@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirror-server
+  namespace: ztp-mirror
+spec:
+  selector:
+    matchLabels:
+      app: mirror-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mirror-server
+    spec:
+      volumes:
+        - name: ztp-mirror
+          persistentVolumeClaim:
+            claimName: ztp-mirror
+        - name: mirror-config
+          configMap:
+            name: mirror-config
+        #- name: trusted-ca
+        #  configMap:
+        #    name: trusted-ca
+      containers:
+        - name: mirror-server
+          image: quay.io/kenmoini/http-mirror:latest
+          imagePullPolicy: Always
+          #env:
+          #  - name: HTTP_PROXY
+          #    value: http://192.168.51.1:3128/
+          #  - name: HTTPS_PROXY
+          #    value: http://192.168.51.1:3128/
+          #  - name: NO_PROXY
+          #    value: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost"
+          #  - name: http_proxy
+          #    value: http://192.168.51.1:3128/
+          #  - name: https_proxy
+          #    value: http://192.168.51.1:3128/
+          #  - name: no_proxy
+          #    value: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost"
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "500m"
+              memory: "500Mi"
+          volumeMounts:
+            - name: mirror-config
+              mountPath: /tmp/server/config
+            - name: ztp-mirror
+              mountPath: /tmp/server/pub
+            #- mountPath: /etc/pki/ca-trust/extracted/pem
+            #  name: trusted-ca
+            #  readOnly: true
