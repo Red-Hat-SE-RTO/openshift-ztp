@@ -1,6 +1,29 @@
 ---
 # tasks file for configure_rhacm_oas
 
+- name: Set fact for asset URL
+  when: not use_ztp_mirror|bool
+  set_fact:
+    asset_url: "mirror.openshift.com"
+
+- name: Set facts for when using the ZTP Mirror
+  when: use_ztp_mirror|bool
+  block:
+    - name: get route subdomain
+      k8s_info:
+        kind: IngressController
+        name: default
+        namespace: openshift-ingress-operator
+      register: route_subdomain_r
+
+    - name: set route_subdomain
+      set_fact:
+        route_subdomain: "{{ route_subdomain_r.resources[0].status.domain }}"
+
+    - name: Set fact for asset URL
+      set_fact:
+        asset_url: "ztp-mirror-ztp-mirror.{{ route_subdomain }}"
+
 - name: Get Cluster Version
   kubernetes.core.k8s_info:
     api_version: config.openshift.io/v1

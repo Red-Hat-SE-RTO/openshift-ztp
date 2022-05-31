@@ -38,7 +38,7 @@ spec:
 {% endfor %}
     - openshiftVersion: "{{ version }}"
       version: "{{ ns.version }}"
-      url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live.x86_64.iso"
-      rootFSUrl: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live-rootfs.x86_64.img"
+      url: "https://{{ asset_url }}/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live.x86_64.iso"
+      rootFSUrl: "https://{{ asset_url }}/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live-rootfs.x86_64.img"
       cpuArchitecture: x86_64
 {% endfor %}
