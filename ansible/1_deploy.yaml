@@ -16,6 +16,7 @@
     deploy_nfd: false
     deploy_lso: true
     deploy_odf: true
+    deploy_http_mirror: true
     deploy_rhacm: true
     deploy_gitea: true
     deploy_rh_gitops: true
@@ -75,6 +76,11 @@
       include_role:
         name: deploy_odf_operator
       when: deploy_odf|bool
+
+    - name: Deploy the ZTP HTTP Mirror
+      include_role:
+        name: deploy_http_mirror
+      when: deploy_http_mirror|bool
 
     - name: Install Red Hat Advanced Cluster Management
       include_role:

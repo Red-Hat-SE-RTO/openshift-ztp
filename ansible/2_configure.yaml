@@ -9,6 +9,7 @@
     configure_rhacm: true
     configure_aap2_controller: true
     configure_rh_gitops: true
+    use_ztp_mirror: true
 
     ## Path to the OpenShift Pull Secret
     pull_secret_path: ~/rh-ocp-pull-secret.json
