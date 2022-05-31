@@ -1,0 +1,25 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgresql
+  namespace: {{ aap_operator_namespace }}
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/name: postgres-13
+spec:
+  clusterIP: None
+  ipFamilies:
+    - IPv4
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  internalTrafficPolicy: Cluster
+  clusterIPs:
+    - None
+  type: ClusterIP
+  ipFamilyPolicy: SingleStack
+  sessionAffinity: None
+  selector:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/name: postgres-13

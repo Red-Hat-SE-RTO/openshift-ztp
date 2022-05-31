@@ -98,7 +98,7 @@
     api_version: config.openshift.io/v1
     kind: Proxy
     name: cluster
-  register: r_cluster_proxy_config
+  register: r_cluster_root_ca_aap2
 
 - name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
   kubernetes.core.k8s:
@@ -115,7 +115,7 @@
         labels:
           config.openshift.io/inject-trusted-cabundle: 'true'
       data: {}
-  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+  when: (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name != '')
   register: cm_k8s_run
 
 - name: Query the cluster-wide Root CAs ConfigMap
@@ -143,7 +143,7 @@
         name: cluster-root-ca-aap2-bundle
       stringData:
         bundle-ca.crt: "{{ cm_k8s_info_run.resources[0].data['ca-bundle.crt'] }}"
-  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+  when: (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name != '')
   register: cm_new_k8s_run
   until: cm_new_k8s_run is not failed
 
@@ -152,19 +152,36 @@
 # ===============================================================================================
 
 #- name: Set the fact for httpProxy
-#  when: (r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpProxy != '')
+#  when: (r_cluster_root_ca_aap2.resources[0].status.httpProxy is defined) and (r_cluster_root_ca_aap2.resources[0].status.httpProxy != '')
 #  set_fact:
-#    cluster_http_proxy: "{{ r_cluster_proxy_config.resources[0].status.httpProxy }}"
+#    cluster_http_proxy: "{{ r_cluster_root_ca_aap2.resources[0].status.httpProxy }}"
 #
 #- name: Set the fact for httpsProxy
-#  when: (r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpsProxy != '')
+#  when: (r_cluster_root_ca_aap2.resources[0].status.httpsProxy is defined) and (r_cluster_root_ca_aap2.resources[0].status.httpsProxy != '')
 #  set_fact:
-#    cluster_https_proxy: "{{ r_cluster_proxy_config.resources[0].status.httpsProxy }}"
+#    cluster_https_proxy: "{{ r_cluster_root_ca_aap2.resources[0].status.httpsProxy }}"
 #
 #- name: Set the fact for noProxy
-#  when: (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '')
+#  when: (r_cluster_root_ca_aap2.resources[0].status.noProxy is defined) and (r_cluster_root_ca_aap2.resources[0].status.noProxy != '')
 #  set_fact:
-#    cluster_no_proxy: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
+#    cluster_no_proxy: "{{ r_cluster_root_ca_aap2.resources[0].status.noProxy }}"
+
+- name: Deploy the unmanaged PostgreSQL instance
+  kubernetes.core.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  loop:
+    - templates/pgsql-secret.yaml.j2
+    - templates/pgsql-service.yaml.j2
+    - templates/pgsql-statefulset.yaml.j2
+  loop_control:
+    loop_var: template_item
+  
 
 - name: Query the {{ aap_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
