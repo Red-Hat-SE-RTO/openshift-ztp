@@ -23,6 +23,9 @@ spec:
         #- name: trusted-ca
         #  configMap:
         #    name: trusted-ca
+        #    items:
+        #      - key: ca-bundle.crt
+        #        path: tls-ca-bundle.pem
       containers:
         - name: mirror-server
           image: quay.io/kenmoini/http-mirror:latest
