@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirror-server
+  namespace: {{ http_mirror_operator_namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: mirror-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mirror-server
+    spec:
+      volumes:
+        - name: ztp-mirror
+          persistentVolumeClaim:
+            claimName: ztp-mirror
+        - name: mirror-config
+          configMap:
+            name: mirror-config
+{% if (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name != '') %}
+        - name: trusted-ca
+          configMap:
+            name: trusted-ca
+            items:
+              - key: ca-bundle.crt
+                path: tls-ca-bundle.pem
+{% endif %}
+      containers:
+        - name: mirror-server
+          image: quay.io/kenmoini/http-mirror:latest
+          imagePullPolicy: Always
+{% if cluster_wide_http_proxy is defined or cluster_wide_https_proxy is defined or cluster_wide_no_proxy is defined %}
+          env:
+{% if cluster_wide_http_proxy is defined %}
+            - name: HTTP_PROXY
+              value: "{{ cluster_wide_http_proxy }}"
+            - name: http_proxy
+              value: "{{ cluster_wide_http_proxy }}"
+{% endif %}
+{% if cluster_wide_https_proxy is defined %}
+            - name: HTTPS_PROXY
+              value: "{{ cluster_wide_https_proxy }}"
+            - name: https_proxy
+              value: "{{ cluster_wide_https_proxy }}"
+{% endif %}
+{% if cluster_wide_no_proxy is defined %}
+            - name: NO_PROXY
+              value: "{{ cluster_wide_no_proxy }}"
+            - name: no_proxy
+              value: "{{ cluster_wide_no_proxy }}"
+{% endif %}
+{% endif %}
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "500m"
+              memory: "500Mi"
+          volumeMounts:
+            - name: mirror-config
+              mountPath: /tmp/server/config
+            - name: ztp-mirror
+              mountPath: /tmp/server/pub
+{% if (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name != '') %}
+            - mountPath: /etc/pki/ca-trust/extracted/pem
+              name: trusted-ca
+              readOnly: true
+{% endif %}

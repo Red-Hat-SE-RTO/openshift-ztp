@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mirror-config
+  namespace: ztp-mirror
+data:
+  config.json: |-
+    {
+      "assets": [
+{% for version in mirrored_versions %}
+        {"src_url": "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live.x86_64.iso", "target_path": "/tmp/server/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live.x86_64.iso"},
+        {"src_url": "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live-rootfs.x86_64.img", "target_path": "/tmp/server/pub/openshift-v4/x86_64/dependencies/rhcos/{{ version }}/latest/rhcos-live-rootfs.x86_64.img"}{%- if not loop.last %},{% endif %}
+{% endfor %}
+      ]
+    }

@@ -1,0 +1,7 @@
+---
+# defaults file for deploy_http_mirror
+http_mirror_operator_namespace: ztp-mirror
+
+mirrored_versions:
+  - "4.9"
+  - "4.10"
