@@ -5,18 +5,35 @@
 ## Gitea
 ###############################################################################################
 
-- name: Get the Gitea Route
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Route
-    namespace: gitea
-    name: gitea
-  register: gitea_route
+- name: Use Internal Gitea
+  when: git_repo_url is not defined
+  block:
 
-- name: Set the Git Repo fact if defined
-  set_fact:
-    git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
-  when: gitea_route.resources | length > 0 and git_repo_url is not defined
+    - name: Use Internal Gitea - Get the Gitea Service
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Service
+        namespace: gitea
+        name: gitea
+      register: gitea_service
+
+    - name: Use Internal Gitea - Get the Gitea Route
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Route
+        namespace: gitea
+        name: gitea
+      register: gitea_route
+
+    - name: Use Internal Gitea - Set the Git Repo fact to the Route
+      set_fact:
+        git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
+      when: gitea_route.resources | length > 0 and not use_services_not_routes|bool
+
+    - name: Use Internal Gitea - Set the Git Repo fact to the Service
+      set_fact:
+        git_repo_url: "http://gitea.gitea.svc.cluster.local:3000/user-1/openshift-ztp.git"
+      when: gitea_service.resources | length > 0 and use_services_not_routes|bool
 
 ###############################################################################################
 ## ArgoCD

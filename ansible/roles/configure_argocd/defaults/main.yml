@@ -4,3 +4,5 @@ argocd_namespace: openshift-gitops
 argocd_instance_name: openshift-gitops
 
 argocd_appproject_name: ztp-clusters
+
+use_services_not_routes: false
