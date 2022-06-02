@@ -8,6 +8,8 @@ spec:
     matchLabels:
       app: mirror-server
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -30,7 +32,7 @@ spec:
 {% endif %}
       containers:
         - name: mirror-server
-          image: quay.io/kenmoini/http-mirror:latest
+          image: quay.io/kenmoini/go-http-mirror:latest
           imagePullPolicy: Always
 {% if cluster_wide_http_proxy is defined or cluster_wide_https_proxy is defined or cluster_wide_no_proxy is defined %}
           env:
@@ -64,7 +66,7 @@ spec:
               memory: "500Mi"
           volumeMounts:
             - name: mirror-config
-              mountPath: /tmp/server/config
+              mountPath: /etc/ztp-mirror
             - name: ztp-mirror
               mountPath: /tmp/server/pub
 {% if (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name != '') %}
