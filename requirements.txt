@@ -1,4 +1,6 @@
-openshift == 0.12.1
 kubernetes
-pyvmomi
 jmespath
+jsonpatch
+openshift
+pyvmomi
+PyYAML
