@@ -29,6 +29,9 @@
 
     node_boot_timeout: 300
 
+    root_ca_bundle_configmap_name: cluster-root-ca-bundle
+    pass_proxy_to_spoke_from_hub: true
+
   environment:
     http_proxy: "{{ proxy_config.http_proxy | default('') }}"
     https_proxy: "{{ proxy_config.https_proxy | default('') }}"
@@ -41,7 +44,7 @@
   
   tasks:
   #######################################################
-  ## Tower Preflight
+  ## Tower Preflight - this can be skipped if using the quay.io/kenmoini/git-aap2-ee execution environment
 #  - name: Preflight for Tower
 #    block:
 #    - name: Install needed pip modules if running in Tower
@@ -148,6 +151,57 @@
   ## OpenShift Query Preflights
   - name: Query OpenShift for needed Configs & Secrets without ssh key
     block:
+
+    - name: Check to see if the cluster-wide certificates and proxy config are set
+      when: query_hub_for_root_ca|bool or pass_proxy_to_spoke_from_hub|bool
+      kubernetes.core.k8s_info:
+        api_version: config.openshift.io/v1
+        kind: Proxy
+        name: cluster
+      register: r_cluster_proxy_config
+
+      # ===============================================================================================
+      # Setup Root CA Facts
+      # ===============================================================================================
+      
+    - name: Handle Root CA Config
+      when: query_hub_for_root_ca|bool
+      block:
+        - name: Query OpenShift for the Root CA ConfigMap
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: ConfigMap
+            name: "{{ root_ca_bundle_configmap_name }}"
+          register: r_root_ca_config
+          when: r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined and r_cluster_proxy_config.resources[0].spec.trustedCA.name != ""
+        
+        - name: Set the Root CA var as a base64 encoded string
+          set_fact:
+            root_ca_bundle_pem: "{{ r_root_ca_config.resources[0].data['ca-bundle.crt'] | b64encode }}"
+
+      # ===============================================================================================
+      # Setup Proxy Facts
+      # ===============================================================================================
+      
+    - name: Handle Proxy Config
+      when: pass_proxy_to_spoke_from_hub|bool
+      block:
+
+        - name: Set the fact for httpProxy
+          when: (r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpProxy != '')
+          set_fact:
+            spoke_httpProxy: "{{ r_cluster_proxy_config.resources[0].status.httpProxy }}"
+
+        - name: Set the fact for httpsProxy
+          when: (r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpsProxy != '')
+          set_fact:
+            spoke_httpsProxy: "{{ r_cluster_proxy_config.resources[0].status.httpsProxy }}"
+
+        - name: Set the fact for noProxy
+          when: (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '')
+          set_fact:
+            spoke_noProxy: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
+
     - name: Get the Git Credentials
       kubernetes.core.k8s_info:
         api_version: v1
