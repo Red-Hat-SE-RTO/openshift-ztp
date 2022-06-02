@@ -3,6 +3,7 @@
 aap2_operator_namespace: ansible-automation-platform
 aap2_controller_name: ac-tower
 aap2_admin_secret_name: "{{ aap2_controller_name }}-admin-password"
+aap2_serviceaccount_name: "{{ aap2_controller_name }}"
 
 aap2_organization: ZTP Org
 aap2_inventory_name: localhost-ee
@@ -10,6 +11,7 @@ aap2_project_name: vSphere ZTP
 aap2_application_name: ZTP RHACM
 aap2_scm_credential_name: SCM Credentials
 aap2_execution_environments_name: GitNPip
+aap2_k8s_credential_name: Local Hub Cluster
 
 aap2_job_template_create_infra_name: create-vsphere-infra-ztp
 aap2_job_template_create_infra_playbook: ansible/deploy_to_vsphere.yml
