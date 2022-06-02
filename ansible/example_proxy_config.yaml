@@ -1,5 +1,5 @@
 ---
-proxy_config:
-  http_proxy: http://192.168.51.1:3128/
-  https_proxy: http://192.168.51.1:3128/
-  no_proxy: .svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost,.apps.core-ocp.lab.kemo.network
+
+http_proxy: http://192.168.51.1:3128/
+https_proxy: http://192.168.51.1:3128/
+no_proxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost,.apps.core-ocp.lab.kemo.network,localhost,127.0.0.1"
