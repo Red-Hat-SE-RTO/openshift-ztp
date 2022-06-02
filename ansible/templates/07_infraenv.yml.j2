@@ -22,7 +22,9 @@ spec:
   sshAuthorizedKey: "{{ ssh_public_key }}"
   pullSecretRef:
     name: {{ pull_secret_secret_name }}
-  #ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/someconfig", "contents": {"source": "data:text/plain;base64,aGVscGltdHJhcHBlZGluYXN3YWdnZXJzcGVj"}}]}}'
+{% if root_ca_bundle_pem is defined %}
+  ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "overwrite": true, "contents": {"source": "data:text/plain;base64,{{ root_ca_bundle_pem }}"}}]}}'
+{% endif %}
   nmStateConfigLabelSelector:
     matchLabels:
       cluster-name: {{ cluster_name }}
