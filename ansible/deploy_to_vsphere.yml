@@ -34,18 +34,19 @@
   # Preflight
   #===================================================================================
 
-  - name: Preflight for Tower
-    block:
-    - name: Install needed pip modules
-      pip:
-        name:
-          - kubernetes
-          - openshift==0.12.1
-          - pyvmomi
-          - jmespath
-        extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
-      delegate_to: localhost
-    when: tower_job_id is defined
+  ## Tower Preflight - this can be skipped if using the quay.io/kenmoini/git-aap2-ee execution environment
+  #- name: Preflight for Tower
+  #  block:
+  #  - name: Install needed pip modules
+  #    pip:
+  #      name:
+  #        - kubernetes
+  #        - openshift==0.12.1
+  #        - pyvmomi
+  #        - jmespath
+  #      extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
+  #    delegate_to: localhost
+  #  when: tower_job_id is defined
 
   #===================================================================================
   # Query the needed OpenShift objects
