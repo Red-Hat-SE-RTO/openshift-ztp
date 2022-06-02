@@ -9,6 +9,7 @@ aap2_inventory_name: localhost-ee
 aap2_project_name: vSphere ZTP
 aap2_application_name: ZTP RHACM
 aap2_scm_credential_name: SCM Credentials
+aap2_execution_environments_name: GitNPip
 
 aap2_job_template_create_infra_name: create-vsphere-infra-ztp
 aap2_job_template_create_infra_playbook: ansible/deploy_to_vsphere.yml

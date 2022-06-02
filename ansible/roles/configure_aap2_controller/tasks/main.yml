@@ -161,18 +161,36 @@
     ## Gitea
     ###############################################################################################
 
-    - name: Get the Gitea Route
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Route
-        namespace: gitea
-        name: gitea
-      register: gitea_route
+    - name: Use Internal Gitea
+      when: git_repo_url is not defined
+      block:
 
-    - name: Set the Git Repo fact if defined
-      set_fact:
-        git_repo: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
-      when: gitea_route.resources | length > 0 and git_repo is not defined
+        - name: Use Internal Gitea - Get the Gitea Service
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Service
+            namespace: gitea
+            name: gitea
+          register: gitea_service
+
+        - name: Use Internal Gitea - Get the Gitea Route
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Route
+            namespace: gitea
+            name: gitea
+          register: gitea_route
+
+        - name: Use Internal Gitea - Set the Git Repo fact to the Route
+          set_fact:
+            git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
+          when: gitea_route.resources | length > 0 and not use_services_not_routes|bool
+
+        - name: Use Internal Gitea - Set the Git Repo fact to the Service
+          set_fact:
+            git_repo_url: "http://gitea.gitea.svc.cluster.local:3000/user-1/openshift-ztp.git"
+          when: gitea_service.resources | length > 0 and use_services_not_routes|bool
+
 
     ###############################################################################################
     ## Job Config
@@ -536,6 +554,44 @@
       delay: 10
 
     ###############################################################################################
+    ## Execution Environment
+    ###############################################################################################
+
+    - name: Check for an Execution Environment
+      uri:
+        url: "{{ aap2_route }}/api/v2/execution_environments/?name={{ aap2_execution_environments_name|urlencode() }}"
+        method: GET
+        validate_certs: no
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+      register: execution_environments_response
+
+    - name: Set fact for Execution Environment ID when existing
+      set_fact:
+        aap2_execution_environments_id: "{{ execution_environments_response.json.results[0].id }}"
+        aap2_execution_environments: "{{ execution_environments_response.json.results[0] }}"
+      when: execution_environments_response.json.results[0].id is defined and execution_environments_response.json.count > 0
+
+    - name: Create the Execution Environment if it does not exist
+      when: execution_environments_response.json.count == 0
+      uri:
+        url: "{{ aap2_route }}/api/v2/execution_environments/"
+        method: POST
+        status_code: 201
+        headers:
+          Authorization: "Bearer {{ login_response.json.token }}"
+        body: '{ "name": "{{ aap2_execution_environments_name }}", "description": "EE with Git and Pip modules for ZTP preinstalled", "organization": null, "image": "quay.io/kenmoini/git-aap2-ee:latest", "credential": null, "pull": "missing" }'
+        body_format: json
+        validate_certs: no
+      register: create_execution_environments_response
+
+    - name: Set fact for Execution Environment ID when created
+      set_fact:
+        aap2_execution_environments_id: "{{ create_execution_environments_response.json.id }}"
+        aap2_execution_environments: "{{ create_execution_environments_response.json }}"
+      when: create_execution_environments_response.json.id is defined and execution_environments_response.json.count == 0
+
+    ###############################################################################################
     ## Inventory
     ###############################################################################################
 
@@ -673,7 +729,7 @@
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
         body_format: json
-        body: '{ "name": "{{ aap2_project_name }}", "description": "{{ aap2_project_description|default("") }}", "organization": {{ aap2_organization_id }}, "scm_type": "git", "scm_url": "{{ git_repo }}", "scm_clean": true, "scm_track_submodules": false, "scm_delete_on_update": false, "credential": {{ aap2_scm_credential_id }}, "timeout": 0, "scm_update_on_launch": true, "scm_update_cache_timeout": 0, "allow_override": false, "default_environment": null }'
+        body: '{ "name": "{{ aap2_project_name }}", "description": "{{ aap2_project_description|default("") }}", "organization": {{ aap2_organization_id }}, "scm_type": "git", "scm_url": "{{ git_repo_url }}", "scm_clean": true, "scm_track_submodules": false, "scm_delete_on_update": false, "credential": {{ aap2_scm_credential_id }}, "timeout": 0, "scm_update_on_launch": true, "scm_update_cache_timeout": 0, "allow_override": false, "default_environment": null }'
       register: create_project_response
 
     - name: Set Project ID when created
@@ -925,6 +981,7 @@
           #- "AAP 2 Project: {{ aap2_project }}"
           - "AAP 2 Application ID: {{ aap2_application_id }}"
           #- "AAP 2 Application: {{ aap2_application }}"
+          - "AAP 2 Execution Environment ID: {{ aap2_execution_environments_id }}"
 
   always:
     - name: Delete on-demand generated OAuth token
