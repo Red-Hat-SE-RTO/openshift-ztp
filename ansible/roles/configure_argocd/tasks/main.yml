@@ -6,7 +6,7 @@
 ###############################################################################################
 
 - name: Use Internal Gitea
-  when: git_repo_url is not defined
+  when: git_repo_url is not defined or git_repo_url == ""
   block:
 
     - name: Use Internal Gitea - Get the Gitea Service

@@ -206,7 +206,7 @@
     ###############################################################################################
 
     - name: Use Internal Gitea
-      when: git_repo_url is not defined
+      when: git_repo_url is not defined or git_repo_url == ""
       block:
 
         - name: Use Internal Gitea - Get the Gitea Service
@@ -268,6 +268,12 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
+        
+        - name: Reset facts
+          set_fact:
+            job_settings_json: ""
+            job_settings_response: {}
+
       tags:
         - job_config
         - job_config_disable_git_ssl_verification
