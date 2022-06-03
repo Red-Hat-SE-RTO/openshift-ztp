@@ -19,7 +19,7 @@
     secret_management: reflector
     credential_namespace: "ztp-credentials"
     ansible_tower_secret_name: "ansible-tower-credentials"
-    pull_secret_secret_name: "assisted-deployment-pull-secret"
+    pull_secret_secret_name: "ztp-deployment-pull-secret"
     ansible_job_template_name: create-vsphere-infra-ztp
     
     #ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner

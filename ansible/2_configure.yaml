@@ -15,6 +15,7 @@
 
     ## Path to the OpenShift Pull Secret
     pull_secret_path: ~/rh-ocp-pull-secret.json
+    pull_secret: "{{ lookup('file', pull_secret_path) }}"
 
     # git_credential_type: ssh | basic
     scm_credential_type: basic
