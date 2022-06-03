@@ -34,13 +34,15 @@ spec:
     - {{ ntp }}
 {% endfor %}
 {% endif %}
-{% if (httpProxy is defined) or (httpsProxy is defined) %}
+{% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
   proxy:
-{% if httpProxy is defined %}
-    httpProxy: {{ httpProxy }}
+{% if spoke_httpProxy is defined %}
+    httpProxy: {{ spoke_httpProxy }}
 {% endif %}
-{% if httpsProxy is defined %}
-    httpsProxy: {{ httpsProxy }}
+{% if spoke_httpsProxy is defined %}
+    httpsProxy: {{ spoke_httpsProxy }}
+{% endif %}
+{% if spoke_noProxy is defined %}
+    noProxy: {{ spoke_noProxy }}
 {% endif %}
 {% endif %}
-

@@ -30,7 +30,9 @@
     node_boot_timeout: 300
 
     root_ca_bundle_configmap_name: cluster-root-ca-bundle
-    pass_proxy_to_spoke_from_hub: true
+    
+    # pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpProxy, spoke_httpsProxy, spoke_noProxy vars
+    pass_proxy_to_spoke_from_hub: false
 
   environment:
     http_proxy: "{{ http_proxy | default('') }}"
