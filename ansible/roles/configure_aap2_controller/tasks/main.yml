@@ -65,12 +65,12 @@
       register: aap2_serviceaccount
 
     - name: Set the Token Secret Name
+      when: secret_item is search(aap2_serviceaccount_name + "-token")
       set_fact:
         aap2_token_secret_name: "{{ secret_item }}"
       loop: "{{ aap2_serviceaccount.resources[0].secrets }}"
       loop_control:
         loop_var: secret_item
-      when: secret_item is search(aap2_serviceaccount_name + "-token")
 
     - name: Get the Token Secret
       kubernetes.core.k8s_info:
@@ -136,6 +136,7 @@
       register: config_response
 
     - name: Post manifest file if not subscribed
+      when: config_response.json.license_info.date_expired is not defined
       uri:
         url: "{{ aap2_route }}/api/v2/config/"
         method: POST
@@ -144,12 +145,11 @@
         body: '{ "eula_accepted": true, "manifest": "{{ manifest_file.content }}" }'
         body_format: json
         validate_certs: no
-      when: config_response.json.license_info.date_expired is not defined
 
     - name: Pause for a few seconds for Tower to parse the license
+      when: config_response.json.license_info.date_expired is not defined
       pause:
         seconds: 5
-      when: config_response.json.license_info.date_expired is not defined
 
     - name: Get the current User ID
       uri:
@@ -226,14 +226,14 @@
           register: gitea_route
 
         - name: Use Internal Gitea - Set the Git Repo fact to the Route
+          when: gitea_route.resources | length > 0 and not use_services_not_routes|bool
           set_fact:
             git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
-          when: gitea_route.resources | length > 0 and not use_services_not_routes|bool
 
         - name: Use Internal Gitea - Set the Git Repo fact to the Service
+          when: gitea_service.resources | length > 0 and use_services_not_routes|bool
           set_fact:
             git_repo_url: "http://gitea.gitea.svc.cluster.local:3000/user-1/openshift-ztp.git"
-          when: gitea_service.resources | length > 0 and use_services_not_routes|bool
       tags:
         - gitea
 
@@ -253,11 +253,12 @@
           register: job_settings_response
 
         - name: Set a new JSON object if the GIT_SSL_NO_VERIFY key does not exists
+          when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
           set_fact:
             job_settings_json: "{{ job_settings_response.json['AWX_TASK_ENV'] | combine({\"GIT_SSL_NO_VERIFY\": \"true\"}) }}"
-          when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
 
         - name: Patch the API with the new JSON setting
+          when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -267,7 +268,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
       tags:
         - job_config
         - job_config_disable_git_ssl_verification
@@ -342,11 +342,12 @@
               HTTP_PROXY: "{{ cluster_http_proxy }}"
 
         - name: Set a new JSON object if the HTTP_PROXY key does not exists
+          when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
           set_fact:
             job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(big_http_proxy_object) }}"
-          when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
 
         - name: Patch the API with the new JSON setting - HTTP_PROXY
+          when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -356,7 +357,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
 
         - name: Reset facts
           set_fact:
@@ -388,11 +388,12 @@
               HTTPS_PROXY: "{{ cluster_https_proxy }}"
 
         - name: Set a new JSON object if the HTTPS_PROXY key does not exists
+          when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
           set_fact:
             job_settings_json: "{{ https_job_settings_response.json['AWX_TASK_ENV'] | combine(big_https_proxy_object) }}"
-          when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
 
         - name: Patch the API with the new JSON setting - HTTPS_PROXY
+          when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -402,7 +403,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
 
         - name: Reset facts
           set_fact:
@@ -434,11 +434,12 @@
               NO_PROXY: "{{ cluster_no_proxy }}"
 
         - name: Set a new JSON object if the NO_PROXY key does not exists
+          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
           set_fact:
             job_settings_json: "{{ no_proxy_job_settings_response.json['AWX_TASK_ENV'] | combine(big_no_proxy_object) }}"
-          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
 
         - name: Patch the API with the new JSON setting - NO_PROXY
+          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -448,7 +449,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
 
         - name: Reset facts
           set_fact:
@@ -480,11 +480,12 @@
               http_proxy: "{{ cluster_http_proxy }}"
 
         - name: Set a new JSON object if the http_proxy key does not exists
+          when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
           set_fact:
             job_settings_json: "{{ http_job_settings_response.json['AWX_TASK_ENV'] | combine(http_proxy_object) }}"
-          when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
 
         - name: Patch the API with the new JSON setting - http_proxy
+          when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -494,7 +495,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
 
         - name: Reset facts
           set_fact:
@@ -526,11 +526,12 @@
               https_proxy: "{{ cluster_https_proxy }}"
 
         - name: Set a new JSON object if the https_proxy key does not exists
+          when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
           set_fact:
             job_settings_json: "{{ https_job_settings_response.json['AWX_TASK_ENV'] | combine(https_proxy_object) }}"
-          when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
 
         - name: Patch the API with the new JSON setting - https_proxy
+          when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -540,7 +541,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
 
         - name: Reset facts
           set_fact:
@@ -572,11 +572,12 @@
               no_proxy: "{{ cluster_no_proxy }}"
 
         - name: Set a new JSON object if the no_proxy key does not exists
+          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
           set_fact:
             job_settings_json: "{{ no_proxy_job_settings_response.json['AWX_TASK_ENV'] | combine(no_proxy_object) }}"
-          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
 
         - name: Patch the API with the new JSON setting - no_proxy
+          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
           uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
@@ -586,7 +587,6 @@
             body_format: json
             validate_certs: no
           register: job_settings_patch_response
-          when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
 
         - name: Reset facts
           set_fact:
@@ -626,16 +626,16 @@
           register: create_org_response
 
         - name: Set fact for Organization ID when existing
+          when: org_response.json.id is defined and org_response.status != 404
           set_fact:
             aap2_organization_id: "{{ org_response.json.id }}"
             aap2_org: "{{ org_response.json }}"
-          when: org_response.json.id is defined and org_response.status != 404
 
         - name: Set fact for Organization ID when created
+          when: create_org_response.json.id is defined and org_response.status == 404
           set_fact:
             aap2_organization_id: "{{ create_org_response.json.id }}"
             aap2_org: "{{ create_org_response.json }}"
-          when: create_org_response.json.id is defined and org_response.status == 404
 
         #### TODO
         
@@ -674,10 +674,10 @@
           register: execution_environments_response
 
         - name: Set fact for Execution Environment ID when existing
+          when: execution_environments_response.json.results[0].id is defined and execution_environments_response.json.count > 0
           set_fact:
             aap2_execution_environments_id: "{{ execution_environments_response.json.results[0].id }}"
             aap2_execution_environments: "{{ execution_environments_response.json.results[0] }}"
-          when: execution_environments_response.json.results[0].id is defined and execution_environments_response.json.count > 0
 
         - name: Create the Execution Environment if it does not exist
           when: execution_environments_response.json.count == 0
@@ -693,10 +693,10 @@
           register: create_execution_environments_response
 
         - name: Set fact for Execution Environment ID when created
+          when: create_execution_environments_response.json.id is defined and execution_environments_response.json.count == 0
           set_fact:
             aap2_execution_environments_id: "{{ create_execution_environments_response.json.id }}"
             aap2_execution_environments: "{{ create_execution_environments_response.json }}"
-          when: create_execution_environments_response.json.id is defined and execution_environments_response.json.count == 0
       tags:
         - execution_environment
 
@@ -717,10 +717,10 @@
           register: inventory_response
 
         - name: Set fact for Inventory ID when existing
+          when: inventory_response.json.results[0].id is defined and inventory_response.json.count > 0
           set_fact:
             aap2_inventory_id: "{{ inventory_response.json.results[0].id }}"
             aap2_inventory: "{{ inventory_response.json.results[0] }}"
-          when: inventory_response.json.results[0].id is defined and inventory_response.json.count > 0
 
         - name: Create the Inventory if it does not exist
           when: inventory_response.json.count == 0
@@ -736,10 +736,10 @@
           register: create_inventory_response
 
         - name: Set fact for Inventory ID when created
+          when: create_inventory_response.json.id is defined and inventory_response.json.count == 0
           set_fact:
             aap2_inventory_id: "{{ create_inventory_response.json.id }}"
             aap2_inventory: "{{ create_inventory_response.json }}"
-          when: create_inventory_response.json.id is defined and inventory_response.json.count == 0
       tags:
         - inventory
 
@@ -815,16 +815,16 @@
           register: create_scm_credential_response
 
         - name: Set fact for SCM Credential ID when created
+          when: create_scm_credential_response.json.id is defined and check_scm_credential_response.json.count == 0
           set_fact:
             aap2_scm_credential_id: "{{ create_scm_credential_response.json.id }}"
             aap2_scm_credential: "{{ create_scm_credential_response.json }}"
-          when: create_scm_credential_response.json.id is defined and check_scm_credential_response.json.count == 0
 
         - name: Set fact for SCM Credential ID when exists
+          when: check_scm_credential_response.json.count > 0
           set_fact:
             aap2_scm_credential_id: "{{ check_scm_credential_response.json.results[0].id }}"
             aap2_scm_credential: "{{ check_scm_credential_response.json.results[0] }}"
-          when: check_scm_credential_response.json.count > 0
       tags:
         - credentials
 
@@ -857,16 +857,16 @@
           register: create_project_response
 
         - name: Set Project ID when created
+          when: create_project_response.json.id is defined and check_project_response.json.count == 0
           set_fact:
             aap2_project_id: "{{ create_project_response.json.id }}"
             aap2_project: "{{ create_project_response.json }}"
-          when: create_project_response.json.id is defined and check_project_response.json.count == 0
 
         - name: Set Project ID when exists
+          when: check_project_response.json.count > 0
           set_fact:
             aap2_project_id: "{{ check_project_response.json.results[0].id }}"
             aap2_project: "{{ check_project_response.json.results[0] }}"
-          when: check_project_response.json.count > 0
       tags:
         - project
 
@@ -899,16 +899,16 @@
           register: create_application_response
 
         - name: Set Application ID when created
+          when: create_application_response.json.id is defined and check_application_response.json.count == 0
           set_fact:
             aap2_application_id: "{{ create_application_response.json.id }}"
             aap2_application: "{{ create_application_response.json }}"
-          when: create_application_response.json.id is defined and check_application_response.json.count == 0
 
         - name: Set Application ID when exists
+          when: check_application_response.json.count > 0
           set_fact:
             aap2_application_id: "{{ check_application_response.json.results[0].id }}"
             aap2_application: "{{ check_application_response.json.results[0] }}"
-          when: check_application_response.json.count > 0
       tags:
         - application
 
@@ -941,10 +941,10 @@
           register: create_user_application_token_response
 
         - name: Set User Application Token ID when created
+          when: create_user_application_token_response.json.token is defined and check_user_application_token_response.json.count == 0
           set_fact:
             aap2_user_application_token_id: "{{ create_user_application_token_response.json.token }}"
             aap2_user_application_token: "{{ create_user_application_token_response.json }}"
-          when: create_user_application_token_response.json.token is defined and check_user_application_token_response.json.count == 0
 
         - name: Create OpenShift Secret for the User Application Token
           when: aap2_user_application_token_id is defined
@@ -997,16 +997,16 @@
           retries: 60
 
         - name: Set "Create vSphere Infrastructure" Template ID when created
+          when: create_vsphere_infra_response.json.id is defined and check_create_vsphere_infra_job_template_response.json.count == 0
           set_fact:
             aap2_create_vsphere_infra_id: "{{ create_vsphere_infra_response.json.id }}"
             aap2_create_vsphere_infra: "{{ create_vsphere_infra_response.json }}"
-          when: create_vsphere_infra_response.json.token is defined and check_create_vsphere_infra_job_template_response.json.count == 0
 
         - name: Set "Create vSphere Infrastructure" ID when existing
+          when: check_create_vsphere_infra_job_template_response.json.count > 0
           set_fact:
             aap2_create_vsphere_infra_template_id: "{{ check_create_vsphere_infra_job_template_response.json.results[0].id }}"
             aap2_create_vsphere_infra_template: "{{ check_create_vsphere_infra_job_template_response.json.results[0] }}"
-          when: check_create_vsphere_infra_job_template_response.json.count > 0
 
       tags:
         - templates
@@ -1049,16 +1049,16 @@
           retries: 6
 
         - name: Set "Delete vSphere Infrastructure" Template ID when created
+          when: delete_vsphere_infra_response.json.id is defined and check_delete_vsphere_infra_job_template_response.json.count == 0
           set_fact:
             aap2_delete_vsphere_infra_id: "{{ delete_vsphere_infra_response.json.id }}"
             aap2_delete_vsphere_infra: "{{ delete_vsphere_infra_response.json }}"
-          when: delete_vsphere_infra_response.json.token is defined and check_delete_vsphere_infra_job_template_response.json.count == 0
 
         - name: Set "Delete vSphere Infrastructure" ID when existing
+          when: check_delete_vsphere_infra_job_template_response.json.count > 0
           set_fact:
             aap2_delete_vsphere_infra_template_id: "{{ check_delete_vsphere_infra_job_template_response.json.results[0].id }}"
             aap2_delete_vsphere_infra_template: "{{ check_delete_vsphere_infra_job_template_response.json.results[0] }}"
-          when: check_delete_vsphere_infra_job_template_response.json.count > 0
       tags:
         - templates
         - delete_vsphere_infra
@@ -1100,16 +1100,16 @@
           retries: 30
 
         - name: Set Create Spoke Manifests Template ID when created
+          when: create_spoke_manifests_response.json.id is defined and check_create_spoke_manifests_job_template_response.json.count == 0
           set_fact:
             aap2_create_spoke_manifests_template_id: "{{ create_spoke_manifests_response.json.id }}"
             aap2_create_spoke_manifests_template: "{{ create_spoke_manifests_response.json }}"
-          when: create_spoke_manifests_response.json.token is defined and check_create_spoke_manifests_job_template_response.json.count == 0
 
         - name: Set Create Spoke Manifests Template ID when existing
+          when: check_create_spoke_manifests_job_template_response.json.count > 0
           set_fact:
             aap2_create_spoke_manifests_template_id: "{{ check_create_spoke_manifests_job_template_response.json.results[0].id }}"
             aap2_create_spoke_manifests_template: "{{ check_create_spoke_manifests_job_template_response.json.results[0] }}"
-          when: check_create_spoke_manifests_job_template_response.json.count > 0
       tags:
         - templates
         - create_spoke_manifests
@@ -1151,16 +1151,16 @@
           retries: 30
 
         - name: Set Create Credentials Template ID when created
+          when: create_credentials_response.json.id is defined and check_create_credentials_job_template_response.json.count == 0
           set_fact:
             aap2_create_credential_template_id: "{{ create_credentials_response.json.id }}"
             aap2_create_credential_template: "{{ create_credentials_response.json }}"
-          when: create_credentials_response.json.token is defined and check_create_credentials_job_template_response.json.count == 0
 
         - name: Set Create Credentials Template ID when existing
+          when: check_create_credentials_job_template_response.json.count > 0
           set_fact:
             aap2_create_credential_template_id: "{{ check_create_credentials_job_template_response.json.results[0].id }}"
             aap2_create_credential_template: "{{ check_create_credentials_job_template_response.json.results[0] }}"
-          when: check_create_credentials_job_template_response.json.count > 0
       tags:
         - templates
         - create_credentials
@@ -1180,7 +1180,7 @@
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_k8s_credential_r
 
-        - name: Create the K8s Credentials if it does not exist for the "Create Credential" Template
+        - name: Create the K8s Credentials if it does not exist
           when: check_k8s_credential_r.json.count == 0
           uri:
             url: "{{ aap2_route }}/api/v2/credentials/"
@@ -1194,16 +1194,16 @@
           register: create_k8s_credential_r
 
         - name: Set the K8s Credential ID when it is created
+          when: create_k8s_credential_r.json.id is defined and check_k8s_credential_r.json.count == 0
           set_fact:
             aap2_k8s_credential_id: "{{ create_k8s_credential_r.json.id }}"
             aap2_k8s_credential: "{{ create_k8s_credential_r.json }}"
-          when: check_k8s_credential_r.json.count == 0
 
         - name: Set the K8s credential ID when it exists
+          when: check_k8s_credential_r.json.count > 0
           set_fact:
             aap2_k8s_credential_id: "{{ check_k8s_credential_r.json.results[0].id }}"
             aap2_k8s_credential: "{{ check_k8s_credential_r.json.results[0] }}"
-          when: check_k8s_credential_r.json.count > 0
       tags:
         - credentials
         - credentials_k8s
@@ -1223,7 +1223,7 @@
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_k8s_credential_response
 
-        - name: Create the K8s Credentials if it does not exist for the "Create Credential" Template
+        - name: Associate the K8s Credentials with the "Create Credential" Template
           when: check_k8s_credential_response.json.count == 0
           uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_credential_template_id }}/credentials/"
@@ -1255,7 +1255,7 @@
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_spoke_manifests_k8s_credential_response
 
-        - name: Create the K8s Credentials if it does not exist for the "Create Spoke Manifests" Template
+        - name: Associate the K8s Credentials with the "Create Spoke Manifests" Template
           when: check_create_spoke_manifests_k8s_credential_response.json.count == 0
           uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_spoke_manifests_template_id }}/credentials/"
@@ -1287,7 +1287,7 @@
             Authorization: "Bearer {{ login_response.json.token }}"
         register: check_delete_vsphere_infra_k8s_credential_response
 
-      - name: Create the K8s Credentials if it does not exist for the "Delete vSphere Infrastructure" Template
+      - name: Associate the K8s Credentials with the "Delete vSphere Infrastructure" Template
         when: check_delete_vsphere_infra_k8s_credential_response.json.count == 0
         uri:
           url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_delete_vsphere_infra_template_id }}/credentials/"
@@ -1319,7 +1319,7 @@
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_vsphere_infra_k8s_credential_response
 
-        - name: Create the K8s Credentials if it does not exist for the "Create vSphere Infrastructure" Template
+        - name: Associate the K8s Credentials with the "Create vSphere Infrastructure" Template
           when: check_create_vsphere_infra_k8s_credential_response.json.count == 0
           uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_vsphere_infra_template_id }}/credentials/"
