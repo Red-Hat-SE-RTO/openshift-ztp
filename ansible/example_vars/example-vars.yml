@@ -178,7 +178,7 @@ credential_namespace: "ztp-credentials"
 ## The names of the credentials to be mirrored into the Spoke Cluster Namespace
 ## from the credential_namespace
 ansible_tower_secret_name: "ansible-tower-credentials"
-pull_secret_secret_name: "assisted-deployment-pull-secret"
+pull_secret_secret_name: "ztp-deployment-pull-secret"
 vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
 
 ###############################################################################

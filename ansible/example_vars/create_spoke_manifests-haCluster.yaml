@@ -1,5 +1,5 @@
 vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
-pull_secret_secret_name: assisted-deployment-pull-secret
+pull_secret_secret_name: ztp-deployment-pull-secret
 cluster_type: full
 cluster_name: vsphere-ocp-ha
 base_domain: kemo.labs
