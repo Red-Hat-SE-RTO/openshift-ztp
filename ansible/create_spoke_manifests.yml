@@ -280,8 +280,9 @@
 
           - name: Set Install Config Overrides for the Root CA
             set_fact:
-              install_config_overrides_additionalTrustBundle: |
-                {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
+              install_config_overrides_additionalTrustBundle:
+                additionalTrustBundle: |
+                  {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
 
           - name: Set the fact for the install config overrides
             set_fact:
