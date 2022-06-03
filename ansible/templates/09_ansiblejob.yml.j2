@@ -32,3 +32,9 @@ spec:
 {% if no_proxy is defined %}
     no_proxy: "{{ no_proxy }}"
 {% endif %}
+{% if ansible_job_runner_image is defined %}
+  runner_image: "{{ ansible_job_runner_image }}"
+{% endif %}
+{% if ansible_job_runner_image_version is defined %}
+  runner_version: "{{ ansible_job_runner_image_version }}"
+{% endif %}
