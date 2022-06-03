@@ -25,6 +25,8 @@
     #ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner
     #ansible_job_runner_image_version: latest
 
+    #root_ca_secret_name: cluster-root-ca-bundle
+
     create_argo_application: true
     argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
     argocd_namespace: openshift-gitops
@@ -236,6 +238,87 @@
           push_git_url_combined: "{{ git_transport }}://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace('^https?://') }}"
         no_log: true
 
+  - name: Set Install Config Overrides
+    block:
+      - name: Set the fact for the install config overrides
+        set_fact:
+          install_config_overrides: "{{ install_config_overrides | default([]) }}"
+
+      - name: Current ICO
+        debug:
+          msg: "{{ install_config_overrides }}"
+
+      - name: Set Install Config Overrides when a Proxy is provided
+        when: spoke_httpProxy is defined or spoke_httpsProxy is defined or spoke_noProxy is defined
+        block:
+          - name: Current ICO
+            debug:
+              msg: "{{ install_config_overrides }}"
+
+          - name: Set Install Config Overrides for the Proxy
+            set_fact:
+              install_config_overrides_proxy:
+                proxy:
+                  httpProxy: "{{ spoke_httpProxy | default(omit) }}"
+                  httpsProxy: "{{ spoke_httpsProxy | default(omit) }}"
+                  noProxy: "{{ spoke_noProxy | default(omit) }}"
+
+          - name: Set the fact for the install config overrides
+            set_fact:
+              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_proxy )  }}"
+
+          - name: New ICO
+            debug:
+              msg: "{{ install_config_overrides }}"
+
+      - name: Set Install Config Overrides when a Root CA is provided
+        when: root_ca_bundle_pem is defined
+        block:
+          - name: Current ICO
+            debug:
+              msg: "{{ install_config_overrides }}"
+
+          - name: Set Install Config Overrides for the Root CA
+            set_fact:
+              install_config_overrides_additionalTrustBundle: |
+                {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
+
+          - name: Set the fact for the install config overrides
+            set_fact:
+              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_additionalTrustBundle )  }}"
+
+          - name: New ICO
+            debug:
+              msg: "{{ install_config_overrides }}"
+      
+      - name: Set Install Config Overrides for platform type
+        when: deployment_type is defined
+        block:
+          - name: Current ICO
+            debug:
+              msg: "{{ install_config_overrides }}"
+
+          - name: Set Install Config Overrides for the Platform Type
+            when: deployment_type in ['vsphere', 'vcenter', 'vmware']
+            set_fact:
+              install_config_overrides_platform_type:
+                platform:
+                  type: vsphere
+
+          - name: Set Install Config Overrides for the Platform Type
+            when: deployment_type not in ['vsphere', 'vcenter', 'vmware']
+            set_fact:
+              install_config_overrides_platform_type:
+                platform:
+                  type: baremetal
+
+          - name: Set the fact for the install config overrides
+            set_fact:
+              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_platform_type )  }}"
+          
+          - name: New ICO
+            debug:
+              msg: "{{ install_config_overrides }}"
 
   #######################################################
   ## Filesystem Operations
