@@ -4,7 +4,8 @@
 - name: Set fact for asset URL
   when: not use_ztp_mirror|bool
   set_fact:
-    asset_url: "mirror.openshift.com"
+    live_iso_asset_url: "https://mirror.openshift.com"
+    root_fs_asset_url: "https://mirror.openshift.com"
 
 - name: Set facts for when using the ZTP Mirror
   when: use_ztp_mirror|bool
@@ -20,9 +21,17 @@
       set_fact:
         route_subdomain: "{{ route_subdomain_r.resources[0].status.domain }}"
 
-    - name: Set fact for asset URL
+    - name: Set fact for asset URL as a Route
+      when: not use_services_not_routes|bool
       set_fact:
-        asset_url: "ztp-mirror-ztp-mirror.{{ route_subdomain }}"
+        live_iso_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
+        root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
+
+    - name: Set facts for when using the ZTP Mirror as a Service
+      when: use_services_not_routes|bool
+      set_fact:
+        live_iso_asset_url: "http://ztp-mirror.ztp-mirror.svc.cluster.local:8080"
+        root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
 
 - name: Get Cluster Version
   kubernetes.core.k8s_info:
