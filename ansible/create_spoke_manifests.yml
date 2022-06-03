@@ -21,6 +21,9 @@
     ansible_tower_secret_name: "ansible-tower-credentials"
     pull_secret_secret_name: "assisted-deployment-pull-secret"
     ansible_job_template_name: create-vsphere-infra-ztp
+    
+    #ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner
+    #ansible_job_runner_image_version: latest
 
     create_argo_application: true
     argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
