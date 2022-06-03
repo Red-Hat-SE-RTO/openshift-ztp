@@ -31,6 +31,7 @@
 
     query_hub_for_root_ca: true
     root_ca_bundle_configmap_name: cluster-root-ca-bundle
+    root_ca_bundle_configmap_namespace: openshift-config
 
     # pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpProxy, spoke_httpsProxy, spoke_noProxy vars
     pass_proxy_to_spoke_from_hub: false
