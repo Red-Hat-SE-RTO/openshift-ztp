@@ -10,12 +10,12 @@ data:
   LOG_LEVEL: "debug"
   AUTH_TYPE: "none"
   SKIP_CERT_VERIFICATION: "True"
-{% (if r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (if r_cluster_proxy_config.resources[0].status.httpProxy != '') %}
+{% if (r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpProxy != '') %}
   HTTP_PROXY: "{{ r_cluster_proxy_config.resources[0].status.httpProxy }}"
 {% endif %}
-{% (if r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (if r_cluster_proxy_config.resources[0].status.httpsProxy != '') %}
+{% if (r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpsProxy != '') %}
   HTTPS_PROXY: "{{ r_cluster_proxy_config.resources[0].status.httpsProxy }}"
 {% endif %}
-{% (if r_cluster_proxy_config.resources[0].status.noProxy is defined) and (if r_cluster_proxy_config.resources[0].status.noProxy != '') %}
+{% if (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '') %}
   NO_PROXY: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
 {% endif %}
