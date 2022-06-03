@@ -304,6 +304,22 @@
         - job_config
         - job_config_enable_mounts
 
+    - name: Enable use of jinja2 Templates in extra vars
+      block:
+        - name: Patch the API with the new JSON setting for enabling use of jinja2 Templates in extra vars
+          uri:
+            url: "{{ aap2_route }}/api/v2/settings/jobs/"
+            method: PATCH
+            headers:
+              Authorization: "Bearer {{ login_response.json.token }}"
+            body: "{ \"ALLOW_JINJA_IN_EXTRA_VARS\": \"always\" }"
+            body_format: json
+            validate_certs: no
+          register: mounts_job_settings_patch_response
+      tags:
+        - job_config
+        - job_config_enable_jinja_extra_vars
+
     ###############################################################################################
     ## Proxy Config - HTTP
     ###############################################################################################
