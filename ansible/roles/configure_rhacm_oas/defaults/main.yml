@@ -8,3 +8,4 @@ release_versions:
 - 4.9.19
 - 4.10.3
 ztp_config_namespace: ztp-config
+root_ca_object_name: root-ca-bundle
