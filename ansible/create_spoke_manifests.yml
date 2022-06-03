@@ -174,6 +174,7 @@
               api_version: v1
               kind: ConfigMap
               name: "{{ root_ca_bundle_configmap_name }}"
+              namespace: "{{ root_ca_bundle_configmap_namespace }}"
             register: r_root_ca_config
             when: r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined and r_cluster_proxy_config.resources[0].spec.trustedCA.name != ""
           
