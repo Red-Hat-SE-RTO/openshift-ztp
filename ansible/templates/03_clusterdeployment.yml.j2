@@ -31,3 +31,9 @@ spec:
           cluster-name: {{ cluster_name }}
   pullSecretRef:
     name: {{ pull_secret_secret_name }}
+{% if root_ca_secret_name is defined %}
+  certificateBundles:
+    - name: {{ root_ca_secret_name }}
+      certificateSecretRef:
+        name: {{ root_ca_secret_name }}
+{% endif %}
