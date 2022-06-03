@@ -5,10 +5,11 @@ metadata:
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
   annotations:
+    agent-install.openshift.io/install-config-overrides: '{{ install_config_overrides | to_json }}'
 {% if (deployment_type == "vsphere") or (deployment_type == "vcenter") %}
-    agent-install.openshift.io/install-config-overrides: '{"platform":{"type":"vsphere"}}'
+    #agent-install.openshift.io/install-config-overrides: '{"platform":{"type":"vsphere"}}'
 {% else %}
-    agent-install.openshift.io/install-config-overrides: '{"platform":{"type":"baremetal"}}'
+    #agent-install.openshift.io/install-config-overrides: '{"platform":{"type":"baremetal"}}'
 {% endif %}
   labels:
     name: {{ cluster_name }}
