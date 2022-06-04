@@ -22,10 +22,10 @@ spec:
     resources:
       requests:
         storage: 40Gi
-  ### This is a ConfigMap that only will make sense on Disconnected environments
-  ### mirrorRegistryRef:
-  ###   name: "lab-index-mirror"
-  ###
+{% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
+  mirrorRegistryRef:
+    name: "{{ mirror_registry_root_ca_configmap_name }}"
+{% endif %}
   osImages:
 {% for version in major_release_versions %}
 {% set releaseData = lookup('url', 'https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-'+version+'/release.txt', wantlist=True) %}
