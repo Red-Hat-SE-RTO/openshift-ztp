@@ -39,6 +39,13 @@
     # pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpProxy, spoke_httpsProxy, spoke_noProxy vars
     pass_proxy_to_spoke_from_hub: false
 
+    # https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
+    ## Spoke Proxy Configuration
+    #spoke_httpProxy: "http://192.168.77.1:3128/"
+    # spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
+    #spoke_httpsProxy: "http://192.168.77.1:3128/"
+    #spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
+
   environment:
     http_proxy: "{{ http_proxy | default('') }}"
     https_proxy: "{{ https_proxy | default('') }}"
@@ -246,49 +253,49 @@
         debug:
           msg: "{{ install_config_overrides }}"
 
-      - name: Set Install Config Overrides when a Proxy is provided
-        when: spoke_httpProxy is defined or spoke_httpsProxy is defined or spoke_noProxy is defined
-        block:
-          - name: Current ICO
-            debug:
-              msg: "{{ install_config_overrides }}"
+#      - name: Set Install Config Overrides when a Proxy is provided
+#        when: spoke_httpProxy is defined or spoke_httpsProxy is defined or spoke_noProxy is defined
+#        block:
+#          - name: Current ICO
+#            debug:
+#              msg: "{{ install_config_overrides }}"
+#
+#          - name: Set Install Config Overrides for the Proxy
+#            set_fact:
+#              install_config_overrides_proxy:
+#                proxy:
+#                  httpProxy: "{{ spoke_httpProxy | default(omit) }}"
+#                  httpsProxy: "{{ spoke_httpsProxy | default(omit) }}"
+#                  noProxy: "{{ spoke_noProxy | default(omit) }}"
+#
+#          - name: Set the fact for the install config overrides
+#            set_fact:
+#              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_proxy )  }}"
+#
+#          - name: New ICO
+#            debug:
+#              msg: "{{ install_config_overrides }}"
 
-          - name: Set Install Config Overrides for the Proxy
-            set_fact:
-              install_config_overrides_proxy:
-                proxy:
-                  httpProxy: "{{ spoke_httpProxy | default(omit) }}"
-                  httpsProxy: "{{ spoke_httpsProxy | default(omit) }}"
-                  noProxy: "{{ spoke_noProxy | default(omit) }}"
-
-          - name: Set the fact for the install config overrides
-            set_fact:
-              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_proxy )  }}"
-
-          - name: New ICO
-            debug:
-              msg: "{{ install_config_overrides }}"
-
-      - name: Set Install Config Overrides when a Root CA is provided
-        when: root_ca_bundle_pem is defined
-        block:
-          - name: Current ICO
-            debug:
-              msg: "{{ install_config_overrides }}"
-
-          - name: Set Install Config Overrides for the Root CA
-            set_fact:
-              install_config_overrides_additionalTrustBundle:
-                additionalTrustBundle: |
-                  {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
-
-          - name: Set the fact for the install config overrides
-            set_fact:
-              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_additionalTrustBundle )  }}"
-
-          - name: New ICO
-            debug:
-              msg: "{{ install_config_overrides }}"
+#      - name: Set Install Config Overrides when a Root CA is provided
+#        when: root_ca_bundle_pem is defined
+#        block:
+#          - name: Current ICO
+#            debug:
+#              msg: "{{ install_config_overrides }}"
+#
+#          - name: Set Install Config Overrides for the Root CA
+#            set_fact:
+#              install_config_overrides_additionalTrustBundle:
+#                additionalTrustBundle: |
+#                  {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
+#
+#          - name: Set the fact for the install config overrides
+#            set_fact:
+#              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_additionalTrustBundle )  }}"
+#
+#          - name: New ICO
+#            debug:
+#              msg: "{{ install_config_overrides }}"
       
       - name: Set Install Config Overrides for platform type
         when: deployment_type is defined
