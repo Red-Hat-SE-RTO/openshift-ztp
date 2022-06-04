@@ -1057,8 +1057,8 @@
         - name: Set "Delete vSphere Infrastructure" Template ID when created
           when: delete_vsphere_infra_response.json.id is defined and check_delete_vsphere_infra_job_template_response.json.count == 0
           set_fact:
-            aap2_delete_vsphere_infra_id: "{{ delete_vsphere_infra_response.json.id }}"
-            aap2_delete_vsphere_infra: "{{ delete_vsphere_infra_response.json }}"
+            aap2_delete_vsphere_infra_template_id: "{{ delete_vsphere_infra_response.json.id }}"
+            aap2_delete_vsphere_infra_template: "{{ delete_vsphere_infra_response.json }}"
 
         - name: Set "Delete vSphere Infrastructure" ID when existing
           when: check_delete_vsphere_infra_job_template_response.json.count > 0
