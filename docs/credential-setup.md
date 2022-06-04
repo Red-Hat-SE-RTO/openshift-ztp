@@ -101,7 +101,7 @@ cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
-  name: assisted-deployment-pull-secret
+  name: ztp-deployment-pull-secret
   namespace: ztp-credentials
   annotations:
     reflector.v1.k8s.emberstack.com/reflection-allowed: 'true'
@@ -183,10 +183,10 @@ cat <<EOF | oc create -f -
 apiVersion: v1
 kind: Secret
 metadata:
-  name: assisted-deployment-pull-secret
+  name: ztp-deployment-pull-secret
   namespace: ${CLUSTER_NAME}
   annotations:
-    reflector.v1.k8s.emberstack.com/reflects: "ztp-credentials/assisted-deployment-pull-secret"
+    reflector.v1.k8s.emberstack.com/reflects: "ztp-credentials/ztp-deployment-pull-secret"
   labels:
     name: '${CLUSTER_NAME}'
     cloud: vSphere
