@@ -22,9 +22,7 @@ spec:
   sshAuthorizedKey: "{{ ssh_public_key }}"
   pullSecretRef:
     name: {{ pull_secret_secret_name }}
-{% if root_ca_bundle_pem is defined %}
-  ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "overwrite": true, "contents": {"source": "data:text/plain;base64,{{ root_ca_bundle_pem }}"}}]}}'
-{% endif %}
+  #ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "overwrite": true, "contents": {"source": "data:text/plain;base64,root_ca_bundle_pem_in_base64"} } ] } }'
   nmStateConfigLabelSelector:
     matchLabels:
       cluster-name: {{ cluster_name }}
@@ -35,14 +33,15 @@ spec:
 {% endfor %}
 {% endif %}
 {% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
-  proxy:
+  # spoke Proxy just needs to be defined once in the AgentClusterInstall CR
+  #proxy:
 {% if spoke_httpProxy is defined %}
-    httpProxy: {{ spoke_httpProxy }}
+    #httpProxy: {{ spoke_httpProxy }}
 {% endif %}
 {% if spoke_httpsProxy is defined %}
-    httpsProxy: {{ spoke_httpsProxy }}
+    #httpsProxy: {{ spoke_httpsProxy }}
 {% endif %}
 {% if spoke_noProxy is defined %}
-    noProxy: {{ spoke_noProxy }}
+    #noProxy: {{ spoke_noProxy }}
 {% endif %}
 {% endif %}
