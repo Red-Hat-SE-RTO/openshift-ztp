@@ -99,3 +99,6 @@ Where the Secret has a `.data.tls-ca-bundle.pem` key that contains the custom Ro
 - https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
 - https://docs.openshift.com/container-platform/4.10/networking/enable-cluster-wide-proxy.html
 - https://docs.openshift.com/container-platform/4.10/networking/configuring-a-custom-pki.html
+- https://github.com/openshift/assisted-service/tree/master/docs/hive-integration
+- https://github.com/wangjun1974/tips/blob/9ba0154b44cdf2da6e7d71b6ed691edb9ec52a67/ocp/assisted-installer-on-premise.md
+- https://docs.google.com/document/d/1JN_KHsBpBk6vrf_aQjP9-vpmwODM5WcoJm18-k0Ofb4/edit#heading=h.sacp69wt8jj4

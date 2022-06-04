@@ -14,6 +14,7 @@ This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a
 - [Red Hat GitOps](https://cloud.redhat.com/blog/announcing-openshift-gitops) (ArgoCD)
 - [Reflector](https://github.com/emberstack/kubernetes-reflector) to manage secrets
 - [Gitea](https://gitea.io/en-us/) for a cluster-hosted Git server
+- HTTP Mirror for assets such as RHCOS ISOs and Root FS blobs, as well as anything else that would need to be served via HTTP server
 
 ## Primer Information
 
