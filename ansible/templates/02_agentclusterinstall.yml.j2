@@ -43,6 +43,9 @@ spec:
   provisionRequirements:
     controlPlaneAgents: {{ (cluster_type == 'sno') | ternary('1', '3') }}
   sshPublicKey: "{{ ssh_public_key }}"
+#  manifestsConfigMapRefs:
+#  - name: manifests-config-map-1
+#  - name: manifests-config-map-2
 {% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
   proxy:
 {% if spoke_httpProxy is defined %}
