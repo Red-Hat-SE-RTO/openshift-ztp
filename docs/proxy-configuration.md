@@ -40,7 +40,7 @@ https_proxy: 'http://192.168.51.1:3128/'
 no_proxy: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost,127.0.0.1,.apps.core-ocp.lab.kemo.network"
 ```
 
-### AnsibleJob Custom Resources - `create_spoke_manifests.yml`
+### AnsibleJob Custom Resources Proxy and Root CA - `create_spoke_manifests.yml`
 
 Part of this ZTP to vSphere automation workflow uses AnsibleJob Custom Resources provided by the AAP2 Operator.
 
