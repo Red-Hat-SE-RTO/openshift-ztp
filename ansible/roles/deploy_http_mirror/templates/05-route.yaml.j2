@@ -3,6 +3,8 @@ kind: Route
 metadata:
   name: ztp-mirror
   namespace: {{ http_mirror_operator_namespace }}
+  annotations:
+    haproxy.router.openshift.io/timeout: "600s"
 spec:
   #host: ztp-mirror-ztp-mirror.apps.core-ocp.lab.kemo.network
   path: /
