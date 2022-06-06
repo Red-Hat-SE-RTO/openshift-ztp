@@ -309,14 +309,14 @@
             set_fact:
               install_config_overrides_platform_type:
                 platform:
-                  type: vsphere
+                  vsphere: {}
 
           - name: Set Install Config Overrides for the Platform Type
             when: deployment_type not in ['vsphere', 'vcenter', 'vmware']
             set_fact:
               install_config_overrides_platform_type:
                 platform:
-                  type: baremetal
+                  none: {}
 
           - name: Set the fact for the install config overrides
             set_fact:
