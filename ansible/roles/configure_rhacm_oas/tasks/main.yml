@@ -180,7 +180,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   loop:
     - templates/01_hiveconfig.yml.j2
     - templates/03_assisted_service_configmap.yml.j2
