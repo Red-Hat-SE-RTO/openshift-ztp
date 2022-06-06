@@ -47,14 +47,14 @@ spec:
 #  - name: manifests-config-map-1
 #  - name: manifests-config-map-2
 {% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
-  proxy:
+  #proxy:
 {% if spoke_httpProxy is defined %}
-    httpProxy: {{ spoke_httpProxy }}
+    #httpProxy: {{ spoke_httpProxy }}
 {% endif %}
 {% if spoke_httpsProxy is defined %}
-    httpsProxy: {{ spoke_httpsProxy }}
+    #httpsProxy: {{ spoke_httpsProxy }}
 {% endif %}
 {% if spoke_noProxy is defined %}
-    noProxy: {{ spoke_noProxy }}
+    #noProxy: {{ spoke_noProxy }}
 {% endif %}
 {% endif %}
