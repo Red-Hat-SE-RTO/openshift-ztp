@@ -1005,8 +1005,8 @@
         - name: Set "Create vSphere Infrastructure" Template ID when created
           when: create_vsphere_infra_response.json.id is defined and check_create_vsphere_infra_job_template_response.json.count == 0
           set_fact:
-            aap2_create_vsphere_infra_id: "{{ create_vsphere_infra_response.json.id }}"
-            aap2_create_vsphere_infra: "{{ create_vsphere_infra_response.json }}"
+            aap2_create_vsphere_infra_template_id: "{{ create_vsphere_infra_response.json.id }}"
+            aap2_create_vsphere_infra_template: "{{ create_vsphere_infra_response.json }}"
 
         - name: Set "Create vSphere Infrastructure" ID when existing
           when: check_create_vsphere_infra_job_template_response.json.count > 0
