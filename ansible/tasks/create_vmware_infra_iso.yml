@@ -40,7 +40,11 @@
     datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('ISOs') }}/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
+  retries: 10
+  delay: 10
+  until: upload_iso.changed|bool
   ignore_errors: true
+  register: upload_iso
 
 - name: Delete local Discovery ISO
   file:
