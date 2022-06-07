@@ -120,7 +120,7 @@
       namespace: "{{ git_push_credentials_secret_namespace }}"
       name: "{{ git_push_credentials_secret_name }}"
     register: git_secret
-    when: generate_ssh_keys|bool 
+    #when: generate_ssh_keys|bool 
 
   - name: Fail if the Git credentials secret is not found
     fail:
