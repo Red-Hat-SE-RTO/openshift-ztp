@@ -32,10 +32,12 @@ spec:
     networkType: OVNKubernetes
     #userManagedNetworking: false
     clusterNetwork:
-      - cidr: "10.128.0.0/14"
+      - cidr: "{{ cluster_network_cidr }}"
         hostPrefix: 23
     serviceNetwork:
-      - "172.30.0.0/16"
+{% for netwrk in service_network_cidrs %}
+      - "{{ netwrk }}"
+{% endfor %}
 {% if cluster_node_cidr is defined  %}
     machineNetwork:
       - cidr: "{{ cluster_node_cidr }}"
