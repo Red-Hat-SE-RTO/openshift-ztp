@@ -4,4 +4,5 @@ collections:
   - name: kubernetes.core
   - name: community.crypto
   - name: community.vmware
+    version: 1.17.0
   - name: community.general
