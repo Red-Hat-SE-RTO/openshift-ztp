@@ -171,7 +171,7 @@
   delay: 10
   retries: 30
   loop:
-    - "templates/subscription.yaml.j2"
+    #- "templates/subscription.yaml.j2"
     - "templates/operator-rbac-clusterrole.yaml.j2"
     - "templates/operator-rbac-rolebinding.yaml.j2"
   loop_control:
