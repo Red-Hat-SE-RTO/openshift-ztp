@@ -1,0 +1,15 @@
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: thanos-object-storage-bucket
+  namespace: open-cluster-management-observability
+  labels:
+    app: noobaa
+    bucket-provisioner: openshift-storage.noobaa.io-obc
+    noobaa-domain: openshift-storage.noobaa.io
+spec:
+  additionalConfig:
+    bucketclass: noobaa-default-bucket-class
+  objectBucketName: thanos-object-storage-bucket
+  bucketName: thanos-object-storage-bucket
+  storageClassName: openshift-storage.noobaa.io
