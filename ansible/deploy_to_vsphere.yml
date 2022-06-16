@@ -29,8 +29,7 @@
     NO_PROXY: "{{ no_proxy | default('') }}"
     K8S_AUTH_PROXY: "{{ http_proxy | default('') }}"
     K8S_AUTH_NO_PROXY: "{{ no_proxy | default('') }}"
-  
-  
+
   tasks:
 
   #===================================================================================
