@@ -6,6 +6,7 @@
 
   vars:
     #########################################
+    output_lines: []
     configure_rhacm: true
     configure_aap2_controller: true
     configure_rh_gitops: true
@@ -27,16 +28,21 @@
 
   tasks:
     - name: Configure RHACM for ZTP feature gated functions
-      include_role: 
-        name: configure_rhacm_oas
       when: configure_rhacm|bool
+      include_role:
+        name: configure_rhacm_oas
 
     - name: Configure Ansible Automation Platform 2 Controller for ZTP stuff
-      include_role: 
-        name: configure_aap2_controller
       when: configure_aap2_controller|bool
+      include_role:
+        name: configure_aap2_controller
 
     - name: Configure ArgoCD/Red Hat GitOps for syncing ZTP Spoke Clusters
-      include_role: 
-        name: configure_argocd
       when: configure_rh_gitops|bool
+      include_role:
+        name: configure_argocd
+
+    - name: Print the Playbook output
+      when: output_lines | length > 0
+      debug:
+        msg: "{{ output_lines }}"

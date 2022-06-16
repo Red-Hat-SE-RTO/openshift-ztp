@@ -5,22 +5,24 @@
   gather_facts: no
 
   vars:
+    output_lines: []
     #########################################
     ## Secrets Management
-    deploy_reflector: true
+    deploy_reflector: false
     deploy_sealed_secrets: false # not supported yet
     deploy_hashicorp_vault: false # not supported yet
 
     #########################################
     ## Operator Management
     deploy_nfd: false
-    deploy_lso: true
-    deploy_odf: true
-    deploy_http_mirror: true
-    deploy_rhacm: true
-    deploy_gitea: true
-    deploy_rh_gitops: true
-    deploy_aap2_controller: true
+    deploy_lso: false
+    deploy_odf: false
+    deploy_http_mirror: false
+    deploy_rhacm: false
+    deploy_gitea: false
+    deploy_rh_gitops: false
+    deploy_aap2_controller: false
+    deploy_rh_sso: false
 
     #########################################
     ## Local Storage Operator Variables
@@ -32,31 +34,32 @@
 
   tasks:
     - name: Check for Helm
+      when: deploy_reflector|bool or deploy_sealed_secrets|bool or deploy_hashicorp_vault|bool
       include_role:
         name: setup_helm
-      when: deploy_reflector|bool or deploy_sealed_secrets|bool or deploy_hashicorp_vault|bool
 
     - name: Install Reflector for Secret management
+      when: deploy_reflector|bool
       include_role:
         name: deploy_reflector_chart
-      when: deploy_reflector|bool
 
     - name: Install Bitnami SealedSecrets for Secret management
+      when: deploy_sealed_secrets|bool
       include_role:
         name: deploy_sealedsecrets_chart
-      when: deploy_sealed_secrets|bool
 
     - name: Install Hashicorp Vault for Secret management
+      when: deploy_hashicorp_vault|bool
       include_role:
         name: deploy_vault_chart
-      when: deploy_hashicorp_vault|bool
 
     - name: Install Node Feature Discovery
+      when: deploy_nfd|bool
       include_role:
         name: deploy_nfd_operator
-      when: deploy_nfd|bool
 
     - name: Install Local Storage Operator
+      when: deploy_lso|bool
       block:
         - name: Get the cluster infrastructure information
           kubernetes.core.k8s_info:
@@ -66,38 +69,47 @@
           register: r_ocp_infra
 
         - name: Start the role if not on AWS
+          when: r_ocp_infra.resources[0].status.platform != "AWS"
           include_role:
             name: deploy_lso_operator
-          when: r_ocp_infra.resources[0].status.platform != "AWS"
-      when: deploy_lso|bool
 
     ## TODO: Add logic for ODF to create a StorageSystem from EBS on AWS
     - name: Install OpenShift Data Foundation
+      when: deploy_odf|bool
       include_role:
         name: deploy_odf_operator
-      when: deploy_odf|bool
 
     - name: Deploy the ZTP HTTP Mirror
+      when: deploy_http_mirror|bool
       include_role:
         name: deploy_http_mirror
-      when: deploy_http_mirror|bool
 
     - name: Install Red Hat Advanced Cluster Management
+      when: deploy_rhacm|bool
       include_role:
         name: deploy_rhacm_operator
-      when: deploy_rhacm|bool
 
     - name: Install the Gitea Operator
+      when: deploy_gitea|bool
       include_role:
         name: deploy_gitea_operator
-      when: deploy_gitea|bool
 
     - name: Install Red Hat GitOps Operator
+      when: deploy_rh_gitops|bool
       include_role:
         name: deploy_rh_gitops_operator
-      when: deploy_rh_gitops|bool
 
     - name: Install the Red Hat Ansible Automation Platform Controller
+      when: deploy_aap2_controller|bool
       include_role:
         name: deploy_aap2_controller
-      when: deploy_aap2_controller|bool
+
+    - name: Install the Red Hat Single Sign On Operator
+      when: deploy_rh_sso|bool
+      include_role:
+        name: deploy_rh_sso
+
+    - name: Print the Playbook output
+      when: output_lines | length > 0
+      debug:
+        msg: "{{ output_lines }}"
