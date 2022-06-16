@@ -199,6 +199,9 @@
     namespace: open-cluster-management-observability
     name: thanos-object-storage-bucket
   register: r_nooba_secret
+  until: r_nooba_secret.resources | length > 0
+  delay: 10
+  retries: 30
 
 - name: Create new secret for the thanos s3 binding
   kubernetes.core.k8s:
