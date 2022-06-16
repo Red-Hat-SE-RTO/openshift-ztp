@@ -45,6 +45,12 @@ spec:
   provisionRequirements:
     controlPlaneAgents: {{ (cluster_type == 'sno') | ternary('1', '3') }}
   sshPublicKey: "{{ ssh_public_key }}"
+{% if manifestOverrides is defined and manifestOverrides | length > 0 %}
+  manifestsConfigMapRefs:
+{% for manifest in manifestOverrides %}
+    - name: {{ manifest.name }}
+{% endfor %}
+{% endif %}
 #  manifestsConfigMapRefs:
 #  - name: manifests-config-map-1
 #  - name: manifests-config-map-2
