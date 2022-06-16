@@ -1,0 +1,38 @@
+---
+# manifestOverrides allows you to add Manifest Objects that will be applied to the cluster as a default manifest at cluster install
+
+manifestOverrides:
+  - name: spoke-cluster-config
+    # Both name and filename have to be unique
+    filename: 99-cm-spoke-cluster-config.yaml
+    content: |
+      ---
+      kind: ConfigMap 
+      apiVersion: v1 
+      metadata:
+        name: spoke-cluster-config
+        namespace: openshift-config
+        labels:
+          name: {{ cluster_name }}
+          cloud: vSphere
+          vendor: OpenShift
+          datacenter: {{ vcenter_datacenter }}
+          cluster: {{ vcenter_cluster }}
+          cluster-name: {{ cluster_name }}
+      data:
+        cluster_name: {{ cluster_name }}
+        cluster_provider: vsphere
+        cluster_type: {{ cluster_type }}
+
+        vsphere_datacenter: {{ vcenter_datacenter }}
+        vsphere_cluster: {{ vcenter_cluster }}
+        vsphere_datastore: {{ vcenter_datastore }}
+        vsphere_network: {{ vcenter_network }}
+      {% if vsphere_iso_folder is defined %}
+        vsphere_iso_folder: {{ vsphere_iso_folder }}
+      {% endif %}
+      {% if vsphere_vm_folder is defined %}
+        vsphere_vm_folder: {{ vsphere_vm_folder }}
+      {% endif %}
+
+        cluster_nodes: '{{ cluster_nodes | to_json }}'

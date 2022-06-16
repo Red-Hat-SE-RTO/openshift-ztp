@@ -494,6 +494,16 @@
       loop_control:
         loop_var: node_item
 
+    - name: Template any additional manifests for the Spoke Cluster
+      when: manifestOverrides is defined and manifestOverrides | length > 0
+      loop: "{{ manifestOverrides }}"
+      loop_control:
+        loop_var: manifest
+        label: "{{ manifest.name }}: {{ manifest.filename }}"
+      template:
+        src: templates/30_cm_manifest_overrides.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/30_cm_mo_{{ manifest.name }}.yml"
+
     - name: Add the ArgoCD Application
       when: create_argo_application|bool
       block:
