@@ -1,0 +1,27 @@
+kind: KeycloakUser
+apiVersion: keycloak.org/v1alpha1
+metadata:
+  name: breakglass-luser
+  namespace: {{ rh_sso_operator_namespace }}
+  labels:
+    app: sso
+spec:
+  user:
+    username: luser
+    firstName: Legendary
+    lastName: User
+    email: luser@ztp-r-us.com
+    enabled: true
+    emailVerified: true
+    credentials:
+      - type: "password"
+        value: "0p3nSHIFT"
+    realmRoles:
+      - defaults-roles-basic
+    #federatedIdentities:
+    #  - identityProvider: aadsaml
+    #    userId: long-string
+    #    userName: luser@ztp-r-us.com
+  realmSelector:
+    matchLabels:
+      app: sso

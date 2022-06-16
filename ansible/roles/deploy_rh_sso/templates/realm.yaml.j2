@@ -1,0 +1,36 @@
+apiVersion: {{ operator_api_version }}
+kind: KeycloakRealm
+metadata:
+  name: {{ rh_sso_operator_instance_name }}
+  namespace: {{ rh_sso_operator_namespace }}
+  labels:
+    app: sso
+spec:
+  realm:
+    id: ztp
+    realm: ztp
+    displayName: ZTP Realm
+
+    enabled: true
+    verifyEmail: false
+    internationalizationEnabled: true
+    sslRequired: 'none'
+
+    accountTheme: rh-sso.v2
+    adminTheme: rh-sso
+    emailTheme: rh-sso
+    loginTheme: rh-sso
+
+    # Incomplete IDP Defintion
+    #identityProviders:
+    #  - enabled: true
+    #    displayName: AAD SAML
+    #    alias: aadsaml
+    #    trustEmail: true
+    #    providerId: aadsaml
+    #    firstBrokerLoginFlowAlias: first broker login
+    #    addReadTokenRoleOnCreate: true
+
+  instanceSelector:
+    matchLabels:
+      app: sso

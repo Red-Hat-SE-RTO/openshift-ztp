@@ -1,0 +1,81 @@
+apiVersion: {{ operator_api_version }}
+kind: Keycloak
+metadata:
+  name: {{ rh_sso_operator_instance_name }}
+  namespace: {{ rh_sso_operator_namespace }}
+  labels:
+    app: sso
+spec:
+  externalAccess:
+    enabled: true
+  instances: 1
+  storageClassName: {{ rh_sso_storageclass_name }}
+  keycloakDeploymentSpec:
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    experimental:
+{% if (cluster_http_proxy is defined) or (cluster_https_proxy is defined) or (cluster_no_proxy is defined) %}
+{% set clusterJavaOpt = "" %}
+{% if cluster_http_proxy is defined %}
+      #- "-Dhttp.proxyHost=10.0.0.100 -Dhttp.proxyPort={{ (cluster_http_proxy|split(':'))[-1] }}"
+{% endif %}
+{% if cluster_https_proxy is defined %}
+      #- "-Dhttps.proxyHost=10.0.0.100 -Dhttps.proxyPort={{ cluster_https_proxy|split(':') | last }}"
+{% endif %}
+{% if cluster_no_proxy is defined %}
+      #- "-Dhttp.nonProxyHosts={{ cluster_no_proxy|replace(',', '|') }}"
+{% endif %}
+{% endif %}
+{% if (cluster_http_proxy is defined) or (cluster_https_proxy is defined) or (cluster_no_proxy is defined) %}
+      # Java doesn't respect system proxy env vars but do it anyway lol
+      env:
+        - name: JAVA_OPTS
+          value: "-Djava.net.useSystemProxies=true"
+{% if cluster_http_proxy is defined %}
+        - name: HTTP_PROXY
+          value: "{{ cluster_http_proxy }}"
+        - name: http_proxy
+          value: "{{ cluster_http_proxy }}"
+{% endif %}
+{% if cluster_https_proxy is defined %}
+        - name: HTTPS_PROXY
+          value: "{{ cluster_https_proxy }}"
+        - name: https_proxy
+          value: "{{ cluster_https_proxy }}"
+{% endif %}
+{% if cluster_no_proxy is defined %}
+        - name: NO_PROXY
+          value: "{{ cluster_no_proxy }}"
+        - name: no_proxy
+          value: "{{ cluster_no_proxy }}"
+{% endif %}
+{% endif %}
+      volumes:
+        defaultMode: 0777
+        items:
+          #- name: keytab
+          #  mountPath: /keytabs
+          #  secrets:
+          #    - keytabs
+          #- name: vault
+          #  mountPath: /opt/jboss/keycloak/secrets
+          #  secrets:
+          #    - realm1
+          #    - realm2
+{% if (r_cluster_root_ca_sso.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_sso.resources[0].spec.trustedCA.name != '') %}
+          # Even though Java uses keystores lol
+          # https://keycloak.discourse.group/t/import-keystores-and-truststores-with-keycloak-operator/8691/2
+          - name: cluster-root-ca-bundle
+            mountPath: /etc/pki/ca-trust/extracted/pem
+            configMaps:
+              - cluster-root-ca-bundle
+            items:
+              - key: ca-bundle.crt 
+                path: tls-ca-bundle.pem
+{% endif %}

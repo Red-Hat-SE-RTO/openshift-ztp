@@ -1,0 +1,9 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  creationTimestamp: null
+  name: {{ rh_sso_operator_namespace }}
+  namespace: {{ rh_sso_operator_namespace }}
+spec:
+  targetNamespaces:
+    - {{ rh_sso_operator_namespace }}

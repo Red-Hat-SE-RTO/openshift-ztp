@@ -1,0 +1,9 @@
+---
+# defaults file for deploy_rh_sso
+rh_sso_operator_channel: "stable"
+
+rh_sso_operator_namespace: "rh-sso"
+
+rh_sso_operator_instance_name: ztp-rh-sso
+
+rh_sso_storageclass_name: ocs-storagecluster-ceph-rbd

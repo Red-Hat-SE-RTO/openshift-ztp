@@ -1,0 +1,307 @@
+---
+# tasks file for deploy_rh_sso
+
+- name: Clear out facts
+  set_fact:
+    operator_csv_version: ""
+    operator_csv_version_index: ""
+    operator_api_definition: ""
+    operator_api_version: ""
+
+- name: Get Cluster Version
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: ClusterVersion
+    name: version
+  register: r_ocp_version
+
+- name: Set cluster version
+  set_fact:
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+
+- name: Query the RHSSO PackageManifest for the latest version of the RHSSO Operator
+  kubernetes.core.k8s_info:
+    api_version: packages.operators.coreos.com/v1
+    kind: PackageManifest
+    name: rhsso-operator
+    namespace: openshift-marketplace
+  register: r_pm
+  until: r_pm.resources | length > 0
+  delay: 10
+  retries: 30
+
+- name: Set the latest CSV version for {{ rh_sso_operator_channel }} channel
+  set_fact:
+    operator_csv_version: "{{ chan_item.currentCSV }}"
+    operator_csv_version_index: "{{ chan_idx }}"
+  loop: "{{ r_pm.resources[0].status.channels }}"
+  loop_control:
+    loop_var: chan_item
+    index_var: chan_idx
+    label: "{{ chan_item.name }}"
+  when: chan_item.name == rh_sso_operator_channel
+
+- name: Debug
+  debug:
+    msg: "{{ operator_csv_version }}"
+
+- name: Fail if the Current Operator CSV was not found
+  fail:
+    msg: "Operator CSV for RH SSO not found for channel {{ rh_sso_operator_channel }}"
+  when: operator_csv_version is undefined
+
+- name: Set additional operator specific facts
+  set_fact:
+    operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Keycloak')].name\") | first }}"
+    operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Keycloak')].version\") | first }}"
+
+- name: Debug
+  debug:
+    msg:
+      - "OpenShift Version: {{ ocp_version }}"
+      - "Operator CSV version: {{ operator_csv_version }}"
+      - "Operator API Definition: {{ operator_api_definition }}"
+      - "Operator API Version: {{ operator_api_version }}"
+
+# ===============================================================================================
+# Deploy Operator Basics
+# ===============================================================================================
+
+- name: Create namespace for {{ rh_sso_operator_namespace }}
+  kubernetes.core.k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ rh_sso_operator_namespace }}"
+      spec: {}
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+# ===============================================================================================
+# Add the custom Root CAs
+# ===============================================================================================
+
+- name: Check to see if the cluster-wide certificates are set
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Proxy
+    name: cluster
+  register: r_cluster_root_ca_sso
+
+- name: Query the cluster-wide Root CAs ConfigMap
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ rh_sso_operator_namespace }}"
+    name: cluster-root-ca-bundle
+  register: cm_k8s_info_run
+
+- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+  when: (r_cluster_root_ca_sso.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_sso.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ rh_sso_operator_namespace }}"
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: cluster-root-ca-bundle
+        labels:
+          config.openshift.io/inject-trusted-cabundle: 'true'
+      data: {}
+  register: cm_k8s_run
+
+# ===============================================================================================
+# Set the Proxy variables
+# ===============================================================================================
+
+- name: Set the fact for httpProxy
+  when: (r_cluster_root_ca_sso.resources[0].status.httpProxy is defined) and (r_cluster_root_ca_sso.resources[0].status.httpProxy != '')
+  set_fact:
+    cluster_http_proxy: "{{ r_cluster_root_ca_sso.resources[0].status.httpProxy }}"
+
+- name: Set the fact for httpsProxy
+  when: (r_cluster_root_ca_sso.resources[0].status.httpsProxy is defined) and (r_cluster_root_ca_sso.resources[0].status.httpsProxy != '')
+  set_fact:
+    cluster_https_proxy: "{{ r_cluster_root_ca_sso.resources[0].status.httpsProxy }}"
+
+- name: Set the fact for noProxy
+  when: (r_cluster_root_ca_sso.resources[0].status.noProxy is defined) and (r_cluster_root_ca_sso.resources[0].status.noProxy != '')
+  set_fact:
+    cluster_no_proxy: "{{ r_cluster_root_ca_sso.resources[0].status.noProxy }}"
+
+# ===============================================================================================
+# Add the OperatorGroup if it does not exist
+# ===============================================================================================
+
+- name: Query the {{ rh_sso_operator_namespace }} namespace for OperatorGroups
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1
+    kind: OperatorGroup
+    namespace: "{{ rh_sso_operator_namespace }}"
+  register: r_og_list
+
+- name: Create Operator OperatorGroup
+  kubernetes.core.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  when: r_og_list.resources | length == 0
+
+# ===============================================================================================
+# Deploy the Operator
+# ===============================================================================================
+
+- name: Create Operator subscription
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/subscription.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Wait for the Operator to become available - before v4.9.0
+  kubernetes.core.k8s_info:
+    api_version: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    name: "{{ operator_api_definition }}"
+  register: crd_check
+  retries: 200
+  delay: 10
+  until: crd_check.resources | list | length == 1
+  when: ocp_version is version('4.9.0', operator='lt', strict=True)
+
+- name: Wait for the Operator to come online - v4.9.0+
+  kubernetes.core.k8s_info:
+    api_version: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    name: "{{ operator_api_definition }}"
+  register: crd_check
+  retries: 200
+  delay: 10
+  until: crd_check.resources | list | length == 1
+  when: ocp_version is version('4.9.0', operator='ge', strict=True)
+
+# ===============================================================================================
+# Deploy the Operator Instance
+# ===============================================================================================
+
+- name: Create Operator Instance Probe ConfigMap - fixes proxy issues with no_proxy and the hostname -i IP
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/cm_overridden_probes.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create Operator Instance
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/instance.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Get the Operator Instance
+  kubernetes.core.k8s_info:
+    api_version: "{{ operator_api_version }}"
+    kind: Keycloak
+    namespace: "{{ rh_sso_operator_namespace }}"
+    name: "{{ rh_sso_operator_instance_name }}"
+  register: r_sso_instance
+  until: r_sso_instance.resources[0].status.externalURL is defined and r_sso_instance.resources[0].status.externalURL != ''
+  delay: 10
+  retries: 30
+
+- name: Wait till the Keycloak Pod is running
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ rh_sso_operator_namespace }}"
+    name: "keycloak-0"
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 600
+    wait_condition:
+      type: Ready
+      status: "True"
+
+- name: Create Operator Instance Realm
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/realm.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Create Operator Instance Realm-bound Break Glass User
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/breakglass_user.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+# ===============================================================================================
+# Output
+# ===============================================================================================
+
+- name: Get the Operator Instance Credential Secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ rh_sso_operator_namespace }}"
+    name: "{{ r_sso_instance.resources[0].status.credentialSecret }}"
+  register: r_sso_credential_secret
+  until: r_sso_credential_secret.resources | length > 0
+  delay: 10
+  retries: 30
+
+- name: Output Resources
+  debug:
+    msg:
+      - "RH SSO Route: {{ r_sso_instance.resources[0].status.externalURL }}"
+      - "RH SSO Admin Password: {{ r_sso_credential_secret.resources[0].data.ADMIN_PASSWORD | b64decode }}"
+
+- name: Set fact for output_lines
+  set_fact:
+    output_lines: "{{ output_lines + [line_item] }}"
+  loop_control:
+    loop_var: line_item
+  loop:
+    - "RH SSO Route: {{ r_sso_instance.resources[0].status.externalURL }}"
+    - "RH SSO Admin Password: {{ r_sso_credential_secret.resources[0].data.ADMIN_PASSWORD | b64decode }}"
