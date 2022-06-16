@@ -33,6 +33,15 @@
         live_iso_asset_url: "http://ztp-mirror.ztp-mirror.svc.cluster.local:8080"
         root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
 
+    - name: Add information to the output_lines variable
+      set_fact:
+        output_lines: "{{ output_lines + [line_item] }}"
+      loop:
+        - "OAS live_iso_asset_url: {{ live_iso_asset_url }}"
+        - "OAS root_fs_asset_url: {{ root_fs_asset_url }}"
+      loop_control:
+        loop_var: line_item
+
 - name: Get Cluster Version
   kubernetes.core.k8s_info:
     api_version: config.openshift.io/v1

@@ -91,6 +91,15 @@
           - "AAP 2 Route: {{ aap2_route }}"
           - "AAP 2 Admin Password: {{ aap2_admin_password }}"
 
+    - name: Add information to the output_lines variable
+      set_fact:
+        output_lines: "{{ output_lines + [line_item] }}"
+      loop:
+        - "AAP 2 Route: {{ aap2_route }}"
+        - "AAP 2 Admin Password: {{ aap2_admin_password }}"
+      loop_control:
+        loop_var: line_item
+
     - name: Create AAP2 RoleBinding
       kubernetes.core.k8s:
         state: present
