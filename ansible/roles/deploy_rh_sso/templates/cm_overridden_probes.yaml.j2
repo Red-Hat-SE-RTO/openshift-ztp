@@ -2,7 +2,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: keycloak-probes
-  namespace: rh-sso
+  namespace: {{ rh_sso_operator_namespace }}
   labels:
     app: keycloak
     keycloak: ztp-rh-sso

@@ -204,6 +204,18 @@
 # Deploy the Operator Instance
 # ===============================================================================================
 
+- name: Create Operator Instance RBAC for PGSQL
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/rbac_rb.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
 - name: Create Operator Instance Probe ConfigMap - fixes proxy issues with no_proxy and the hostname -i IP
   kubernetes.core.k8s:
     state: present
@@ -247,7 +259,7 @@
     name: "keycloak-0"
     wait: yes
     wait_sleep: 10
-    wait_timeout: 600
+    wait_timeout: 720
     wait_condition:
       type: Ready
       status: "True"
