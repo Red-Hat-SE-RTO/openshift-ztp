@@ -7,9 +7,13 @@
   vars:
     #########################################
     output_lines: []
-    configure_rhacm: true
-    configure_aap2_controller: true
-    configure_rh_gitops: true
+
+    # May still need some manual steps for RHACM OAS if on bare-metal
+    ## https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.5/html-single/clusters/managing-your-clusters#enable-cim
+    
+    configure_rhacm: false
+    configure_aap2_controller: false
+    configure_rh_gitops: false
 
     use_ztp_mirror: true
     use_services_not_routes: true
