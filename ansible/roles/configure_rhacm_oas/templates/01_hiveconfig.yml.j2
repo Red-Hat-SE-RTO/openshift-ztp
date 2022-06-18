@@ -18,5 +18,5 @@ spec:
   #targetNamespace: hive
 {% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
   additionalCertificateAuthoritiesSecretRef:
-    - name: {{ root_ca_object_name }}
+    - name: {{ custom_root_ca_name }}
 {% endif %}

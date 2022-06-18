@@ -7,7 +7,7 @@ metadata:
 data:
 {% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
   ca-bundle.crt: |
-    {{ cm_k8s_info_run.resources[0].data['ca-bundle.crt'] | indent(4) }}
+    {{ k8s_info_cm_custom_ca_certs.resources[0].data['ca-bundle.crt'] | indent(4) }}
     {{ extra_registry_ca_bundle_pem | default('') | indent(4) }}
   registries.conf: |
     {{ mirror_registry_config | indent(4) }}
