@@ -91,93 +91,108 @@
 # Add the custom Root CAs
 # ===============================================================================================
 
-- name: Check to see if the cluster-wide certificates are set
-  kubernetes.core.k8s_info:
-    api_version: config.openshift.io/v1
-    kind: Proxy
-    name: cluster
-  register: r_cluster_root_ca_rhacm
+- name: Add ConfigMaps and Secrets needed for Custom Root CAs
+  include_tasks: create_root_ca_objects.yml
+  vars:
+    target_namespace: "{{ ns_item }}"
+    root_ca_bundle_name: "{{ root_ca_object_name }}"
+    #custom_root_ca_name: "{{ custom_root_ca_name }}"
+  loop:
+    - "{{ acm_operator_namespace }}"
+    - open-cluster-management-observability
+    - multicluster-engine
+    - hive
+    - assisted-installer
+  loop_control:
+    loop_var: ns_item
+
+#- name: Check to see if the cluster-wide certificates are set
+#  kubernetes.core.k8s_info:
+#    api_version: config.openshift.io/v1
+#    kind: Proxy
+#    name: cluster
+#  register: r_cluster_root_ca_rhacm
 
 ################################################################ RHACM Namespace
 
-- name: Query the cluster-wide Root CAs ConfigMap
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: ConfigMap
-    namespace: "{{ acm_operator_namespace }}"
-    name: cluster-root-ca-bundle
-  register: cm_k8s_info_run
+#- name: Query the cluster-wide Root CAs ConfigMap
+#  kubernetes.core.k8s_info:
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: "{{ acm_operator_namespace }}"
+#    name: cluster-root-ca-bundle
+#  register: cm_k8s_info_run
 
-- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
-  when: (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
-  kubernetes.core.k8s:
-    state: present
-    api_version: v1
-    kind: ConfigMap
-    namespace: "{{ acm_operator_namespace }}"
-    merge_type:
-    - strategic-merge
-    - merge
-    definition:
-      metadata:
-        name: cluster-root-ca-bundle
-        labels:
-          config.openshift.io/inject-trusted-cabundle: 'true'
-      data: {}
+#- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+#  when: (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
+#  kubernetes.core.k8s:
+#    state: present
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: "{{ acm_operator_namespace }}"
+#    merge_type:
+#    - strategic-merge
+#    - merge
+#    definition:
+#      metadata:
+#        name: cluster-root-ca-bundle
+#        labels:
+#          config.openshift.io/inject-trusted-cabundle: 'true'
+#      data: {}
 
 ################################################################ Hive
 
-- name: Query the cluster-wide Root CAs ConfigMap
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: ConfigMap
-    namespace: hive
-    name: cluster-root-ca-bundle
-  register: cm_k8s_info_run
-
-- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
-  when: (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
-  kubernetes.core.k8s:
-    state: present
-    api_version: v1
-    kind: ConfigMap
-    namespace: hive
-    merge_type:
-    - strategic-merge
-    - merge
-    definition:
-      metadata:
-        name: cluster-root-ca-bundle
-        labels:
-          config.openshift.io/inject-trusted-cabundle: 'true'
-      data: {}
+#- name: Query the cluster-wide Root CAs ConfigMap
+#  kubernetes.core.k8s_info:
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: hive
+#    name: cluster-root-ca-bundle
+#  register: cm_k8s_info_run
+#
+#- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+#  when: (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
+#  kubernetes.core.k8s:
+#    state: present
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: hive
+#    merge_type:
+#    - strategic-merge
+#    - merge
+#    definition:
+#      metadata:
+#        name: cluster-root-ca-bundle
+#        labels:
+#          config.openshift.io/inject-trusted-cabundle: 'true'
+#      data: {}
 
 ################################################################ multicluster-engine
 
-- name: Query the cluster-wide Root CAs ConfigMap
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: ConfigMap
-    namespace: multicluster-engine
-    name: cluster-root-ca-bundle
-  register: cm_k8s_info_run
-
-- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
-  when: (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
-  kubernetes.core.k8s:
-    state: present
-    api_version: v1
-    kind: ConfigMap
-    namespace: multicluster-engine
-    merge_type:
-    - strategic-merge
-    - merge
-    definition:
-      metadata:
-        name: cluster-root-ca-bundle
-        labels:
-          config.openshift.io/inject-trusted-cabundle: 'true'
-      data: {}
+#- name: Query the cluster-wide Root CAs ConfigMap
+#  kubernetes.core.k8s_info:
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: multicluster-engine
+#    name: cluster-root-ca-bundle
+#  register: cm_k8s_info_run
+#
+#- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+#  when: (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_rhacm.resources[0].spec.trustedCA.name != '') and (cm_k8s_info_run.resources | length == 0)
+#  kubernetes.core.k8s:
+#    state: present
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: multicluster-engine
+#    merge_type:
+#    - strategic-merge
+#    - merge
+#    definition:
+#      metadata:
+#        name: cluster-root-ca-bundle
+#        labels:
+#          config.openshift.io/inject-trusted-cabundle: 'true'
+#      data: {}
 
 # ===============================================================================================
 # Add the Pull Secret Secrets
@@ -205,7 +220,7 @@
   loop:
     - hive
     - multicluster-engine
-    - open-cluster-management
+    - "{{ acm_operator_namespace }}"
     - open-cluster-management-observability
   loop_control:
     loop_var: ns_item

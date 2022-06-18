@@ -46,7 +46,7 @@
         definition:
           metadata:
             name: "{{ custom_root_ca_name }}"
-          data:
+          stringData:
             ca.crt: "{{ k8s_info_cm_custom_ca_certs.resources[0].data['ca-bundle.crt'] }}"
             ca-bundle.crt: "{{ k8s_info_cm_custom_ca_certs.resources[0].data['ca-bundle.crt'] }}"
 

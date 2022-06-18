@@ -50,12 +50,11 @@
   register: r_ocp_version
 
 - name: Add ConfigMaps and Secrets needed for Custom Root CAs
-  include_tasks:
-    name: create_root_ca_objects.yml
+  include_tasks: create_root_ca_objects.yml
   vars:
     target_namespace: "{{ ns_item }}"
     root_ca_bundle_name: "{{ root_ca_object_name }}"
-    custom_root_ca_name: "{{ custom_root_ca_name }}"
+    #custom_root_ca_name: "{{ custom_root_ca_name }}"
   loop:
     - "{{ acm_operator_namespace }}"
     - hive
