@@ -6,3 +6,5 @@ legacy/
 legacy/**
 .vault.**
 .vault*
+ansible/.myvars
+ansible/.myvars/**
