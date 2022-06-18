@@ -219,7 +219,7 @@ stringData:
   vcenter_fqdn: $VCENTER_FQDN
   vcenter_username: $VCENTER_USERNAME
   vcenter_password: $VCENTER_PASSWORD
-  skip_ssl_validation: "true"
+  vcenter_validate_ssl: "true"
 EOF
 ```
 

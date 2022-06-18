@@ -276,7 +276,7 @@ Add extra secrets as such:
 ```bash
 ## Create vCenter Credentials
 oc exec -it vault-0 -- vault kv put secrets/rdu-vcenter \
- skip_ssl_validation="true" \
+ vcenter_validate_ssl="true" \
  vcenter_fqdn="vcenter.example.com" \
  vcenter_username="administrator@vsphere.local" \
  vcenter_password="secr3t"

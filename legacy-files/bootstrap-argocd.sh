@@ -176,7 +176,7 @@ spec:
       jsonPointers:
         - /data/host
         - /data/token
-        - /data/skip_ssl_validation
+        - /data/vcenter_validate_ssl
         - /data/vcenter_fqdn
         - /data/vcenter_username
         - /data/vcenter_password
@@ -187,7 +187,7 @@ spec:
       jsonPointers:
         - /data/host
         - /data/token
-        - /data/skip_ssl_validation
+        - /data/vcenter_validate_ssl
         - /data/vcenter_fqdn
         - /data/vcenter_username
         - /data/vcenter_password
@@ -198,7 +198,7 @@ spec:
       jsonPointers:
         - /data/host
         - /data/token
-        - /data/skip_ssl_validation
+        - /data/vcenter_validate_ssl
         - /data/vcenter_fqdn
         - /data/vcenter_username
         - /data/vcenter_password
