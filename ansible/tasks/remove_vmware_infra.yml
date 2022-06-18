@@ -23,7 +23,7 @@
     hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
     username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
     password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-    validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+    validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl|b64decode }}"
     datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
@@ -37,7 +37,7 @@
     hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
     username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
     password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-    validate_certs: "{{ (vsphere_secret.resources[0].data.skip_ssl_validation|b64decode == 'true') | ternary('false', 'true') }}"
+    validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl|b64decode }}"
     datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
