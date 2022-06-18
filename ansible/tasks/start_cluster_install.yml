@@ -1,5 +1,16 @@
 ---
 
+- name: Start cluster install via AgentClusterInstall update
+  kubernetes.core.k8s:
+    state: patched
+    kind: AgentClusterInstall
+    name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+    namespace: "{{ cluster_configmap.namespace }}"
+    api_version: extensions.hive.openshift.io/v1beta1
+    definition:
+      spec:
+        holdInstallation: false
+
 - name: Get the RHACM Route
   kubernetes.core.k8s_info:
     api_version: route.openshift.io/v1
