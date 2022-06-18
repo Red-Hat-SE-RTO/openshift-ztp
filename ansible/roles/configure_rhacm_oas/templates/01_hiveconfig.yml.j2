@@ -3,18 +3,19 @@ kind: HiveConfig
 metadata:
   creationTimestamp: null
   name: hive
-  namespace: {{ acm_operator_namespace }}
+  #namespace: {{ acm_operator_namespace }}
   labels:
-    installer.name: multiclusterhub
-    installer.namespace: {{ acm_operator_namespace }}
+    #installer.name: multiclusterhub
+    #installer.namespace: {{ acm_operator_namespace }}
+    backplaneconfig.name: multiclusterengine
 spec:
-  featureGates:
-    custom:
-      enabled:
-        - AlphaAgentInstallStrategy
-    featureSet: Custom
-  logLevel: debug
-  targetNamespace: hive
+  #featureGates:
+  #  custom:
+  #    enabled:
+  #      - AlphaAgentInstallStrategy
+  #  featureSet: Custom
+  #logLevel: debug
+  #targetNamespace: hive
 {% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
   additionalCertificateAuthoritiesSecretRef:
     - name: {{ root_ca_object_name }}

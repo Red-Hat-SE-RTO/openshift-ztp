@@ -3,7 +3,8 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: assisted-service-config
-  namespace: {{ acm_operator_namespace }}
+  #namespace: {{ acm_operator_namespace }}
+  namespace: multicluster-engine
   labels:
     app: assisted-service
 data:
@@ -19,5 +20,5 @@ data:
 {% if (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '') %}
   NO_PROXY: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
 {% endif %}
-  SERVICE_IMAGE: registry.access.redhat.com/rhacm2/agent-service-rhel8@sha256:b6deaffb775887853123bac203ae1e0441014392f43ccb38e456389d20af34e4
-  SELF_VERSION: registry.access.redhat.com/rhacm2/agent-service-rhel8@sha256:b6deaffb775887853123bac203ae1e0441014392f43ccb38e456389d20af34e4
+  #SERVICE_IMAGE: registry.access.redhat.com/rhacm2/agent-service-rhel8@sha256:b6deaffb775887853123bac203ae1e0441014392f43ccb38e456389d20af34e4
+  #SELF_VERSION: registry.access.redhat.com/rhacm2/agent-service-rhel8@sha256:b6deaffb775887853123bac203ae1e0441014392f43ccb38e456389d20af34e4

@@ -7,8 +7,9 @@ release_versions:
 - 4.9.9
 - 4.9.19
 - 4.10.3
-ztp_config_namespace: ztp-config
+#ztp_config_namespace: ztp-config
 root_ca_object_name: root-ca-bundle
+custom_root_ca_name: custom-root-ca-certs
 mirror_registry_root_ca_configmap_name: mirror-registry-config-map
 
 mirror_registry_config: |

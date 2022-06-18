@@ -2,7 +2,6 @@ apiVersion: agent-install.openshift.io/v1beta1
 kind: AgentServiceConfig
 metadata:
   name: agent
-  namespace: {{ acm_operator_namespace }}
   ### This is the annotation that injects modifications in the Assisted Service pod
   annotations:
     unsupported.agent-install.openshift.io/assisted-service-configmap: "assisted-service-config"
@@ -19,6 +18,12 @@ spec:
   filesystemStorage:
     accessModes:
       - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  imageStorage:
+    accessModes:
+    - ReadWriteOnce
     resources:
       requests:
         storage: 40Gi

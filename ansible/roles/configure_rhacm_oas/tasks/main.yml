@@ -49,62 +49,83 @@
     name: version
   register: r_ocp_version
 
-- name: Check to see if the cluster-wide certificates and proxy config are set
-  kubernetes.core.k8s_info:
-    api_version: config.openshift.io/v1
-    kind: Proxy
-    name: cluster
-  register: r_cluster_proxy_config
+- name: Add ConfigMaps and Secrets needed for Custom Root CAs
+  include_tasks:
+    name: create_root_ca_objects.yml
+  vars:
+    target_namespace: "{{ ns_item }}"
+    root_ca_bundle_name: "{{ root_ca_object_name }}"
+    custom_root_ca_name: "{{ custom_root_ca_name }}"
+  loop:
+    - "{{ acm_operator_namespace }}"
+    - hive
+    - multicluster-engine
+  loop_control:
+    loop_var: ns_item
 
-- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
-  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
-  kubernetes.core.k8s:
-    state: present
-    api_version: v1
-    kind: ConfigMap
-    namespace: "{{ acm_operator_namespace }}"
-    merge_type:
-    - strategic-merge
-    - merge
-    definition:
-      metadata:
-        name: "{{ root_ca_object_name }}"
-        labels:
-          config.openshift.io/inject-trusted-cabundle: 'true'
-      data: {}
-  register: cm_k8s_run
+#- name: Check to see if the cluster-wide certificates and proxy config are set
+#  kubernetes.core.k8s_info:
+#    api_version: config.openshift.io/v1
+#    kind: Proxy
+#    name: cluster
+#  register: r_cluster_proxy_config
 
-- name: Query the cluster-wide Root CAs ConfigMap
-  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: ConfigMap
-    namespace: "{{ acm_operator_namespace }}"
-    name: "{{ root_ca_object_name }}"
-  until: cm_k8s_info_run.resources | length > 0
-  register: cm_k8s_info_run
-  delay: 10
-  retries: 30
+#- name: Add the needed empty ConfigMap to populate with cluster-wide Root CAs
+#  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+#  kubernetes.core.k8s:
+#    state: present
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: "{{ ns_item }}"
+#    merge_type:
+#    - strategic-merge
+#    - merge
+#    definition:
+#      metadata:
+#        name: "{{ root_ca_object_name }}"
+#        labels:
+#          config.openshift.io/inject-trusted-cabundle: 'true'
+#      data: {}
+#  loop:
+#    - "{{ acm_operator_namespace }}"
+#    - hive
+#    - multicluster-engine
+#  loop_control:
+#    loop_var: ns_item
 
-- name: Copy data over to a secret formatted for Assisted Service
-  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
-  kubernetes.core.k8s:
-    state: present
-    api_version: v1
-    kind: Secret
-    namespace: "{{ acm_operator_namespace }}"
-    merge_type:
-    - strategic-merge
-    - merge
-    definition:
-      metadata:
-        name: "{{ root_ca_object_name }}"
-      stringData:
-        ca.crt: "{{ cm_k8s_info_run.resources[0].data['ca-bundle.crt'] }}"
-  register: cm_new_k8s_run
-  until: cm_new_k8s_run is not failed
-  delay: 10
-  retries: 30
+#- name: Query the cluster-wide Root CAs ConfigMap
+#  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+#  kubernetes.core.k8s_info:
+#    api_version: v1
+#    kind: ConfigMap
+#    namespace: "{{ acm_operator_namespace }}"
+#    name: "{{ root_ca_object_name }}"
+#  until: cm_k8s_info_run.resources | length > 0
+#  register: cm_k8s_info_run
+#  delay: 10
+#  retries: 30
+
+#- name: Copy data over to a secret formatted for Assisted Service
+#  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+#  kubernetes.core.k8s:
+#    state: present
+#    api_version: v1
+#    kind: Secret
+#    namespace: "{{ ns_item }}"
+#    merge_type:
+#    - strategic-merge
+#    - merge
+#    definition:
+#      metadata:
+#        name: "{{ root_ca_object_name }}"
+#      stringData:
+#        ca.crt: "{{ cm_k8s_info_run.resources[0].data['ca-bundle.crt'] }}"
+#  loop:
+#    - "{{ acm_operator_namespace }}"
+#    - hive
+#    - multicluster-engine
+#  loop_control:
+#    loop_var: ns_item
 
 - name: Set cluster version
   set_fact:
@@ -133,23 +154,6 @@
   retries: 200
   delay: 10
   until: r_subscription.resources | list | length == 1
-
-- name: Create namespaces for {{ ztp_config_namespace }}
-  kubernetes.core.k8s:
-    state: present
-    kind: Namespace
-    api_version: v1
-    merge_type:
-    - strategic-merge
-    - merge
-    definition:
-      metadata:
-        name: "{{ ztp_config_namespace }}"
-      spec: {}
-  register: k8s_run
-  until: k8s_run is not failed
-  delay: 10
-  retries: 30
 
 - name: Apply the Cluster Releases
   kubernetes.core.k8s:

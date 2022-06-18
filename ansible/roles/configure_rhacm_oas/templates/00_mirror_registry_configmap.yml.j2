@@ -2,7 +2,8 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: {{ mirror_registry_root_ca_configmap_name }}
-  namespace: {{ acm_operator_namespace }}
+  #namespace: {{ acm_operator_namespace }}
+  namespace: multicluster-engine
 data:
 {% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
   ca-bundle.crt: |
