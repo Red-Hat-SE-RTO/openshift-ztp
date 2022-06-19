@@ -9,6 +9,12 @@ metadata:
     #installer.namespace: {{ acm_operator_namespace }}
     backplaneconfig.name: multiclusterengine
 spec:
+  controllersConfig:
+    default:
+      replicas: 1
+  argoCDConfig:
+    enabled: true
+    namespace: openshift-gitops
   #featureGates:
   #  custom:
   #    enabled:

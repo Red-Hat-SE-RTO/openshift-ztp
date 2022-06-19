@@ -231,11 +231,12 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('template', 'templates/10_objectbucketclaim.yml.j2' ) | from_yaml }}"
-  register: k8s_run
-  until: k8s_run is not failed
-  delay: 10
-  retries: 30
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+    - "templates/10_objectbucketclaim.yaml.j2"
+    - "templates/rbac_hive.yaml.j2"
+  loop_control:
+    loop_var: template_item
 
 - name: Query the {{ acm_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
