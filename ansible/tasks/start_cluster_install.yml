@@ -15,7 +15,7 @@
   kubernetes.core.k8s_info:
     api_version: route.openshift.io/v1
     kind: Route
-    namespace: open-cluster-management
+    namespace: multicluster-engine
     name: assisted-service
   register: rhacm_route_info
 
