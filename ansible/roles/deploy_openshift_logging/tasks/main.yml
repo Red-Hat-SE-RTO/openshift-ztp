@@ -141,26 +141,6 @@
 ## OperatorGroup
 ###########################################################################
 
-- name: Query the {{ logging_operator_namespace }} namespace for OperatorGroups
-  kubernetes.core.k8s_info:
-    api_version: operators.coreos.com/v1
-    kind: OperatorGroup
-    namespace: "{{ logging_operator_namespace }}"
-  register: r_og_list
-
-- name: Create Operator OperatorGroup
-  kubernetes.core.k8s:
-    state: present
-    apply: yes
-    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2' ) | from_yaml }}"
-  register: k8s_run
-  until: k8s_run is not failed
-  delay: 10
-  retries: 3
-  when: r_og_list.resources | length == 0
-  vars:
-    target_operator_namespace: "{{ logging_operator_namespace }}"
-
 - name: Query the {{ elasticsearch_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1
@@ -172,14 +152,30 @@
   kubernetes.core.k8s:
     state: present
     apply: yes
-    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2' ) | from_yaml }}"
+    definition: "{{ lookup('template', 'templates/es_operatorgroup.yaml.j2' ) | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
   retries: 3
   when: r_og_list.resources | length == 0
-  vars:
-    target_operator_namespace: "{{ elasticsearch_operator_namespace }}"
+
+- name: Query the {{ logging_operator_namespace }} namespace for OperatorGroups
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1
+    kind: OperatorGroup
+    namespace: "{{ logging_operator_namespace }}"
+  register: r_og_list
+
+- name: Create Operator OperatorGroup
+  kubernetes.core.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', 'templates/logging_operatorgroup.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+  when: r_og_list.resources | length == 0
 
 ###########################################################################
 ## Elasticsearch Subscription
