@@ -1,0 +1,6 @@
+---
+# defaults file for deploy_openshift_logging
+elasticsearch_operator_namespace: openshift-operators-redhat
+logging_operator_namespace: openshift-logging
+
+logging_storageclass: ocs-storagecluster-ceph-rbd
