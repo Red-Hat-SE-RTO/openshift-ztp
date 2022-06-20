@@ -77,6 +77,8 @@
     definition:
       metadata:
         name: "{{ ns_item }}"
+        labels:
+          openshift.io/cluster-monitoring: 'true'
       spec: {}
   loop:
     - "{{ acm_operator_namespace }}"

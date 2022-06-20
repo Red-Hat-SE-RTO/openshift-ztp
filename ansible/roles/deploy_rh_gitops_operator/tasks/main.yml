@@ -67,6 +67,8 @@
     definition:
       metadata:
         name: "{{ argo_operator_namespace }}"
+        labels:
+          openshift.io/cluster-monitoring: 'true'
       spec: {}
   register: k8s_run
   until: k8s_run is not failed
