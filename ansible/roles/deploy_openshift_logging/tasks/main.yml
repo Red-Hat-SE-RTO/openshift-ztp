@@ -114,6 +114,8 @@
     definition:
       metadata:
         name: "{{ logging_operator_namespace }}"
+        label:
+          openshift.io/cluster-monitoring: 'true'
       spec: {}
   register: k8s_run
   until: k8s_run is not failed
@@ -131,6 +133,8 @@
     definition:
       metadata:
         name: "{{ elasticsearch_operator_namespace }}"
+        label:
+          openshift.io/cluster-monitoring: 'true'
       spec: {}
   register: k8s_run
   until: k8s_run is not failed
