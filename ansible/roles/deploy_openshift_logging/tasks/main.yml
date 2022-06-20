@@ -51,8 +51,8 @@
 
 - name: Set additional operator specific facts
   set_fact:
-    es_operator_api_definition: "{{ r_pm.resources[0].status.channels[es_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Elasticsearch')].name\") | first }}"
-    es_operator_api_version: "{{ r_pm.resources[0].status.channels[es_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Elasticsearch')].version\") | first }}"
+    es_operator_api_definition: "{{ r_es_pm.resources[0].status.channels[es_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Elasticsearch')].name\") | first }}"
+    es_operator_api_version: "{{ r_es_pm.resources[0].status.channels[es_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Elasticsearch')].version\") | first }}"
 
 ###########################################################################
 ## OpenShift Logging Operator Setup
@@ -118,7 +118,24 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
+
+- name: Create namespace for {{ elasticsearch_operator_namespace }}
+  kubernetes.core.k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ elasticsearch_operator_namespace }}"
+      spec: {}
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
 
 ###########################################################################
 ## OperatorGroup
@@ -139,8 +156,30 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_og_list.resources | length == 0
+  vars:
+    target_operator_namespace: "{{ logging_operator_namespace }}"
+
+- name: Query the {{ elasticsearch_operator_namespace }} namespace for OperatorGroups
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1
+    kind: OperatorGroup
+    namespace: "{{ elasticsearch_operator_namespace }}"
+  register: r_og_list
+
+- name: Create Operator OperatorGroup
+  kubernetes.core.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+  when: r_og_list.resources | length == 0
+  vars:
+    target_operator_namespace: "{{ elasticsearch_operator_namespace }}"
 
 ###########################################################################
 ## Elasticsearch Subscription
@@ -156,7 +195,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the Operator to become available - before v4.9.0
   kubernetes.core.k8s_info:
@@ -194,7 +233,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the Operator to become available - before v4.9.0
   kubernetes.core.k8s_info:
@@ -232,7 +271,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Get the elasticsearch Pod
   kubernetes.core.k8s_info:
@@ -242,6 +281,9 @@
     label_selectors:
       - component = elasticsearch
   register: r_es_pod
+  retries: 200
+  delay: 10
+  until: r_es_pod.resources | list | length == 1
 
 - name: Wait till the Elasticsearch Pod is ready
   kubernetes.core.k8s_info:
