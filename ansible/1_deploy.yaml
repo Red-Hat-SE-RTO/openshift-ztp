@@ -14,6 +14,8 @@
 
     #########################################
     ## Operator Management
+    deploy_rh_cert_manager: false
+    deploy_openshift_logging: false
     deploy_nfd: false
     deploy_lso: false
     deploy_odf: false
@@ -53,6 +55,11 @@
       include_role:
         name: deploy_vault_chart
 
+    - name: Install the Red Hat cert-manager Operator
+      when: deploy_rh_cert_manager|bool
+      include_role:
+        name: deploy_cert_manager
+
     - name: Install Node Feature Discovery
       when: deploy_nfd|bool
       include_role:
@@ -78,6 +85,11 @@
       when: deploy_odf|bool
       include_role:
         name: deploy_odf_operator
+
+    - name: Install the Red Hat OpenShift Logging Operator
+      when: deploy_openshift_logging|bool
+      include_role:
+        name: deploy_openshift_logging
 
     - name: Deploy the ZTP HTTP Mirror
       when: deploy_http_mirror|bool
