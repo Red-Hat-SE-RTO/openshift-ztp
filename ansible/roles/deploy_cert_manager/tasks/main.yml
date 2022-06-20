@@ -1,0 +1,106 @@
+---
+# tasks file for deploy_cert_manager
+
+- name: Clear out facts
+  set_fact:
+    operator_csv_version: ""
+    operator_csv_version_index: ""
+    operator_api_definition: ""
+    operator_api_version: ""
+    operator_default_channel: ""
+
+- name: Get Cluster Version
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: ClusterVersion
+    name: version
+  register: r_ocp_version
+
+- name: Set cluster version
+  set_fact:
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+
+- name: Query the openshift-cert-manager-operator PackageManifest for the latest version of the Red Hat cert-manager
+  kubernetes.core.k8s_info:
+    api_version: packages.operators.coreos.com/v1
+    kind: PackageManifest
+    name: openshift-cert-manager-operator
+    namespace: openshift-marketplace
+  register: r_pm
+
+- name: Set the latest CSV version
+  set_fact:
+    operator_csv_version: "{{ chan_item.currentCSV }}"
+    operator_csv_version_index: "{{ chan_idx }}"
+    operator_default_channel: "{{ r_pm.resources[0].status.defaultChannel }}"
+  loop: "{{ r_pm.resources[0].status.channels }}"
+  loop_control:
+    loop_var: chan_item
+    index_var: chan_idx
+    label: "{{ chan_item.name }}"
+  when: chan_item.name ==  r_pm.resources[0].status.defaultChannel
+
+- name: Fail if the Current Operator CSV was not found
+  fail:
+    msg: "Operator CSV for RH cert-manager not found for channel {{ r_pm.resources[0].status.defaultChannel }}"
+  when: operator_csv_version is undefined
+
+#- name: Set additional operator specific facts
+#  set_fact:
+#    operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='ArgoCD')].name\") | first }}"
+#    operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='ArgoCD')].version\") | first }}"
+
+- name: Debug
+  debug:
+    msg:
+      - "OpenShift Version: {{ ocp_version }}"
+      - "Operator CSV version: {{ operator_csv_version }}"
+      #- "Operator API Definition: {{ operator_api_definition }}"
+      #- "Operator API Version: {{ operator_api_version }}"
+
+- name: Create namespace for {{ rh_cert_manager_operator_namespace }}
+  kubernetes.core.k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ rh_cert_manager_operator_namespace }}"
+      spec: {}
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+
+- name: Query the {{ rh_cert_manager_operator_namespace }} namespace for OperatorGroups
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1
+    kind: OperatorGroup
+    namespace: "{{ rh_cert_manager_operator_namespace }}"
+  register: r_og_list
+
+- name: Create Operator OperatorGroup
+  kubernetes.core.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
+  when: r_og_list.resources | length == 0
+
+- name: Create Operator subscription
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/subscription.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 30
