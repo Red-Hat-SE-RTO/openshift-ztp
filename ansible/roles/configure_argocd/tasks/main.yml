@@ -49,7 +49,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create ArgoCD AppProject for Cluster Sync
   kubernetes.core.k8s:
@@ -61,7 +61,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create ArgoCD AppProject for Cluster Application Sync
   kubernetes.core.k8s:
@@ -73,7 +73,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create ArgoCD Git Credentials Secret for Cluster Application Sync
   kubernetes.core.k8s:
@@ -85,7 +85,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create ArgoCD Application for Cluster Application Sync
   kubernetes.core.k8s:

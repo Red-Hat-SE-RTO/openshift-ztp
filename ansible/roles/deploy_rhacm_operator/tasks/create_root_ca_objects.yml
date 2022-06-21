@@ -76,7 +76,7 @@
       until: cm_k8s_info_root_bundle_ca.resources | length > 0
       register: cm_k8s_info_root_bundle_ca
       delay: 10
-      retries: 30
+      retries: 3
 
     - name: Copy data over to a secret formatted for Assisted Service/CIM/Hive/RHACM
       kubernetes.core.k8s:

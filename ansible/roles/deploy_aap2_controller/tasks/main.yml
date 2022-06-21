@@ -89,7 +89,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 # ===============================================================================================
 # Add the custom Root CAs
@@ -129,7 +129,7 @@
   until: cm_k8s_info_run.resources | length > 0
   register: cm_k8s_info_run
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Copy data over to a secret formatted for AAP2
   kubernetes.core.k8s:
@@ -176,7 +176,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   loop:
     - templates/pgsql-secret.yaml.j2
     - templates/pgsql-service.yaml.j2
@@ -200,7 +200,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_og_list.resources | length == 0
 
 - name: Create Operator subscription
@@ -213,7 +213,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the Operator to become available - before v4.9.0
   kubernetes.core.k8s_info:
@@ -247,7 +247,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Provide RBAC for the Tower/Controller
   kubernetes.core.k8s:
@@ -259,7 +259,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   loop:
     - 'templates/rolebindings.yaml.j2'
     - 'templates/scc.yaml.j2'

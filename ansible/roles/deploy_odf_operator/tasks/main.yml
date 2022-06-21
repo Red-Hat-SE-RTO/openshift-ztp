@@ -87,7 +87,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Query the {{ odf_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:
@@ -104,7 +104,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_og_list.resources | length == 0
 
 - name: Create Operator subscription
@@ -117,7 +117,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the Operator to become available - before v4.9.0
   kubernetes.core.k8s_info:
@@ -167,7 +167,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create the ODF StorageCluster for AWS
   kubernetes.core.k8s:
@@ -179,7 +179,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_ocp_infra.resources[0].status.platform == "AWS"
 
 - name: Create the ODF StorageCluster for LSO
@@ -192,7 +192,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_ocp_infra.resources[0].status.platform != "AWS"
 
 - name: Create the ODF StorageSystem
@@ -205,7 +205,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the CephFS StorageClasses to come online
   kubernetes.core.k8s_info:
@@ -235,4 +235,4 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3

@@ -28,7 +28,7 @@
   register: r_pm
   until: r_pm.resources | length > 0
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Set the latest CSV version for {{ rh_sso_operator_channel }} channel
   set_fact:
@@ -84,7 +84,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 # ===============================================================================================
 # Add the custom Root CAs
@@ -161,7 +161,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_og_list.resources | length == 0
 
 # ===============================================================================================
@@ -178,7 +178,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the Operator to become available - before v4.9.0
   kubernetes.core.k8s_info:
@@ -216,7 +216,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create Operator Instance Probe ConfigMap - fixes proxy issues with no_proxy and the hostname -i IP
   kubernetes.core.k8s:
@@ -228,7 +228,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create Operator Instance
   kubernetes.core.k8s:
@@ -240,7 +240,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Get the Operator Instance
   kubernetes.core.k8s_info:
@@ -251,7 +251,7 @@
   register: r_sso_instance
   until: r_sso_instance.resources[0].status.externalURL is defined and r_sso_instance.resources[0].status.externalURL != ''
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait till the Keycloak Pod is running
   kubernetes.core.k8s_info:
@@ -276,7 +276,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Create Operator Instance Realm-bound Break Glass User
   kubernetes.core.k8s:
@@ -288,7 +288,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 # ===============================================================================================
 # Output
@@ -303,7 +303,7 @@
   register: r_sso_credential_secret
   until: r_sso_credential_secret.resources | length > 0
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Output Resources
   debug:

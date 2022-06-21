@@ -18,7 +18,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 # ===============================================================================================
 # Add the custom Root CAs
@@ -81,7 +81,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   loop:
     - "templates/01-configmap.yaml.j2"
     - "templates/02-pvc.yaml.j2"

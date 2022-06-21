@@ -110,7 +110,7 @@
       register: k8s_run
       until: k8s_run is not failed
       delay: 10
-      retries: 30
+      retries: 3
   tags:
     - k8s_queries
 
@@ -1112,7 +1112,7 @@
             job_template_playbook: "{{ aap2_job_template_create_spoke_manifests_playbook }}"
           until: create_spoke_manifests_response.status == 201
           delay: 10
-          retries: 30
+          retries: 3
 
         - name: Set Create Spoke Manifests Template ID when created
           when: create_spoke_manifests_response.json.id is defined and check_create_spoke_manifests_job_template_response.json.count == 0
@@ -1163,7 +1163,7 @@
             job_template_playbook: "{{ aap2_job_template_create_credentials_playbook }}"
           until: create_credentials_response.status == 201
           delay: 10
-          retries: 30
+          retries: 3
 
         - name: Set Create Credentials Template ID when created
           when: create_credentials_response.json.id is defined and check_create_credentials_job_template_response.json.count == 0

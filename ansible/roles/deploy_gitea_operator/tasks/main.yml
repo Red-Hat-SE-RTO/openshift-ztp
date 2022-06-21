@@ -16,7 +16,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: gitea_operator_source != "kenmoini-gitea"
 
 - name: Add Ken Moini's Gitea Operator CatalogSource
@@ -27,7 +27,7 @@
   register: kemo_k8s_run
   until: kemo_k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: gitea_operator_source == "kenmoini-gitea"
 
 - name: Wait for the CatalogSource to sync
@@ -61,7 +61,7 @@
   register: r_pm
   until: r_pm.resources | length > 0
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Set the latest CSV version for {{ gitea_operator_channel }} channel
   set_fact:
@@ -111,7 +111,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 # ===============================================================================================
 # Add the custom Root CAs
@@ -156,7 +156,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   when: r_og_list.resources | length == 0
 
 - name: Create Operator RBAC
@@ -169,7 +169,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   loop:
     #- "templates/subscription.yaml.j2"
     - "templates/operator-rbac-clusterrole.yaml.j2"
@@ -187,7 +187,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Wait for the Operator to become available - before v4.9.0
   kubernetes.core.k8s_info:
@@ -221,4 +221,4 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3

@@ -102,7 +102,7 @@
 #  until: cm_k8s_info_run.resources | length > 0
 #  register: cm_k8s_info_run
 #  delay: 10
-#  retries: 30
+#  retries: 3
 
 #- name: Copy data over to a secret formatted for Assisted Service
 #  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
@@ -150,7 +150,7 @@
     name: advanced-cluster-management
     namespace: "{{ acm_operator_namespace }}"
   register: r_subscription
-  retries: 200
+  retries: 3
   delay: 10
   until: r_subscription.resources | list | length == 1
 
@@ -164,7 +164,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
   loop: "{{ release_versions }}"
   loop_control:
     loop_var: release_long_version
@@ -180,7 +180,7 @@
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
-  retries: 30
+  retries: 3
 
 - name: Apply the Operator configuration
   kubernetes.core.k8s:

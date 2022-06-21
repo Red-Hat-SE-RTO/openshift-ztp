@@ -7,7 +7,7 @@
     namespace: "{{ infraenv.namespace }}"
     name: "{{ infraenv.name }}"
   register: infraenv_info
-  retries: 30
+  retries: 3
   delay: 10
   until: infraenv_info.resources[0].status.isoDownloadURL != ""
   ignore_errors: true
