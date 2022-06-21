@@ -3,8 +3,33 @@ kind: MultiClusterObservability
 metadata:
   name: observability
 spec:
+  #availabilityConfig: Basic # depreciated in v1beta2 lolwtf
+  advanced:
+    rbacQueryProxy:
+      replicas: 1
+    grafana:
+      replicas: 1
+    alertmanager:
+      replicas: 1
+    storeMemcached:
+      replicas: 1
+    queryFrontendMemcached:
+      replicas: 1
+    observatoriumAPI:
+      replicas: 1
+    queryFrontend:
+      replicas: 1
+    query:
+      replicas: 1
+    receive:
+      replicas: 1
+    rule:
+      replicas: 1
+    store:
+      replicas: 1
   observabilityAddonSpec: {}
   storageConfig:
     metricObjectStorage:
       name: thanos-object-storage
       key: thanos.yaml
+    storageClass: ocs-storagecluster-ceph-rbd
