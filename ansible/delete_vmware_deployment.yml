@@ -13,17 +13,27 @@
       namespace: "{{ cluster_configmap_namespace }}"
       name: "{{ cluster_configmap_name }}"
 
+  environment:
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+    no_proxy: "{{ no_proxy | default('') }}"
+    HTTP_PROXY: "{{ http_proxy | default('') }}"
+    HTTPS_PROXY: "{{ https_proxy | default('') }}"
+    NO_PROXY: "{{ no_proxy | default('') }}"
+    K8S_AUTH_PROXY: "{{ http_proxy | default('') }}"
+    K8S_AUTH_NO_PROXY: "{{ no_proxy | default('') }}"
+
   tasks:
-  - name: Preflight for Tower
-    block:
-    - name: Install needed pip modules
-      pip:
-        name:
-          - kubernetes
-          - openshift==0.12.1
-        extra_args: --upgrade
-      delegate_to: localhost
-    when: tower_job_id is defined
+  #- name: Preflight for Tower
+  #  block:
+  #  - name: Install needed pip modules
+  #    pip:
+  #      name:
+  #        - kubernetes
+  #        - openshift==0.12.1
+  #      extra_args: --upgrade
+  #    delegate_to: localhost
+  #  when: tower_job_id is defined
 
   - name: Query OpenShift for needed Configs & Secrets
     block:
