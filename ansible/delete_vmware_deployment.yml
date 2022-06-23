@@ -13,6 +13,8 @@
       namespace: "{{ cluster_configmap_namespace }}"
       name: "{{ cluster_configmap_name }}"
 
+    argocd_namespace: openshift-gitops
+
   environment:
     http_proxy: "{{ http_proxy | default('') }}"
     https_proxy: "{{ https_proxy | default('') }}"
@@ -94,7 +96,7 @@
         state: absent
         api_version: argoproj.io/v1alpha1
         kind: Application
-        namespace: argocd
+        namespace: "{{ argocd_namespace }}"
         name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
       ignore_errors: yes
 
