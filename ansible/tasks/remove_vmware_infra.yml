@@ -28,7 +28,7 @@
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
     name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
-    folder: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+    folder: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
     guest_id: coreos64Guest
     state: powered-off
 
@@ -42,7 +42,7 @@
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
     name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
-    folder: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+    folder: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
     guest_id: coreos64Guest
     state: absent
 
