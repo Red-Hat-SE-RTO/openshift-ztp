@@ -51,6 +51,7 @@ ansible-playbook 1_deploy.yaml \
   -e deploy_odf=true \
   -e deploy_http_mirror=true \
   -e deploy_rhacm=true \
+  -e enable_rhacm_observability=true \
   -e deploy_gitea=true \
   -e deploy_rh_gitops=true \
   -e deploy_aap2_controller=true \
@@ -71,6 +72,7 @@ deploy_lso: true
 deploy_odf: true
 deploy_http_mirror: true
 deploy_rhacm: true
+enable_rhacm_observability: true
 deploy_gitea: true
 deploy_rh_gitops: true
 deploy_aap2_controller: true
