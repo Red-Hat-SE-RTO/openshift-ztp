@@ -227,7 +227,20 @@
   loop_control:
     loop_var: ns_item
 
+- name: Setup Hive RBAC
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+    - "templates/rbac_hive.yaml.j2"
+  loop_control:
+    loop_var: template_item
+
 - name: Create Nooba Bucket
+  when: enable_rhacm_observability|bool
   kubernetes.core.k8s:
     state: present
     merge_type:
@@ -236,7 +249,6 @@
     definition: "{{ lookup('template', template_item ) | from_yaml }}"
   loop:
     - "templates/10_objectbucketclaim.yaml.j2"
-    - "templates/rbac_hive.yaml.j2"
   loop_control:
     loop_var: template_item
 
@@ -304,45 +316,48 @@
   delay: 10
   retries: 3
 
-- name: Get Nooba bucket Secret
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    namespace: open-cluster-management-observability
-    name: thanos-object-storage-bucket
-  register: r_nooba_secret
-  until: r_nooba_secret.resources | length > 0
-  delay: 10
-  retries: 3
-
-- name: Create new secret for the thanos s3 binding
-  kubernetes.core.k8s:
-    state: present
-    api_version: v1
-    kind: Secret
-    definition:
-      metadata:
+- name: Deploy RHACM Observability
+  when: enable_rhacm_observability|bool
+  block:
+    - name: Get Nooba bucket Secret
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
         namespace: open-cluster-management-observability
-        name: thanos-object-storage
-      type: Opaque
-      stringData:
-        thanos.yaml: |
-          type: s3
-          config:
-            bucket: thanos-object-storage-bucket
-            endpoint: s3.openshift-storage.svc
-            insecure: true
-            access_key: {{ r_nooba_secret.resources[0].data.AWS_ACCESS_KEY_ID | b64decode }}
-            secret_key: {{ r_nooba_secret.resources[0].data.AWS_SECRET_ACCESS_KEY | b64decode }}
+        name: thanos-object-storage-bucket
+      register: r_nooba_secret
+      until: r_nooba_secret.resources | length > 0
+      delay: 10
+      retries: 30
 
-- name: Create MultiClusterObservability
-  kubernetes.core.k8s:
-    state: present
-    merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/10_multi_observability_cr.yaml.j2' ) | from_yaml }}"
-  register: k8s_run
-  until: k8s_run is not failed
-  delay: 10
-  retries: 3
+    - name: Create new secret for the thanos s3 binding
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Secret
+        definition:
+          metadata:
+            namespace: open-cluster-management-observability
+            name: thanos-object-storage
+          type: Opaque
+          stringData:
+            thanos.yaml: |
+              type: s3
+              config:
+                bucket: thanos-object-storage-bucket
+                endpoint: s3.openshift-storage.svc
+                insecure: true
+                access_key: {{ r_nooba_secret.resources[0].data.AWS_ACCESS_KEY_ID | b64decode }}
+                secret_key: {{ r_nooba_secret.resources[0].data.AWS_SECRET_ACCESS_KEY | b64decode }}
+
+    - name: Create MultiClusterObservability
+      kubernetes.core.k8s:
+        state: present
+        merge_type:
+        - strategic-merge
+        - merge
+        definition: "{{ lookup('template', 'templates/10_multi_observability_cr.yaml.j2' ) | from_yaml }}"
+      register: k8s_run
+      until: k8s_run is not failed
+      delay: 10
+      retries: 3
