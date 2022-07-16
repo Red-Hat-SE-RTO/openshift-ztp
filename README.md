@@ -12,6 +12,10 @@ This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a
 - [Red Hat Advanced Cluster Management](https://www.redhat.com/en/technologies/management/advanced-cluster-management)
 - [Red Hat Ansible Automation Platform 2.x](https://www.redhat.com/en/technologies/management/ansible)
 - [Red Hat GitOps](https://cloud.redhat.com/blog/announcing-openshift-gitops) (ArgoCD)
+- [Red Hat OpenShift Pipelines](https://cloud.redhat.com/blog/introducing-openshift-pipelines) (Tekton)
+- [Red Hat OpenShift Logging](https://docs.openshift.com/container-platform/4.10/logging/cluster-logging.html) (ELK)
+- [Red Hat Single Sign-On (SSO)](https://access.redhat.com/products/red-hat-single-sign-on) (Keycloak)
+- [Red Hat OpenShift cert-manager](https://docs.openshift.com/container-platform/4.10/security/cert_manager_operator/index.html)
 - [Reflector](https://github.com/emberstack/kubernetes-reflector) to manage secrets
 - [Gitea](https://gitea.io/en-us/) for a cluster-hosted Git server
 - HTTP Mirror for assets such as RHCOS ISOs and Root FS blobs, as well as anything else that would need to be served via HTTP server
@@ -76,10 +80,24 @@ ansible-galaxy collection install -r ./collections/requirements.yml
 oc login ...
 
 ## Bootstrap the Hub cluster with needed Operators and Workloads
-ansible-playbook ansible/1_deploy.yaml
+ansible-playbook ansible/1_deploy.yaml \
+  -e deploy_reflector=true \
+  -e deploy_lso=true \
+  -e deploy_odf=true \
+  -e deploy_http_mirror=true \
+  -e deploy_rhacm=true \
+  -e deploy_gitea=true \
+  -e deploy_rh_gitops=true \
+  -e deploy_aap2_controller=true \
+  -e deploy_rh_sso=true \
+  -e deploy_rh_cert_manager=true
 
 ## Configure the Hub cluster Operators and Workloads, namely RHACM, AAP2, and RH GitOps (ArgoCD)
-ansible-playbook ansible/2_configure.yaml
+ansible-playbook ansible/2_configure.yaml \
+  -e configure_rhacm=true \
+  -e configure_aap2_controller=true \
+  -e configure_rh_gitops=true \
+  -e pull_secret_path="~/rh-ocp-pull-secret.json" 
 
 ## Create credentials for vSphere Infrastructure, Pull Secret, Git credentials, etc
 ansible-playbook \

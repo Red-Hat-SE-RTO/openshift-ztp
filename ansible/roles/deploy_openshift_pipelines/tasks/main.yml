@@ -1,0 +1,92 @@
+---
+# tasks file for deploy_openshift_pipelines
+
+- name: Clear out facts
+  set_fact:
+    operator_csv_version: ""
+    operator_csv_version_index: ""
+    operator_api_definition: ""
+    operator_api_version: ""
+    operator_channel: ""
+
+- name: Get Cluster Version
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: ClusterVersion
+    name: version
+  register: r_ocp_version
+
+- name: Set cluster version
+  set_fact:
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+
+- name: Query the openshift-pipelines-operator-rh PackageManifest for the latest version of the OpenShift Pipelines Operator
+  kubernetes.core.k8s_info:
+    api_version: packages.operators.coreos.com/v1
+    kind: PackageManifest
+    name: openshift-pipelines-operator-rh
+    namespace: openshift-marketplace
+  register: r_pm
+
+- name: Set the latest CSV version
+  set_fact:
+    operator_csv_version: "{{ chan_item.currentCSV }}"
+    operator_csv_version_index: "{{ chan_idx }}"
+    operator_channel: r_pm.resources[0].status.defaultChannel
+  loop: "{{ r_pm.resources[0].status.channels }}"
+  loop_control:
+    loop_var: chan_item
+    index_var: chan_idx
+    label: "{{ chan_item.name }}"
+  when: chan_item.name == r_pm.resources[0].status.defaultChannel
+
+- name: Debug
+  debug:
+    msg:
+      - "OpenShift Version: {{ ocp_version }}"
+      - "Operator CSV version: {{ operator_csv_version }}"
+      - "Operator API Definition: {{ operator_api_definition }}"
+      - "Operator API Version: {{ operator_api_version }}"
+      - "Operator Channel: {{ operator_channel }}"
+
+- name: Create Operator subscription
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/subscription.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+
+- name: Wait for the Operator to become available - before v4.9.0
+  kubernetes.core.k8s_info:
+    api_version: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    name: "{{ operator_api_definition }}"
+  register: crd_check
+  retries: 200
+  delay: 10
+  until: crd_check.resources | list | length == 1
+  when: ocp_version is version('4.9.0', operator='lt', strict=True)
+
+- name: Wait for the Operator to come online - v4.9.0+
+  kubernetes.core.k8s_info:
+    api_version: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    name: "{{ operator_api_definition }}"
+  register: crd_check
+  retries: 200
+  delay: 10
+  until: crd_check.resources | list | length == 1
+  when: ocp_version is version('4.9.0', operator='ge', strict=True)
+
+- name: Clear out facts
+  set_fact:
+    operator_csv_version: ""
+    operator_csv_version_index: ""
+    operator_api_definition: ""
+    operator_api_version: ""
+    operator_channel: ""

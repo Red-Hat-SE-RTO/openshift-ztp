@@ -37,6 +37,9 @@ The following Playbook will take a fresh OpenShift 4.9+ cluster and deploy:
 - Red Hat GitOps (ArgoCD)
 - Red Hat Ansible Automation Platform 2
 - Red Hat Single Sign-On (SSO)
+- Red Hat OpenShift Pipelines (Tekton)
+- Red Hat OpenShift Logging (Elasticstack)
+- Red Hat OpenShift cert-manager
 - Simple HTTP Mirror for assets such as ISOs, Root FSes, etc.
 
 Though by default nothing is deployed, you must specify workloads to enable:
@@ -51,7 +54,10 @@ ansible-playbook 1_deploy.yaml \
   -e deploy_gitea=true \
   -e deploy_rh_gitops=true \
   -e deploy_aap2_controller=true \
-  -e deploy_rh_sso=true
+  -e deploy_rh_sso=true \
+  -e deploy_rh_cert_manager=true \
+  -e deploy_openshift_logging=true \
+  -e deploy_openshift_pipelines=true
 ```
 
 Or use a variable file, such as `deployment.vars.yaml`:
@@ -69,6 +75,9 @@ deploy_gitea: true
 deploy_rh_gitops: true
 deploy_aap2_controller: true
 deploy_rh_sso: true
+deploy_rh_cert_manager: true
+deploy_openshift_logging: true
+deploy_openshift_pipelines: true
 
 #########################################
 ## Local Storage Operator Variables
@@ -95,9 +104,9 @@ The configuration playbook will do the following:
 
 ```bash
 ansible-playbook 2_configure.yaml \
-  -e configure_rhacm=false \
-  -e configure_aap2_controller=false \
-  -e configure_rh_gitops=false \
+  -e configure_rhacm=true \
+  -e configure_aap2_controller=true \
+  -e configure_rh_gitops=true \
   -e use_ztp_mirror=true \
   -e use_services_not_routes=true \
   -e pull_secret_path="~/rh-ocp-pull-secret.json" \

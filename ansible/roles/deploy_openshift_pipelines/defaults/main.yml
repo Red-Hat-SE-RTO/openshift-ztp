@@ -1,0 +1,4 @@
+---
+# defaults file for deploy_openshift_pipelines
+
+ocp_pipelines_operator_namespace: openshift-operators
