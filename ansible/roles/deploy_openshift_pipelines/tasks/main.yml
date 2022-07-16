@@ -32,13 +32,23 @@
   set_fact:
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
-    operator_channel: r_pm.resources[0].status.defaultChannel
+    operator_channel: "{{ r_pm.resources[0].status.defaultChannel }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
   loop_control:
     loop_var: chan_item
     index_var: chan_idx
     label: "{{ chan_item.name }}"
   when: chan_item.name == r_pm.resources[0].status.defaultChannel
+
+- name: Fail if the Current Operator CSV was not found
+  fail:
+    msg: "Operator CSV for Gitea not found for channel {{ gitea_operator_channel }}"
+  when: operator_csv_version is undefined
+
+- name: Set additional operator specific facts
+  set_fact:
+    operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='TektonPipeline')].name\") | first }}"
+    operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='TektonPipeline')].version\") | first }}"
 
 - name: Debug
   debug:
