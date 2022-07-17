@@ -316,6 +316,18 @@
   delay: 10
   retries: 3
 
+- name: Create Ansible Spoke Standards ClusterCurator
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/spoke-standards-ansible.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+
 - name: Deploy RHACM Observability
   when: enable_rhacm_observability|bool
   block:
