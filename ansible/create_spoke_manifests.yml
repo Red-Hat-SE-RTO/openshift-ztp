@@ -2,53 +2,6 @@
 - name: Create a Spoke Cluster Manifest Set
   hosts: all
   gather_facts: no
-  vars:
-    # source_git_repo should probably be overridden at execution
-    source_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
-    ## Defaults - shouldn't need to be changed
-    target_spoke_git_path: "ztp-clusters/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
-
-    git_push_credentials_secret_name: "ztp-git-push-credentials"
-    git_push_credentials_secret_namespace: "ztp-credentials"
-
-    generate_ssh_keys: true
-    #use_https_repo: false
-    deployment_type: vsphere
-    openshift_release: "4.10.3"
-    template_secrets: true
-    secret_management: reflector
-    credential_namespace: "ztp-credentials"
-    ansible_tower_secret_name: "ansible-tower-credentials"
-    pull_secret_secret_name: "ztp-deployment-pull-secret"
-    ansible_job_template_name: create-vsphere-infra-ztp
-    
-    #ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner
-    #ansible_job_runner_image_version: latest
-
-    #root_ca_secret_name: cluster-root-ca-bundle
-
-    create_argo_application: true
-    argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
-    argocd_namespace: openshift-gitops
-    argocd_project_name: ztp-clusters
-
-    node_boot_timeout: 300
-
-    query_hub_for_root_ca: true
-
-    # pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpProxy, spoke_httpsProxy, spoke_noProxy vars
-    pass_proxy_to_spoke_from_hub: false
-
-    # https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
-    ## Spoke Proxy Configuration
-    #spoke_httpProxy: "http://192.168.77.1:3128/"
-    # spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
-    #spoke_httpsProxy: "http://192.168.77.1:3128/"
-    #spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
-
-    cluster_network_cidr: 10.128.0.0/14
-    service_network_cidrs:
-      - 172.30.0.0/16
 
   environment:
     http_proxy: "{{ http_proxy | default('') }}"
@@ -64,6 +17,7 @@
   #######################################################
   ## Tower Preflight - this can be skipped if using the quay.io/kenmoini/git-aap2-ee execution environment
 #  - name: Preflight for Tower
+#    when: tower_job_id is defined
 #    block:
 #    - name: Install needed pip modules if running in Tower
 #      pip:
@@ -77,12 +31,11 @@
 #    - name: Install needed packages in Ansible EE
 #      shell: microdnf install -y git --disablerepo="*" --enablerepo="ubi-8-appstream" --enablerepo="ubi-8-baseos"
 #      delegate_to: localhost
-#
-#    when: tower_job_id is defined
 
   #######################################################
   ## General Preflight
   #- name: Program Preflight
+  #  when: tower_job_id is not defined
   #  block:
   #  - name: Check for required programs
   #    ansible.builtin.shell: "which {{ item }}"
@@ -90,7 +43,6 @@
   #    ignore_errors: true
   #    with_items:
   #      - git
-  #    when: tower_job_id is not defined
   #    
   #  - name: Fail if needed programs are not found
   #    fail:
@@ -99,8 +51,6 @@
   #    loop: "{{ program_check.results }}"
   #    loop_control:
   #      label: "{{ item.cmd | replace('which ','') }}"
-  #    when: tower_job_id is not defined
-  #  when: tower_job_id is not defined
 
   - name: General variable Preflight
     block:
