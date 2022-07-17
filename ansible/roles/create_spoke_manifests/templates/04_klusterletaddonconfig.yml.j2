@@ -1,0 +1,36 @@
+---
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: {{ cluster_name }}
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+spec:
+  clusterName: {{ cluster_name }}
+  clusterNamespace: {{ cluster_name }}
+  clusterLabels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+    #cluster.open-cluster-management.io/clusterset: default
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+  #workManager:
+  #  enabled: true

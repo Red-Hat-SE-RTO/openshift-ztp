@@ -1,0 +1,81 @@
+---
+# defaults file for create_spoke_manifests
+
+# source_git_repo should probably be overridden at execution with whatever repo you're pushing/pulling to
+source_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
+
+target_spoke_git_path: "ztp-clusters/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+
+######################################################################################
+## Secrets
+# Should the secrets be templated - this really only works with reflector out of the box
+template_secrets: true
+secret_management: reflector
+
+# ssh_key_secret_name - the name of the secret that contains the ssh key to be used for the cluster
+ssh_key_secret_name: ztp-ssh-key
+
+# credential_namespace - If being reflected, where should the Secrets be reflected from
+credential_namespace: "ztp-credentials"
+
+# ansible_tower_secret_name - The Secret name that stores the Ansible Controller/Tower credentials
+ansible_tower_secret_name: "ansible-tower-credentials"
+
+# pull_secret_secret_name - The Secret name that stores the container registry Pull Secret
+pull_secret_secret_name: "ztp-deployment-pull-secret"
+
+# What Secret name and namespace should the Git push credentials be pulled from?
+git_push_credentials_secret_name: "ztp-git-push-credentials"
+git_push_credentials_secret_namespace: "{{ credential_namespace }}"
+
+openshift_release: "4.10.3"
+
+######################################################################################
+## Ansible Automation Platform 2 Configuration
+
+# The name for the Ansible Job that the AnsibleJob CR will kick off
+ansible_job_template_name: create-vsphere-infra-ztp
+
+#ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner
+#ansible_job_runner_image_version: latest
+
+######################################################################################
+## ArgoCD (Red Hat OpenShift GitOps) Configuration
+
+create_argo_application: true
+argo_application_git_repo_path: "ztp-cluster-applications/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
+argocd_namespace: openshift-gitops
+argocd_project_name: ztp-clusters
+
+
+######################################################################################
+## Proxy and Outbound Proxy Configuration
+# query_hub_for_root_ca - If the Hub cluster has the same custom Root CAs applied to it,
+# then the automation can pull that and apply it to the spoke cluster.
+query_hub_for_root_ca: true
+
+#root_ca_secret_name: cluster-root-ca-bundle
+
+# pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpProxy, spoke_httpsProxy, spoke_noProxy vars
+pass_proxy_to_spoke_from_hub: false
+
+## https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
+## Spoke Proxy Configuration
+
+#spoke_httpProxy: "http://192.168.77.1:3128/"
+# spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
+#spoke_httpsProxy: "http://192.168.77.1:3128/"
+#spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
+
+######################################################################################
+## Expert Mode - Do not edit below this line unless you know what you're doing
+
+cluster_network_cidr: 10.128.0.0/14
+service_network_cidrs:
+  - 172.30.0.0/16
+
+node_boot_timeout: 300
+
+deployment_type: vsphere
+
+install_packages: false

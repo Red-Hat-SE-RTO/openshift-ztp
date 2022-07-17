@@ -1,0 +1,45 @@
+---
+
+#######################################################
+## Filesystem Operations
+- name: Filesystem Configuration
+  block:
+    - name: Create a temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: build
+      register: temp_dir
+
+    - name: Create subdirectories in temporary path
+      file:
+        path: "{{ temp_dir.path }}/{{ path_item }}"
+        state: directory
+      loop:
+        - git
+        - secrets
+      loop_control:
+        loop_var: path_item
+
+- name: Clone down the repo
+  ansible.builtin.git:
+    repo: "{{ source_git_repo }}"
+    dest: "{{ temp_dir.path }}/git"
+    clone: yes
+  when: source_git_repo != push_git_url
+
+- name: Clone down the repo
+  ansible.builtin.git:
+    repo: "{{ push_git_url_combined }}"
+    dest: "{{ temp_dir.path }}/git"
+    clone: yes
+  when: source_git_repo == push_git_url
+
+- name: Create a directory for the spoke cluster
+  file:
+    path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
+    state: directory
+
+- name: Create a directory for the spoke cluster ArgoCD application
+  file:
+    path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
+    state: directory

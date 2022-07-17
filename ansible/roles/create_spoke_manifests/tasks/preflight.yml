@@ -1,0 +1,29 @@
+---
+#######################################################
+## General Preflight
+- name: Program Preflight
+  block:
+  - name: Check for required programs
+    ansible.builtin.shell: "which {{ item }}"
+    register: program_check
+    ignore_errors: true
+    with_items:
+      - git
+    
+  - name: Fail if needed programs are not found
+    fail:
+      msg: "{{ item.cmd | replace('which ','') }} is not found! You need to install it first."
+    failed_when: item.rc != 0
+    loop: "{{ program_check.results }}"
+    loop_control:
+      label: "{{ item.cmd | replace('which ','') }}"
+
+  - name: Check cluster_nodes count against the different cluster_types
+    fail:
+      msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_nodes|length }} nodes were found!"
+    failed_when: cluster_type != "sno" and cluster_nodes|length <= 2
+
+  - name: Single node OpenShift can only be a single node!
+    fail:
+      msg: "cluster_type {{ cluster_type }} requires only 1 control-plane nodes but {{ cluster_nodes|length }} nodes were configured!"
+    failed_when: cluster_type == "sno" and cluster_nodes|length >= 2

@@ -1,0 +1,127 @@
+---
+#######################################################
+## Git Push
+- name: Technologic
+  block:
+
+    - name: Git set push user info
+      shell: |
+        git config user.email "{{ push_git_user_email }}"
+        git config user.name "{{ push_git_user_name }}"
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+
+    - name: Git set push user token info
+      shell: |
+        git config --global github.user {{ push_git_username }}
+        git config --global github.token {{ push_git_password }}
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method in ["http", "https"]
+
+    - name: Git add the new cluster
+      shell: |
+        git add {{ target_spoke_git_path }}
+        git add {{ argo_application_git_repo_path }}
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+
+    - name: Git commit the new cluster
+      shell: |
+        git commit -m "add new ztp cluster: {{ cluster_name }}"
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+
+    - name: Git set new remote
+      shell: |
+        git remote add private {{ push_git_url }}
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method == "ssh"
+
+    - name: Save the contents of the SSH Key to a file
+      copy:
+        content: "{{ push_git_ssh_key }}"
+        dest: "{{ temp_dir.path }}/secrets/push_git_ssh_key"
+        mode: 0600
+      when: push_git_auth_method == "ssh"
+      no_log: true
+
+    - name: Create .ssh folder
+      shell: |
+        mkdir -p $HOME/.ssh
+        chmod 0700 $HOME/.ssh
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method == "ssh"
+
+    - name: Git push the new cluster
+      shell: |
+        ssh-keyscan github.com >> $HOME/.ssh/known_hosts
+        chmod 0644 $HOME/.ssh/known_hosts
+        git config core.sshCommand "ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
+        git push private {{ push_git_branch }}
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method == "ssh"
+
+    #- name: extract git url
+    #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
+    #  register: extract_output
+    #  when: push_git_auth_method == "basic"
+
+    #- name: save git url
+    #  set_fact: 
+    #    git_url_https: "{{ extract_output.stdout }}"
+    #  when: push_git_auth_method == "basic"
+
+    #- name: extract git path
+    #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
+    #  register: extract_path_output
+    #  when: push_git_auth_method == "basic"
+
+    #- name: save git path
+    #  set_fact: 
+    #    extract_path_output: "{{ extract_path_output.stdout }}"
+    #  when: push_git_auth_method == "basic"
+
+    #- name: extract git repo 
+    #  shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
+    #  register: extract_repo_output
+    #  when: push_git_auth_method == "basic"
+
+    #- name: save git repo
+    #  set_fact: 
+    #    extract_repo_output: "{{ extract_repo_output.stdout }}"
+    #  when: push_git_auth_method == "basic"
+
+    - name: Git set new remote
+      shell: |
+        git remote add private "{{ push_git_url_combined }}"
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method == "basic"
+
+    - name: git config --list
+      shell: |
+        git config --list
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method == "basic"
+
+    - name: Git push the new cluster
+      shell: |
+        git -c http.sslVerify=false push private main  
+      args:
+        chdir: "{{ temp_dir.path }}/git"
+      when: push_git_auth_method == "basic"
+
+#######################################################
+## Cleanup
+- name: Delete the temporary directory
+  ansible.builtin.file:
+    path: "{{ temp_dir.path }}"
+    state: absent
+    force: yes
+  tags:
+    - always

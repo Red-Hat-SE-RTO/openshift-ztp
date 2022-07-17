@@ -1,0 +1,19 @@
+---
+- name: Create a Spoke Cluster Manifest Set
+  hosts: all
+  gather_facts: no
+
+  environment:
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+    no_proxy: "{{ no_proxy | default('') }}"
+    HTTP_PROXY: "{{ http_proxy | default('') }}"
+    HTTPS_PROXY: "{{ https_proxy | default('') }}"
+    NO_PROXY: "{{ no_proxy | default('') }}"
+    K8S_AUTH_PROXY: "{{ http_proxy | default('') }}"
+    K8S_AUTH_NO_PROXY: "{{ no_proxy | default('') }}"
+  
+  tasks:
+    - name: Create the Spoke YAML Manifests and push them to a Git repo
+      include_role:
+        name: create_spoke_manifests

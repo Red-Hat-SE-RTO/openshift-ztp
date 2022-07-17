@@ -1,0 +1,32 @@
+---
+# tasks file for create_spoke_manifests
+- name: Run preflights
+  block:
+    - name: Run general preflight
+      include_tasks: preflight.yml
+
+    - name: Run preflights for Tower/Controller
+      include_tasks: preflight_tower.yml
+
+- name: Setup needed variables
+  block:
+    - name: Setup Proxy and Root CA configuration
+      include_tasks: ca_and_proxy.yml
+
+    - name: Setup Ignition Config Overrides
+      include_tasks: ignition_config_overrides.yml
+
+    - name: Setup variables for Git
+      include_tasks: git_setup.yml
+
+    - name: Read in the SSH Public Key
+      include_tasks: ssh_key.yml
+
+- name: Set up the local file system and clone the repo down
+  include_tasks: git_clone.yml
+
+- name: Template the needed YAML manifests
+  include_tasks: template_yaml.yml
+
+- name: Git Push
+  include_tasks: git_push.yml

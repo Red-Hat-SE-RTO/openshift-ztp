@@ -1,0 +1,16 @@
+---
+
+#######################################################
+## SSH Key
+- name: Get the Cluster SSH Key Credentials
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ credential_namespace }}"
+    name: "{{ ssh_key_secret_name }}"
+  register: ssh_secret
+
+- name: Read in the SSH Public Key
+  set_fact:
+    ssh_public_key: "{{ ssh_secret.resources[0].data.ssh_public_key | b64decode }}"
+  no_log: true

@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  creationTimestamp: null
+  name: {{ application_name }}
+  namespace: {{ argocd_namespace }}
+spec:
+  ignoreDifferences:
+    - group: hive.openshift.io
+      jsonPointers:
+        - /spec/installed
+      kind: ClusterDeployment
+    - group: hive.openshift.io
+      jsonPointers:
+        - /spec
+      kind: ClusterDeployment
+    - group: extensions.hive.openshift.io
+      jsonPointers:
+        - /spec
+      kind: AgentClusterInstall
+    - kind: Secret
+      jsonPointers:
+        - /data/host
+        - /data/token
+        - /data/vcenter_validate_ssl
+        - /data/vcenter_fqdn
+        - /data/vcenter_username
+        - /data/vcenter_password
+        - /data/.dockerconfigjson
+        - /data
+    - kind: Secret
+      group: core
+      jsonPointers:
+        - /data/host
+        - /data/token
+        - /data/vcenter_validate_ssl
+        - /data/vcenter_fqdn
+        - /data/vcenter_username
+        - /data/vcenter_password
+        - /data/.dockerconfigjson
+        - /data
+    - kind: Secret
+      group: v1
+      jsonPointers:
+        - /data/host
+        - /data/token
+        - /data/vcenter_validate_ssl
+        - /data/vcenter_fqdn
+        - /data/vcenter_username
+        - /data/vcenter_password
+        - /data/.dockerconfigjson
+        - /data
+  destination:
+    server: 'https://kubernetes.default.svc'
+  source:
+    repoURL: '{{ git_repo_url }}'
+    targetRevision: HEAD
+    ## Path is the repo directory that containers the cluster(s) configuration and deployment manifests
+    path: {{ git_repo_path }}
+    #path: ztp-clusters/${INFRA}/${DEPLOYMENT_TYPE}/${CLUSTER_NAME}
+    ## Enable recursive sub-directory search to enable management of multiple cluster from this single Application
+    directory:
+      recurse: true
+  project: {{ project_name }}
+  syncPolicy: {}

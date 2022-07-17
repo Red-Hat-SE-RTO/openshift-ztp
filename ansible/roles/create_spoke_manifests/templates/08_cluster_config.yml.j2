@@ -1,0 +1,33 @@
+---
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: {{ cluster_name }}-cluster-config
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+data:
+  cluster_name: {{ cluster_name }}
+  cluster_provider: vsphere
+  cluster_type: {{ cluster_type }}
+
+  #node_boot_timeout: '{{ node_boot_timeout }}'
+  node_count: '{{ cluster_nodes | length }}'
+
+  vsphere_datacenter: {{ vcenter_datacenter }}
+  vsphere_cluster: {{ vcenter_cluster }}
+  vsphere_datastore: {{ vcenter_datastore }}
+  vsphere_network: {{ vcenter_network }}
+
+  cluster_nodes: '{{ cluster_nodes | to_json }}'
+{% if vsphere_iso_folder is defined %}
+  vsphere_iso_folder: {{ vsphere_iso_folder }}
+{% endif %}
+{% if vsphere_vm_folder is defined %}
+  vsphere_vm_folder: {{ vsphere_vm_folder }}
+{% endif %}

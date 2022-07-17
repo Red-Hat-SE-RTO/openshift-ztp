@@ -1,0 +1,62 @@
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: {{ node_item.name }}-{{ cluster_name }}
+  namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+    hostname: {{ node_item.name }}
+spec:
+  config:
+{% if cluster_node_network_static_dns_servers is defined %}
+    dns-resolver:
+      config:
+        server:
+{% for dns_server in cluster_node_network_static_dns_servers %}
+          - {{ dns_server }}
+{% endfor %}
+        search:
+{% for dns_search in cluster_node_network_static_dns_search_domains %}
+          - {{ dns_search }}
+{% endfor %}
+{% endif %}
+    interfaces:
+{% for iface in node_item.network.interfaces %}
+      - ipv4:
+{% if not iface.dhcp|bool %}
+          address:
+{% for ipv4 in iface.ipv4 %}
+            - ip: {{ ipv4.address }}
+              prefix-length: {{ ipv4.prefix }}
+{% endfor -%}
+{% endif %}
+          dhcp: {{ iface.dhcp }}
+{% if iface.dhcp|bool and (cluster_node_network_static_dns_search_domains is not defined) and (cluster_node_network_static_dns_servers is not defined) %}
+          auto-dns: true
+{% endif %}
+          enabled: true
+        name: {{ iface.name }}
+        state: up
+        type: ethernet
+{% endfor %}
+{% if ((node_item.network.routes is defined) and (node_item.network.routes|length>0)) %}
+    routes:
+      config:
+{% for route in node_item.network.routes %}
+        - destination: {{ route.destination }}
+          next-hop-address: {{ route.next_hop_address }}
+          next-hop-interface: {{ route.next_hop_interface }}
+          table-id: {{ route.table_id }}
+{% endfor %}
+{% endif %}
+  interfaces:
+{% for iface in node_item.network.interfaces %}
+    - name: {{ iface.name }}
+      macAddress: {{ iface.mac_address | default('MAC_NOT_DEFINED') }}
+{% endfor %}
