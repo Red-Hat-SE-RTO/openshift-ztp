@@ -13,7 +13,7 @@
       dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}"
     loop:
       - 01_reflected_ansible_tower_credential.yml
-      - 01_reflected_cluster_ssh_keys.yml.j2
+      - 01_reflected_cluster_ssh_keys.yml
       - 01_reflected_vcenter_secret.yml
       - 01_reflected_pull_secret.yml
     loop_control:
