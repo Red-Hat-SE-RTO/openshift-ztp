@@ -16,6 +16,7 @@ metadata:
 spec:
   agentLabels:
     agentclusterinstalls.extensions.hive.openshift.io/location: {{ cluster_location }}
+    agentBareMetal-generated-infraenv-ai-flow: {{ cluster_name }}
   clusterRef:
     name: {{ cluster_name }}
     namespace: {{ cluster_name }}
@@ -32,6 +33,7 @@ spec:
     - {{ ntp }}
 {% endfor %}
 {% endif %}
+{% if insert_proxy_infraenv|bool %}
 {% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
   # spoke Proxy just needs to be defined once in the AgentClusterInstall CR
   proxy:
@@ -43,5 +45,6 @@ spec:
 {% endif %}
 {% if spoke_noProxy is defined %}
     noProxy: {{ spoke_noProxy }}
+{% endif %}
 {% endif %}
 {% endif %}

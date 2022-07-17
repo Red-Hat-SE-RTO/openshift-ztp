@@ -67,6 +67,9 @@ pass_proxy_to_spoke_from_hub: false
 #spoke_httpsProxy: "http://192.168.77.1:3128/"
 #spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
 
+insert_proxy_infraenv: true
+insert_proxy_agent: true
+
 ######################################################################################
 ## Expert Mode - Do not edit below this line unless you know what you're doing
 

@@ -31,6 +31,7 @@ spec:
       agentSelector:
         matchLabels:
           cluster-name: {{ cluster_name }}
+          agentBareMetal-generated-infraenv-ai-flow: {{ cluster_name }}
   pullSecretRef:
     name: {{ pull_secret_secret_name }}
 {% if root_ca_secret_name is defined %}
