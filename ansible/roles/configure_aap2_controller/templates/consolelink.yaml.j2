@@ -1,0 +1,11 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: ansible-controller-console-link
+spec:
+  applicationMenu:
+    imageURL: https://upload.wikimedia.org/wikipedia/commons/2/24/Ansible_logo.svg
+    section: Ansible Automation Platform 2
+  href: https://{{ aap2_controller_route.resources[0].status.ingress[0].host }}
+  location: ApplicationMenu
+  text: Ansible Controller/Tower
