@@ -26,7 +26,7 @@
     agent_mac_addresses: "{{ agent_mac_addresses + agent_item.status.inventory.interfaces | json_query('[].macAddress') }}"
     agent_name: "{{ agent_item.metadata.name }}"
     agent_role: "{% if node_item.type == 'converged-node' %}master{% endif %}{% if node_item.type == 'control-plane' %}master{%endif%}{% if node_item.type == 'application-node' %}worker{%endif%}"
-    agent_hostname: "{{ node_item.name }}"
+    agent_hostname: "{{ node_item.name }}.{{ cluster_configmap_info.resources[0].data.cluster_name }}.{{ cluster_configmap_info.resources[0].data.cluster_domain }}"
   loop: "{{ agent_crd_info.resources }}"
   loop_control:
     loop_var: agent_item
