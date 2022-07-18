@@ -1,0 +1,11 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: rh-sso-console-link
+spec:
+  applicationMenu:
+    imageURL: https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png
+    section: Red Hat applications
+  href: https://{{ r_sso_instance.resources[0].status.ingress[0].host }}
+  location: ApplicationMenu
+  text: Red Hat Single Sign-On
