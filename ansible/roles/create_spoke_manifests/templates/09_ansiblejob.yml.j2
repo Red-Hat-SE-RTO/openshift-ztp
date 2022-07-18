@@ -11,6 +11,7 @@ metadata:
     datacenter: {{ vcenter_datacenter }}
     cluster: {{ vcenter_cluster }}
     cluster-name: {{ cluster_name }}
+    cluster-role: ztp-spoke
 spec:
   tower_auth_secret: {{ ansible_tower_secret_name }}
   job_template_name: {{ ansible_job_template_name }}

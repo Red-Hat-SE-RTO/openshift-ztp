@@ -18,6 +18,7 @@ metadata:
     datacenter: {{ vcenter_datacenter }}
     cluster: {{ vcenter_cluster }}
     cluster-name: {{ cluster_name }}
+    cluster-role: ztp-spoke
 spec:
   clusterDeploymentRef:
     name: {{ cluster_name }}
@@ -51,9 +52,6 @@ spec:
     - name: {{ manifest.name }}
 {% endfor %}
 {% endif %}
-#  manifestsConfigMapRefs:
-#  - name: manifests-config-map-1
-#  - name: manifests-config-map-2
 {% if insert_proxy_agent|bool %}
 {% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
   proxy:

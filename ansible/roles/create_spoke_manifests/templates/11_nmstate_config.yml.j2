@@ -11,7 +11,8 @@ metadata:
     datacenter: {{ vcenter_datacenter }}
     cluster: {{ vcenter_cluster }}
     cluster-name: {{ cluster_name }}
-    hostname: {{ node_item.name }}
+    cluster-role: ztp-spoke
+    hostname: {{ node_item.name }}.{{ cluster_name }}.{{ base_domain }}
 spec:
   config:
 {% if cluster_node_network_static_dns_servers is defined %}
