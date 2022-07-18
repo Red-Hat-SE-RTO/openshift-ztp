@@ -1,0 +1,12 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleLink
+metadata:
+  name: gitea-console-link
+spec:
+  applicationMenu:
+    imageURL: https://upload.wikimedia.org/wikipedia/commons/b/bb/Gitea_Logo.svg
+    #section: GitOps Tools
+    section: OpenShift GitOps
+  href: https://{{ gitea_route.resources[0].status.ingress[0].host }}
+  location: ApplicationMenu
+  text: Gitea

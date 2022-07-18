@@ -222,3 +222,37 @@
   until: k8s_run is not failed
   delay: 10
   retries: 3
+
+- name: Wait till the Gitea Pod is running
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ gitea_operator_namespace }}"
+    label_selectors:
+      - app = gitea
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 720
+    wait_condition:
+      type: Ready
+      status: "True"
+
+- name: Get the Gitea Route
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Route
+    namespace: "{{ gitea_operator_namespace }}"
+    name: "gitea"
+  register: gitea_route
+
+- name: Create Gitea ConsoleLink
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'templates/consolelink.yaml.j2' ) | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
