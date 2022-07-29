@@ -3,6 +3,20 @@ apiVersion: v1
 metadata:
   name: {{ manifest.name }}
   namespace: {{ cluster_name }}
+  labels:
+    name: {{ cluster_name }}
+    cloud: vSphere
+    vendor: OpenShift
+    datacenter: {{ vcenter_datacenter }}
+    cluster: {{ vcenter_cluster }}
+    cluster-name: {{ cluster_name }}
+    cluster-domain: {{ cluster_name }}.{{ base_domain }}
+    cluster-role: ztp-spoke
+{% if extra_labels is defined %}
+{% for label in extra_labels %}
+    {{ label.key }}: {{ label.value }}
+{% endfor %}
+{% endif %}
 data:
   {{ manifest.filename }}: |
     {{ manifest.content | indent(4) }}

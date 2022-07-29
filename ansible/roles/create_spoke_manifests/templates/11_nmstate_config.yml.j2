@@ -14,6 +14,11 @@ metadata:
     cluster-domain: {{ cluster_name }}.{{ base_domain }}
     cluster-role: ztp-spoke
     hostname: {{ node_item.name }}.{{ cluster_name }}.{{ base_domain }}
+{% if extra_labels is defined %}
+{% for label in extra_labels %}
+    {{ label.key }}: {{ label.value }}
+{% endfor %}
+{% endif %}
 spec:
   config:
 {% if cluster_node_network_static_dns_servers is defined %}

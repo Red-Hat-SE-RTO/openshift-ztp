@@ -13,6 +13,11 @@ metadata:
     cluster-name: {{ cluster_name }}
     cluster-domain: {{ cluster_name }}.{{ base_domain }}
     cluster-role: ztp-spoke
+{% if extra_labels is defined %}
+{% for label in extra_labels %}
+    {{ label.key }}: {{ label.value }}
+{% endfor %}
+{% endif %}
 spec:
   tower_auth_secret: {{ ansible_tower_secret_name }}
   job_template_name: {{ ansible_job_template_name }}

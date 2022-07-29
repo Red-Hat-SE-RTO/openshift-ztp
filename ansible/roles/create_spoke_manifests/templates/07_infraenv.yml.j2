@@ -15,6 +15,11 @@ metadata:
     cluster-role: ztp-spoke
     agentclusterinstalls.extensions.hive.openshift.io/location: {{ cluster_location }}
     networkType: {{ cluster_node_network_ipam }}
+{% if extra_labels is defined %}
+{% for label in extra_labels %}
+    {{ label.key }}: {{ label.value }}
+{% endfor %}
+{% endif %}
 spec:
   agentLabels:
     agentclusterinstalls.extensions.hive.openshift.io/location: {{ cluster_location }}

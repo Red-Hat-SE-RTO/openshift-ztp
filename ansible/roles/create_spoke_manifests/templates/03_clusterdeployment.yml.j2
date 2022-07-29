@@ -17,6 +17,11 @@ metadata:
     cluster-role: ztp-spoke
     #hive.openshift.io/cluster-platform: agent-baremetal
     #cluster.open-cluster-management.io/clusterset: default
+{% if extra_labels is defined %}
+{% for label in extra_labels %}
+    {{ label.key }}: {{ label.value }}
+{% endfor %}
+{% endif %}
 spec:
   baseDomain: {{ base_domain }}
   clusterName: {{ cluster_name }}
