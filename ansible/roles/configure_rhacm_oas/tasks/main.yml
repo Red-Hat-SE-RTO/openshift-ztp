@@ -170,7 +170,7 @@
     loop_var: release_long_version
 
 - name: Apply the Mirror Registry ConfigMap
-  when: (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+  when: configure_registry_mirror|bool and (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
   kubernetes.core.k8s:
     state: present
     merge_type:

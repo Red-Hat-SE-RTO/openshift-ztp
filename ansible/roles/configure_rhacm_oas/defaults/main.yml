@@ -12,6 +12,8 @@ root_ca_object_name: root-ca-bundle
 custom_root_ca_name: custom-root-ca-certs
 mirror_registry_root_ca_configmap_name: mirror-registry-config-map
 
+configure_registry_mirror: false
+
 mirror_registry_config: |
   unqualified-search-registries = ["registry.access.redhat.com", "quay.io", "docker.io"]
 
