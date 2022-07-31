@@ -13,16 +13,16 @@ aap2_scm_credential_name: SCM Credentials
 aap2_execution_environments_name: GitNPip
 aap2_k8s_credential_name: Local Hub Cluster
 
-aap2_job_template_create_infra_name: create-vsphere-infra-ztp
+aap2_job_template_create_infra_name: AJ - Create vSphere Infrastructure
 aap2_job_template_create_infra_playbook: ansible/deploy_to_vsphere.yml
 
-aap2_job_template_delete_infra_name: delete-vsphere-infra-ztp
+aap2_job_template_delete_infra_name: Delete Spoke Cluster
 aap2_job_template_delete_infra_playbook: ansible/delete_vmware_deployment.yml
 
-aap2_job_template_create_spoke_manifests_name: create-vsphere-spoke-manifests-ztp
-aap2_job_template_create_spoke_manifests_playbook: ansible/create_spoke_manifests.yml
+aap2_job_template_create_spoke_manifests_name: 4 - Create Spoke Manifests
+aap2_job_template_create_spoke_manifests_playbook: ansible/4_create_spoke_manifests.yaml
 
-aap2_job_template_create_credentials_name: create-credentials
+aap2_job_template_create_credentials_name: 3 - Create Credentials
 aap2_job_template_create_credentials_playbook: ansible/3_create_credentials.yaml
 
 subscription_manifest_path: ~/aap2-subscription-manifest.zip
