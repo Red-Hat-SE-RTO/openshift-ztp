@@ -1,0 +1,17 @@
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: ClusterCurator
+metadata:
+  name: {{ cluster_name }}-post-automation
+  namespace: {{ cluster_name }}
+spec:
+  desiredCuration: install
+  install:
+    towerAuthSecret: rhacm-ansible-tower-credentials
+    prehook: []
+    posthook:
+      - name: configure-idp
+        extra_vars: {}
+  upgrade:
+    towerAuthSecret: rhacm-ansible-tower-credentials
+    prehook: []
+    posthook: []
