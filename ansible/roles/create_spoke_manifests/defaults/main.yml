@@ -34,7 +34,7 @@ openshift_release: "4.10.3"
 ## Ansible Automation Platform 2 Configuration
 
 # The name for the Ansible Job that the AnsibleJob CR will kick off
-ansible_job_template_name: create-vsphere-infra-ztp
+ansible_job_template_name: "AJ - Create vSphere Infrastructure"
 
 #ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner
 #ansible_job_runner_image_version: latest
