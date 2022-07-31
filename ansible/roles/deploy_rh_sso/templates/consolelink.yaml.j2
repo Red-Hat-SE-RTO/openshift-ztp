@@ -6,6 +6,6 @@ spec:
   applicationMenu:
     imageURL: https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png
     section: Red Hat applications
-  href: https://{{ r_sso_instance.resources[0].status.ingress[0].host }}
+  href: https://{{ r_sso_instance.resources[0].status.externalURL }}
   location: ApplicationMenu
   text: Red Hat Single Sign-On
