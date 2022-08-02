@@ -251,7 +251,7 @@
   register: r_sso_instance
   until: r_sso_instance.resources[0].status.externalURL is defined and r_sso_instance.resources[0].status.externalURL != ''
   delay: 10
-  retries: 10
+  retries: 60
 
 - name: Wait till the Keycloak Pod is running
   kubernetes.core.k8s_info:
