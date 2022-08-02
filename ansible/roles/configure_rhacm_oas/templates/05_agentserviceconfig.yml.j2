@@ -27,7 +27,7 @@ spec:
     resources:
       requests:
         storage: 40Gi
-{% if (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '') %}
+{% if configure_registry_mirror|bool %}
   mirrorRegistryRef:
     name: "{{ mirror_registry_root_ca_configmap_name }}"
 {% endif %}
