@@ -26,6 +26,7 @@
     deploy_aap2_controller: false
     deploy_rh_sso: false
     deploy_openshift_pipelines: false
+    deploy_shipwright: false
 
     #########################################
     ## Local Storage Operator Variables
@@ -126,6 +127,11 @@
       when: deploy_openshift_pipelines|bool
       include_role:
         name: deploy_openshift_pipelines
+
+    - name: Install the Project Shipwright Operator
+      when: deploy_shipwright|bool
+      include_role:
+        name: deploy_shipwright_operator
 
     - name: Print the Playbook output
       when: output_lines | length > 0
