@@ -1,0 +1,5 @@
+---
+collections:
+  - name: community.vmware
+  - name: ansible.posix
+  - name: community.crypto

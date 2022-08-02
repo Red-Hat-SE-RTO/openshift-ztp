@@ -1,0 +1,74 @@
+---
+- name: Delete a deployed JFrog Container Registry VM on Fedora CoreOS from vSphere
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    - name: Test connection to vSphere
+      community.vmware.vmware_cluster_info:
+        hostname: '{{ vcenter_server }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_pass }}'
+        port: "{{ vcenter_server_port }}"
+        datacenter: "{{ datacenter_name }}"
+        cluster_name: "{{ cluster_name }}"
+        validate_certs: "{{ validate_vcenter_certificate }}"
+      tags:
+        - preflight
+        - vcenter
+
+    - name: Delete the VM
+      block:
+
+        - name: Stop the VM
+          community.vmware.vmware_guest:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            state: poweredoff
+            force: yes
+
+        - name: Get the VM disk info
+          community.vmware.vmware_guest_disk_info:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+          register: disk_info
+
+        - name: Resize disk
+          community.vmware.vmware_guest_disk:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            disk:
+              - state: absent
+                size_gb: 500
+                controller_type: "{{ disk_info.guest_disk_info['0'].controller_type }}"
+                controller_number: "{{ disk_info.guest_disk_info['0'].controller_bus_number }}"
+                unit_number: "{{ disk_info.guest_disk_info['0'].unit_number }}"
+          when: disk_info.guest_disk_info | length > 0
+
+        - name: Delete the VM
+          community.vmware.vmware_guest:
+            hostname: '{{ vcenter_server }}'
+            username: '{{ vcenter_user }}'
+            password: '{{ vcenter_pass }}'
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            datastore: "{{ iso_datastore_name }}"
+            state: absent
+            name: "{{ vm_name }}"
+
+      tags:
+        - create_vm

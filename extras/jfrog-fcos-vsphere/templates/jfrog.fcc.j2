@@ -1,0 +1,266 @@
+variant: fcos
+version: 1.4.0
+passwd:
+  groups:
+    - name: artifactory
+      gid: 1234
+
+    - name: haproxy
+      gid: 1235
+
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - {{ lookup('file', generated_asset_directory + '/id_rsa.pub') }}
+      # Generate with: `sudo podman run -ti --rm quay.io/coreos/mkpasswd --method=yescrypt`
+      password_hash: $y$j9T$3o1K3gO.WVLLDEqQVF1Df.$eUwe9asXANzFyhTZolXBsigQ0QqwP7Hj7ynJh9MCAXC
+
+    - name: artifactory
+      uid: 1234
+      shell: /bin/bash
+      home_dir: /srv/artifactory
+      groups:
+        - artifactory
+      no_user_group: true
+
+    - name: haproxy
+      uid: 1235
+      shell: /bin/bash
+      home_dir: /srv/haproxy
+      groups:
+        - haproxy
+      no_user_group: true
+storage:
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: |
+          {{ vm_name }}.{{ vm_domain }}
+    - path: /etc/sysctl.d/20-silence-audit.conf
+      contents:
+        inline: |
+          # Raise console message logging level from DEBUG (7) to WARNING (4)
+          # so that audit messages don't get interspersed on the console that
+          # may frustrate a user trying to interactively log in.
+          kernel.printk=4
+{% if additionalTrustBundle is defined %}
+    - path: /etc/pki/ca-trust/source/anchors/user-ca-bundle.crt
+      contents:
+        inline: |
+          {{ additionalTrustBundle | indent(10) }}
+{% endif %}
+    - path: /etc/proxy_config.env
+      contents:
+        inline: |
+          # System Proxy Configuration
+{% if http_proxy is defined %}
+          HTTP_PROXY={{ http_proxy }}
+          http_proxy={{ http_proxy }}
+{% endif %}
+{% if https_proxy is defined %}
+          HTTPS_PROXY={{ https_proxy }}
+          https_proxy={{ https_proxy }}
+{% endif %}
+{% if no_proxy is defined %}
+          NO_PROXY={{ no_proxy }}
+          no_proxy={{ no_proxy }}
+{% endif %}
+{% if haproxy_ssl_cert is defined %}
+    - path: /etc/haproxy.crt
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          {{ haproxy_ssl_cert | indent(10) }}
+{% endif %}
+    - path: /etc/haproxy.cfg
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          global
+              log         127.0.0.1 local2
+              maxconn     4000
+
+              # turn on stats unix socket
+              stats socket /var/lib/haproxy/stats
+
+              # utilize system-wide crypto-policies
+              #ssl-default-bind-ciphers PROFILE=SYSTEM
+              #ssl-default-server-ciphers PROFILE=SYSTEM
+
+          defaults
+              mode                    tcp
+              log                     global
+              option                  tcplog
+              option                  dontlognull
+              option http-server-close
+              option                  redispatch
+              retries                 3
+              timeout http-request    10s
+              timeout queue           1m
+              timeout connect         10s
+              timeout client          1m
+              timeout server          1m
+              timeout http-keep-alive 10s
+              timeout check           10s
+              maxconn                 3000
+
+{% if haproxy_ssl_cert is defined %}
+          frontend secure
+              bind 0.0.0.0:443 ssl crt /etc/haproxy.crt
+              default_backend secure
+
+          backend secure
+              balance source
+              server jfrog {{ vm_ipaddr }}:8082 check
+{% endif %}
+          frontend insecure
+              bind 0.0.0.0:80
+              default_backend insecure
+
+          backend insecure
+              balance source
+              server jfrog {{ vm_ipaddr }}:8082 check
+          #END OF HAPROXY CONFIG
+    - path: /etc/initial_setup.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/bin/bash
+
+          set -e
+
+          if [ ! -f "/var/.initial-install-complete" ]; then
+            sleep 10
+            rpm-ostree install nc --idempotent --allow-inactive
+            touch /var/.initial-install-complete
+            systemctl reboot
+          fi
+  directories:
+  - path: /srv/certs
+    mode: 0775
+    user:
+      id: 1235
+  - path: /srv/haproxy
+    mode: 0775
+    user:
+      id: 1235
+  - path: /srv/jfrog
+    mode: 0775
+    user:
+      id: 1234
+  - path: /srv/jfrog/artifactory/var
+    mode: 0775
+    user:
+      id: 1234
+  - path: /srv/jfrog/artifactory/opt
+    mode: 0775
+    user:
+      id: 1234
+systemd:
+  units:
+    #- name: install-open-vm-tools.service
+    #  enabled: true
+    #  contents: |
+    #    [Unit]
+    #    Description=Installs open-vm-tools
+    #    After=network-online.target
+    #    Wants=network-online.target
+    #
+    #    [Service]
+    #    Type=oneshot
+    #    TimeoutStartSec=0
+    #    ExecStart=/bin/bash -c "/bin/rpm-ostree install open-vm-tools"
+    #    ExecStartPost=/usr/bin/systemctl enable jfrog-registry.service
+    #    ExecStartPost=/bin/bash -c "/usr/bin/systemctl disable install-open-vm-tools.service && reboot"
+    #
+    #    [Install]
+    #    WantedBy=multi-user.target
+    - name: update-ca-trusts.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Update system Root CA Trusts
+        After=network-online.target
+        Wants=network-online.target
+    
+        [Service]
+        Type=oneshot
+        TimeoutStartSec=0
+        ExecStart=/usr/bin/update-ca-trust
+    
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: initial-setup.service
+      enabled: false
+      contents: |-
+        [Unit]
+        Description=initial-setup: Fedora CoreOS Initial Setup
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        EnvironmentFile=/etc/proxy_config.env
+        ExecStart=/etc/initial_setup.sh
+        Type=simple
+        Restart=on-failure
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: jfrog-registry.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=jfrog-registry
+        After=network-online.target
+        Wants=network-online.target
+        [Service]
+        EnvironmentFile=/etc/proxy_config.env
+        TimeoutStartSec=0
+        ExecStartPre=-/bin/podman kill jfrog-registry
+        ExecStartPre=-/bin/podman rm -f -i jfrog-registry
+        ExecStartPre=/bin/podman pull releases-docker.jfrog.io/jfrog/artifactory-jcr:latest
+        ExecStart=/bin/podman run -d --privileged \
+          -p 8081:8081 \
+          -p 8082:8082 \
+          --user 1234:1234 \
+          --name jfrog-registry \
+          --restart always \
+          --volume /srv/jfrog/artifactory/var:/var/opt/jfrog/artifactory:Z \
+          --volume /srv/jfrog/artifactory/opt:/opt/jfrog/artifactory/var:Z \
+{% if additionalTrustBundle is defined %}
+          --volume /etc/pki/ca-trust/source/anchors:/artifactory_extra_certs:Z \
+{% endif %}
+          jfrog/artifactory-jcr:latest
+
+        Restart=always
+        RestartSec=30
+        Type=forking
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: haproxy.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=HAProxy
+        After=network-online.target
+        Wants=network-online.target
+        [Service]
+        EnvironmentFile=/etc/proxy_config.env
+        Type=forking
+        Restart=always
+        TimeoutSec=600
+        KillMode=process
+        RemainAfterExit=yes
+        ExecStartPre=-/bin/podman kill haproxy
+        ExecStartPre=-/bin/podman rm -f -i haproxy
+        ExecStartPre=/bin/podman pull docker.io/library/haproxy:latest
+        ExecStart=podman run -dt --name haproxy --sysctl net.ipv4.ip_unprivileged_port_start=0 -p 80:80 -p 443:443 -v /etc/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:Z -v /etc/haproxy.crt:/etc/haproxy.crt:Z docker.io/library/haproxy:latest
+        [Install]
+        WantedBy=multi-user.target

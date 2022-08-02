@@ -1,0 +1,237 @@
+---
+- name: Deploy JFrog Container Registry on Fedora CoreOS to vSphere
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    - name: Create asset generation directory
+      ansible.builtin.file:
+        state: directory
+        path: "{{ generated_asset_directory }}"
+        mode: '0755'
+      tags:
+        - preflight
+
+    - name: Get the absolute path to the generation directory
+      shell: "cd {{ generated_asset_directory }} && pwd"
+      register: generated_asset_directory_absolute_path
+
+    - name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+      community.crypto.openssh_keypair:
+        path: "{{ generated_asset_directory }}/id_rsa"
+      tags:
+        - preflight
+        - ssh_keypair
+
+    - name: Test connection to vSphere
+      community.vmware.vmware_cluster_info:
+        hostname: '{{ vcenter_server }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_pass }}'
+        port: "{{ vcenter_server_port }}"
+        datacenter: "{{ datacenter_name }}"
+        cluster_name: "{{ cluster_name }}"
+        validate_certs: "{{ validate_vcenter_certificate }}"
+      tags:
+        - preflight
+        - vcenter
+
+    - name: Download the FCOS OVA
+      block:
+        - name: Check for existing FCOS OVA
+          ansible.builtin.stat:
+            path: "{{ generated_asset_directory }}/fcos.ova"
+          register: iso_check
+
+        - name: Pull FCOS OVA if needed
+          get_url:
+            url: "https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_version }}/x86_64/fedora-coreos-{{ fcos_version }}-vmware.x86_64.ova"
+            dest: "{{ generated_asset_directory }}/fcos.ova"
+          when: not iso_check.stat.exists
+      tags:
+        - download_fcos
+
+    - name: Download Butane/fcct
+      block:
+        - name: Check for the butane executable
+          ansible.builtin.stat:
+            path: "{{ generated_asset_directory }}/butane"
+          register: butane_check
+
+        - name: Download the release of Butane
+          get_url:
+            url: "https://github.com/coreos/butane/releases/download/{{ butane_release }}/butane-x86_64-unknown-linux-gnu"
+            dest: "{{ generated_asset_directory }}/butane"
+          when: not butane_check.stat.exists
+
+        - name: Make the butane executable executable
+          ansible.builtin.file:
+            state: file
+            path: "{{ generated_asset_directory }}/butane"
+            mode: '0755'
+      tags:
+        - download_butane
+
+    ## DEPRECIATED - Can just upload the OVA and create a VM directly, no need to upload the OVA
+    # - name: Upload the FCOS OVA
+      # block:
+        # - name: Create the Datastore path if needed for the ISO
+          # community.vmware.vsphere_file:
+            # host: '{{ vcenter_server }}'
+            # username: '{{ vcenter_user }}'
+            # password: '{{ vcenter_pass }}'
+            # datacenter: "{{ datacenter_name }}"
+            # datastore: "{{ iso_datastore_name }}"
+            # path: "{{ iso_datastore_path }}"
+            # state: directory
+            # validate_certs: "{{ validate_vcenter_certificate }}"
+
+        # - name: Check for the current files that have been uploaded to that path
+          # ansible.builtin.uri:
+            # url: "https://{{ vcenter_server }}:{{ vcenter_server_port }}/folder/{{ iso_datastore_path }}?dcPath={{ datacenter_name }}&dsName={{ iso_datastore_name }}"
+            # user: '{{ vcenter_user }}'
+            # password: '{{ vcenter_pass }}'
+            # force_basic_auth: yes
+            # return_content: yes
+            # validate_certs: "{{ validate_vcenter_certificate }}"
+          # register: iso_list
+
+        # - name: Find the OVA Link listing
+          # set_fact:
+            # stored_fcos_link: "{{ iso_list.content | regex_search('<\\s*a[^>]*>fcos.ova<\\s*/\\s*a>') }}"
+
+        # - name: Execute the upload script because the vsphere_copy module is borked
+          # shell: |
+            # {{ ansible_python_interpreter }} files/upload_iso.py -s {{ vcenter_server }} -o {{ vcenter_server_port }} \
+            # -u {{ vcenter_user }} -p '{{ vcenter_pass }}' \
+            # {{ validate_vcenter_certificate | ternary('', '-nossl', omit) }} \
+            # --datastore-name {{ iso_datastore_name }} \
+            # --local-file-path {{ generated_asset_directory }}/fcos.ova \
+            # --remote-file-path {{ iso_datastore_path }}/fcos.ova
+          # register: upload_iso
+          # when: stored_fcos_link | length == 0
+      # tags:
+        # - upload_rhel_iso
+
+    - name: Create the Ignition file
+      block:
+        - name: Create butane config from template
+          template:
+            src: jfrog.fcc.j2
+            dest: "{{ generated_asset_directory }}/jfrog.fcc"
+            mode: 0664
+
+        - name: Create FCOS transpiled ignition file
+          shell: "{{ generated_asset_directory }}/butane --pretty --strict < {{ generated_asset_directory }}/jfrog.fcc > {{ generated_asset_directory }}/transpiled_config.ign"
+
+        - name: Set ign_file Fact
+          set_fact:
+            ign_file: "{{ lookup('file', '{{ generated_asset_directory }}/transpiled_config.ign') | b64encode }}"
+      tags:
+        - create_ignition_file
+
+    - name: Create the VM Template from the FCOS OVA
+      block:
+        - name: Deploy the OVA
+          community.vmware.vmware_deploy_ovf:
+            hostname: '{{ vcenter_server }}'
+            username: '{{ vcenter_user }}'
+            password: '{{ vcenter_pass }}'
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            datastore: "{{ iso_datastore_name }}"
+            power_on: no
+            allow_duplicates: no
+            name: "{{ vm_name }}"
+            networks: "{u'VM Network':u'{{ vm_network }}'}"
+            ovf: "{{ generated_asset_directory_absolute_path.stdout }}/fcos.ova"
+
+        - name: Get the VM disk info
+          community.vmware.vmware_guest_disk_info:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+          register: disk_info
+
+        - name: Resize disk
+          community.vmware.vmware_guest_disk:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            disk:
+              - state: present
+                size_gb: 500
+                controller_type: "{{ disk_info.guest_disk_info['0'].controller_type }}"
+                controller_number: "{{ disk_info.guest_disk_info['0'].controller_bus_number }}"
+                unit_number: "{{ disk_info.guest_disk_info['0'].unit_number }}"
+          when: disk_info.guest_disk_info['0'].capacity_in_bytes != ('500 GB' | human_to_bytes)
+
+        ## Seems to be a bug in setting the guest ID?
+        - name: Set the os type
+          community.vmware.vmware_guest:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            state: present
+            guest_id: coreos64Guest
+            wait_for_customization: yes
+
+        - name: Give it a little more RAM
+          community.vmware.vmware_guest:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            state: present
+            hardware:
+              memory_mb: 8192
+              hotadd_cpu: yes
+              hotadd_memory: yes
+              version: latest
+            wait_for_customization: yes
+
+        - name: Give it the ignition config
+          community.vmware.vmware_guest:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            state: present
+            advanced_settings:
+            - key: guestinfo.ignition.config.data
+              value: "{{ ign_file }}"
+            - key: guestinfo.ignition.config.data.encoding
+              value: base64
+            - key: guestinfo.afterburn.initrd.network-kargs
+              value: "ip={{ vm_ipaddr }}::{{ vm_gateway }}:{{ vm_netmask }}:{{ vm_name }}:ens192:off:{{ vm_dns }}"
+              # For DHCP:
+              #value: "ip=::::{{ vm_name }}:ens192:on:"
+            wait_for_customization: yes
+
+        - name: Start the VM
+          community.vmware.vmware_guest:
+            hostname: "{{ vcenter_server }}"
+            username: "{{ vcenter_user }}"
+            password: "{{ vcenter_pass }}"
+            validate_certs: "{{ validate_vcenter_certificate }}"
+            datacenter: "{{ datacenter_name }}"
+            name: "{{ vm_name }}"
+            state: poweredon
+
+      tags:
+        - create_vm
