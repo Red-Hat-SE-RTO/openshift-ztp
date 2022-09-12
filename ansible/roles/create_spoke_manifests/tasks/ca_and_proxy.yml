@@ -39,16 +39,16 @@
       when: pass_proxy_to_spoke_from_hub|bool
       block:
         - name: Set the fact for httpProxy
-          when: (r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpProxy != '')
+          when: (r_cluster_proxy_config.resources[0].spec.httpProxy is defined) and (r_cluster_proxy_config.resources[0].spec.httpProxy != '')
           set_fact:
-            spoke_httpProxy: "{{ r_cluster_proxy_config.resources[0].status.httpProxy }}"
+            spoke_httpProxy: "{{ r_cluster_proxy_config.resources[0].spec.httpProxy }}"
 
         - name: Set the fact for httpsProxy
-          when: (r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpsProxy != '')
+          when: (r_cluster_proxy_config.resources[0].spec.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].spec.httpsProxy != '')
           set_fact:
-            spoke_httpsProxy: "{{ r_cluster_proxy_config.resources[0].status.httpsProxy }}"
+            spoke_httpsProxy: "{{ r_cluster_proxy_config.resources[0].spec.httpsProxy }}"
 
         - name: Set the fact for noProxy
-          when: (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '')
+          when: (r_cluster_proxy_config.resources[0].spec.noProxy is defined) and (r_cluster_proxy_config.resources[0].spec.noProxy != '')
           set_fact:
-            spoke_noProxy: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
+            spoke_noProxy: "{{ r_cluster_proxy_config.resources[0].spec.noProxy }}"
