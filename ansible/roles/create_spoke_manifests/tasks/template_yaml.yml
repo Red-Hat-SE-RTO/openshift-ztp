@@ -15,7 +15,8 @@
       - 07_infraenv
       - 08_cluster_config
       - 09_ansiblejob
-      - 12_clustercurator
+      #- 12_clustercurator
+      - 15_rbac_capirole
     loop_control:
       loop_var: template_item
 

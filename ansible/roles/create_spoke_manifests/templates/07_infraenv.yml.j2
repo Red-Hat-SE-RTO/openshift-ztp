@@ -13,6 +13,7 @@ metadata:
     cluster-name: {{ cluster_name }}
     cluster-domain: {{ cluster_name }}.{{ base_domain }}
     cluster-role: ztp-spoke
+    cluster-type: {{ cluster_type }}
     agentclusterinstalls.extensions.hive.openshift.io/location: {{ cluster_location }}
     networkType: {{ cluster_node_network_ipam }}
 {% if extra_labels is defined %}
@@ -28,6 +29,7 @@ spec:
     name: {{ cluster_name }}
     namespace: {{ cluster_name }}
   sshAuthorizedKey: "{{ ssh_public_key }}"
+  cpuArchitecture: {{ infraenv_cpu_arch }}
   pullSecretRef:
     name: {{ pull_secret_secret_name }}
   #ignitionConfigOverride: '{"ignition": {"version": "3.1.0"}, "storage": {"files": [{"path": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "overwrite": true, "contents": {"source": "data:text/plain;base64,root_ca_bundle_pem_in_base64"} } ] } }'

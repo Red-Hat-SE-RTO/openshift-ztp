@@ -82,3 +82,7 @@ node_boot_timeout: 300
 deployment_type: vsphere
 
 install_packages: false
+
+infraenv_cpu_arch: x86_64
+
+clusterset_name: default
