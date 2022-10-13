@@ -1,0 +1,25 @@
+---
+- name: A Playbook to convert the Human-friendly Survey variables into the intended executed variables
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+  - name: Convert friendly_cluster_type to cluster_type
+    when: friendly_cluster_type is defined
+    block:
+    - name: Set cluster_type to 'sno' when friendly_cluster_type is 'Single Node OpenShift'
+      set_fact:
+        cluster_type: "sno"
+      when: friendly_cluster_type == "Single Node OpenShift"
+
+    - name: Set cluster_type to 'converged' when friendly_cluster_type is '3-node Converged'
+      set_fact:
+        cluster_type: "converged"
+      when: friendly_cluster_type == "3-node Converged OpenShift"
+
+    - name: Set cluster_type to 'standard' when friendly_cluster_type is '3-node Standard'
+      set_fact:
+        cluster_type: "full"
+      when: friendly_cluster_type == "Full HA OpenShift"
