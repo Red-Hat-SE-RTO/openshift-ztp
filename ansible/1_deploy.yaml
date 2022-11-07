@@ -36,6 +36,8 @@
       - app-2
       - app-3
 
+    deploy_to_infra_nodes: false
+
   tasks:
     - name: Check for Helm
       when: deploy_reflector|bool or deploy_sealed_secrets|bool or deploy_hashicorp_vault|bool

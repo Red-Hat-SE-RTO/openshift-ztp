@@ -33,3 +33,8 @@ spec:
       name: thanos-object-storage
       key: thanos.yaml
     storageClass: ocs-storagecluster-ceph-rbd
+{% if deploy_to_infra_nodes|bool %}
+  # https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.6/html-single/observability/index#creating-mco-cr
+  nodeSelector:
+    node-role.kubernetes.io/infra:
+{% endif %}

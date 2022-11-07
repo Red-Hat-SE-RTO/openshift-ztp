@@ -13,3 +13,20 @@ spec:
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   startingCSV: {{ operator_csv_version }}
+{% if deploy_to_infra_nodes|bool %}
+  # https://access.redhat.com/articles/6408481
+  config:
+    tolerations:
+    - effect: NoSchedule
+      key: node.ocs.openshift.io/storage
+      operator: Equal
+      value: 'true'
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+    - effect: NoExecute
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+{% endif %}

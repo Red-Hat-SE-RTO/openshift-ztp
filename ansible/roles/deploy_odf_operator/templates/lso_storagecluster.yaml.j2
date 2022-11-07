@@ -46,3 +46,63 @@ spec:
   externalStorage: {}
   version: 4.9.0
   flexibleScaling: true
+{% if deploy_to_infra_nodes|bool %}
+  # https://access.redhat.com/articles/6408481
+  placement:
+    all:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoExecute
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoSchedule
+        key: node.ocs.openshift.io/storage
+        operator: Equal
+        value: "true"
+    mds:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoExecute
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoSchedule
+        key: node.ocs.openshift.io/storage
+        operator: Equal
+        value: "true"
+    noobaa-core:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoExecute
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoSchedule
+        key: node.ocs.openshift.io/storage
+        operator: Equal
+        value: "true"
+    rgw:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoExecute
+        key: node-role.kubernetes.io/infra
+        operator: Equal
+        value: "reserved"
+      - effect: NoSchedule
+        key: node.ocs.openshift.io/storage
+        operator: Equal
+        value: "true"
+{% endif %}

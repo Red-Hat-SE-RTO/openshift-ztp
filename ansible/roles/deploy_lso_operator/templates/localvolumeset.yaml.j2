@@ -22,9 +22,19 @@ spec:
               - {{ host }}
 {% endfor %}
   storageClassName: {{ lso_storage_class_name }}
+{% if deploy_to_infra_nodes|bool %}
   tolerations:
     - effect: NoSchedule
       key: node.ocs.openshift.io/storage
       operator: Equal
       value: 'true'
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+    - effect: NoExecute
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+{% endif %}
   volumeMode: Block
