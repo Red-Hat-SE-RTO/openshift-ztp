@@ -19,7 +19,10 @@ spec:
     nodeSelector:
       node-role.kubernetes.io/infra: ""
     tolerations:
-    - key: node-role.kubernetes.io/infra
-      effect: NoSchedule
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Exists
+    - effect: NoExecute
+      key: node-role.kubernetes.io/infra
       operator: Exists
 {% endif %}

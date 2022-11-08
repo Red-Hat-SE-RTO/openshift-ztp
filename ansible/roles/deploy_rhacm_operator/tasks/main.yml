@@ -89,6 +89,26 @@
   loop_control:
     loop_var: ns_item
 
+- name: Add infrastructure annotations to the namespaces if needed
+  when: deploy_to_infra_nodes|bool
+  kubernetes.core.k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ ns_item }}"
+        annotations:
+          scheduler.alpha.kubernetes.io/defaultTolerations: '[{"operator": "Exists", "effect": "NoSchedule", "key": "node-role.kubernetes.io/infra"},{"operator": "Exists", "effect": "NoExecute", "key": "node-role.kubernetes.io/infra"}]'
+  loop:
+    - open-cluster-management-agent
+    - open-cluster-management-agent-addon
+  loop_control:
+    loop_var: ns_item
+
 # ===============================================================================================
 # Add the custom Root CAs
 # ===============================================================================================

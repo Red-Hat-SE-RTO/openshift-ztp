@@ -37,4 +37,11 @@ spec:
   # https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.6/html-single/observability/index#creating-mco-cr
   nodeSelector:
     node-role.kubernetes.io/infra:
+  tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Exists
+    - effect: NoExecute
+      key: node-role.kubernetes.io/infra
+      operator: Exists
 {% endif %}
