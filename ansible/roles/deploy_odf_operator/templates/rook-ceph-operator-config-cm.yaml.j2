@@ -1,0 +1,36 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: rook-ceph-operator-config
+  namespace: openshift-storage
+data:
+  CSI_ENABLE_CSIADDONS: 'true'
+  CSI_LOG_LEVEL: '5'
+  CSI_PLUGIN_TOLERATIONS: |-
+
+    - key: node.ocs.openshift.io/storage
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+    - effect: NoExecute
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+  CSI_PROVISIONER_TOLERATIONS: |-
+
+    - key: node.ocs.openshift.io/storage
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
+    - effect: NoExecute
+      key: node-role.kubernetes.io/infra
+      operator: Equal
+      value: "reserved"
