@@ -17,7 +17,7 @@
 
 - name: Set cluster version
   set_fact:
-    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Query the openshift-gitops-operator PackageManifest for the latest version of the Red Hat OpenShift GitOps Operator
   kubernetes.core.k8s_info:

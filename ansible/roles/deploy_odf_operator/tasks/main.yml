@@ -32,7 +32,7 @@
 
 - name: Set cluster version
   set_fact:
-    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version }}"
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Set cluster version slice
   set_fact:
@@ -206,6 +206,33 @@
   until: k8s_run is not failed
   delay: 10
   retries: 3
+
+- name: Run tasks for assigning workloads to the Infra nodes
+  when: deploy_to_infra_nodes|bool
+  block:
+
+    - name: Wait for the rook-ceph-operator-config ConfigMap to exist in the openshift-storage namespace
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        name: rook-ceph-operator-config
+        namespace: openshift-storage
+      register: r_cm_list
+      retries: 200
+      delay: 15
+      until: r_cm_list.resources | list | length == 1
+    
+    - name: Reconfigure the rook-ceph-operator-config ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        merge_type:
+        - strategic-merge
+        - merge
+        definition: "{{ lookup('template', 'templates/rook-ceph-operator-config-cm.yaml.j2' ) | from_yaml }}"
+      register: k8s_run
+      until: k8s_run is not failed
+      delay: 10
+      retries: 3
 
 - name: Wait for the CephFS StorageClasses to come online
   kubernetes.core.k8s_info:

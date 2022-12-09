@@ -18,7 +18,7 @@
 
 - name: Set cluster version
   set_fact:
-    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Query the shipwright-operator PackageManifest for the latest version of the the Operator
   kubernetes.core.k8s_info:

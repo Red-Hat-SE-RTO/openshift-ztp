@@ -18,7 +18,7 @@
 
 - name: Set cluster version
   set_fact:
-    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version  }}"
+    ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 ###########################################################################
 ## Elasticsearch Operator Setup
