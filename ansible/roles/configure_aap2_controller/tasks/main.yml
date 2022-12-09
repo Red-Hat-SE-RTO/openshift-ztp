@@ -40,6 +40,17 @@
 
 - name: Kubernetes Queries
   block:  
+    - name: Get Cluster Version
+      kubernetes.core.k8s_info:
+        api_version: config.openshift.io/v1
+        kind: ClusterVersion
+        name: version
+      register: r_ocp_version
+
+    - name: Set cluster version
+      set_fact:
+        ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
+
     - name: Get the AAP2 Controller Admin Secret
       kubernetes.core.k8s_info:
         api_version: v1
@@ -56,6 +67,40 @@
         name: "{{ aap2_controller_name }}"
       register: aap2_controller_route
 
+    - name: Create the ServiceAccount Token Secret if K8s/OpenShift version is > 1.24/4.10
+      when: ocp_version is version('4.11.0', operator='ge', strict=True)
+      block:
+      - name: Create the ServiceAccount Token Secret
+        kubernetes.core.k8s:
+          state: present
+          merge_type:
+          - strategic-merge
+          - merge
+          definition: "{{ lookup('template', 'templates/serviceaccount_token_secret.yaml.j2' ) | from_yaml }}"
+        register: k8s_run
+        until: k8s_run is not failed
+        delay: 10
+        retries: 3
+
+      - name: Add the name of the ServiceAccount Token Secret to the AAP2 ServiceAccount
+        kubernetes.core.k8s:
+          state: present
+          merge_type:
+          - strategic-merge
+          - merge
+          definition:
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: "{{ aap2_serviceaccount_name }}"
+              namespace: "{{ aap2_operator_namespace }}"
+            secrets:
+            - name: "{{ aap2_serviceaccount_name }}-sa-token"
+        register: k8s_run
+        until: k8s_run is not failed
+        delay: 10
+        retries: 3
+
     - name: Get the ac-tower ServiceAccount service account
       kubernetes.core.k8s_info:
         api_version: v1
@@ -65,7 +110,7 @@
       register: aap2_serviceaccount
 
     - name: Set the Token Secret Name
-      when: secret_item is search(aap2_serviceaccount_name + "-token")
+      when: (secret_item is search(aap2_serviceaccount_name + "-token")) or (secret_item is search(aap2_serviceaccount_name + "-sa-token"))
       set_fact:
         aap2_token_secret_name: "{{ secret_item }}"
       loop: "{{ aap2_serviceaccount.resources[0].secrets }}"
