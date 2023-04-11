@@ -193,8 +193,8 @@ manifestOverrides:
     content: |
       ---
       # This file simply adds extra metadata about the spoke cluster in a common place that can be referenced by RHACM/AAP2/etc
-      kind: ConfigMap 
-      apiVersion: v1 
+      kind: ConfigMap
+      apiVersion: v1
       metadata:
         name: spoke-cluster-config
         namespace: openshift-config

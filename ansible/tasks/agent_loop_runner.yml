@@ -1,10 +1,10 @@
 ---
 - name: Wait for node to populate in the assisted installer dashboard
-  wait_for:
+  ansible.builtin.wait_for:
     timeout: 30
 
 - name: Set empty facts
-  set_fact:
+  ansible.builtin.set_fact:
     newly_approved_agents: "{{ task_approved_agents }}"
     total_approved_agents: []
   #when: task_approved_agents | length < node_count | int
@@ -19,7 +19,7 @@
   register: agent_crd_info
 
 - name: Add the approved nodes to the list of approved agents
-  set_fact:
+  ansible.builtin.set_fact:
     total_approved_agents: "{{ total_approved_agents | default([]) + [agent_item.metadata.name] }}"
   loop: "{{ agent_crd_info.resources }}"
   loop_control:
@@ -46,7 +46,7 @@
     when: agent_item.spec.approved == false
 
   - name: Add the approved node to the list
-    set_fact:
+    ansible.builtin.set_fact:
       newly_approved_agents: "{{ newly_approved_agents + [agent_item.metadata.name] }}"
     loop: "{{ agent_crd_info.resources }}"
     loop_control:
@@ -56,7 +56,7 @@
   when: agent_crd_info.resources | length > 0
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "newly_approved_agents: {{ newly_approved_agents | length }}"
       - "task_approved_agents: {{ task_approved_agents | length }}"
@@ -67,7 +67,7 @@
 #  when: agent_crd_info.resources | length ==  node_count | int
 
 - name: INCEPTION
-  include_tasks: tasks/agent_loop_runner.yml
+  ansible.builtin.include_tasks: tasks/agent_loop_runner.yml
   vars:
     task_approved_agents: "{{ newly_approved_agents }}"
   when: cluster_nodes|length != total_approved_agents|length

@@ -65,7 +65,7 @@
       register: vsphere_secret
 
     - name: Fail if the vCenter credentials secret is not found
-      fail:
+      ansible.builtin.fail:
         msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
       when: vsphere_secret.resources | length == 0
 
@@ -81,7 +81,7 @@
           register: git_push_secret_object
 
         - name: Fail if the Git Push Secret is not found
-          fail:
+          ansible.builtin.fail:
             msg: "No Git Push Secret found! Looking for {{ git_push_secret.namespace }}/{{ git_push_secret.name }}"
           when: git_push_secret_object.resources | length == 0
 
@@ -90,11 +90,11 @@
         hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
         username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
         password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-        validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl|b64decode }}"
+        validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
       register: vcenter_test_info
 
     - name: Fail if the vCenter instance cannot be connected to
-      fail:
+      ansible.builtin.fail:
         msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
       when: vcenter_test_info.datacenter_info | length == 0
 
@@ -107,16 +107,16 @@
       register: cluster_configmap_info
 
     - name: Fail if the Cluster Config ConfigMap is not found
-      fail:
+      ansible.builtin.fail:
         msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
       when: cluster_configmap_info.resources | length == 0
 
     - name: Unmarshal the Cluster ConfigMap
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
 
     - name: Create a total array of interfaces and set dynamic_mac to false
-      set_fact:
+      ansible.builtin.set_fact:
         cluster_interfaces: "{{ cluster_interfaces|default([]) + node_item.network.interfaces }}"
         dynamic_mac: false
       loop: "{{ cluster_nodes }}"
@@ -125,7 +125,7 @@
         label: "{{ node_item.name }}"
 
     - name: Loop through all of the interfaces and set dynamic_mac to true if there is no MAC address defined on an interface
-      set_fact:
+      ansible.builtin.set_fact:
         dynamic_mac: true
       loop: "{{ cluster_interfaces }}"
       loop_control:
@@ -142,7 +142,7 @@
       host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
       username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
       password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl|b64decode }}"
+      validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
       datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
       datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
       path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('/ISOs') }}"
@@ -153,7 +153,7 @@
       hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
       username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
       password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl|b64decode }}"
+      validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
       datacenter_name: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
       folder_name: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
       folder_type: vm
@@ -167,13 +167,13 @@
     when: dynamic_mac|bool
     block:
       - name: Create the VMs without a CDROM defined
-        include_tasks: tasks/create_vmware_infra_no_cdrom_mac.yml
+        ansible.builtin.include_tasks: tasks/create_vmware_infra_no_cdrom_mac.yml
         loop: "{{ cluster_nodes }}"
         loop_control:
           loop_var: node_item
 
       - name: Remap the MAC addresses on the interfaces and NMState Configs
-        include_tasks: tasks/create_vmware_infra_remap_mac_addresses.yml
+        ansible.builtin.include_tasks: tasks/create_vmware_infra_remap_mac_addresses.yml
         loop: "{{ cluster_nodes }}"
         loop_control:
           loop_var: node_item
@@ -184,10 +184,10 @@
           seconds: 5
 
       - name: Process ISO downloading and uploading
-        include_tasks: tasks/create_vmware_infra_iso.yml
+        ansible.builtin.include_tasks: tasks/create_vmware_infra_iso.yml
 
       - name: Attach the ISOs to the VMs and boot
-        include_tasks: tasks/create_vmware_infra_attach_iso.yml
+        ansible.builtin.include_tasks: tasks/create_vmware_infra_attach_iso.yml
         loop: "{{ cluster_nodes }}"
         loop_control:
           loop_var: node_item
@@ -201,25 +201,25 @@
     when: not dynamic_mac|bool
     block:
       - name: Process ISO downloading and uploading
-        include_tasks: tasks/create_vmware_infra_iso.yml
+        ansible.builtin.include_tasks: tasks/create_vmware_infra_iso.yml
 
       - name: Process VMs when dynamic mac addresses are not used
         loop: "{{ cluster_nodes }}"
         loop_control:
           loop_var: node_item
-        include_tasks: tasks/create_vmware_infra.yml
+        ansible.builtin.include_tasks: tasks/create_vmware_infra.yml
 
   #===========================================================
   # Agent Approval, Metadata Setting
   #===========================================================
 
   - name: Loop through Agents
-    include_tasks: tasks/agent_loop_runner.yml
+    ansible.builtin.include_tasks: tasks/agent_loop_runner.yml
     vars:
       task_approved_agents: "{{ approved_agents }}"
 
   - name: Loop through Agents and Set Hostname and Role
-    include_tasks: tasks/set_hostname.yml
+    ansible.builtin.include_tasks: tasks/set_hostname.yml
     loop: "{{ cluster_nodes }}"
     loop_control:
       loop_var: node_item
@@ -231,5 +231,5 @@
   #===========================================================
 
   - name: Start the cluster install
-    include_tasks: tasks/start_cluster_install.yml
+    ansible.builtin.include_tasks: tasks/start_cluster_install.yml
     #when: cluster_configmap_info.resources[0].data.cluster_type == "full"

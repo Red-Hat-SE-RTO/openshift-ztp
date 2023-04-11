@@ -2,7 +2,15 @@
 - name: Configure a Hub OpenShift Cluster for ZTP
   hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
+
+  module_defaults:
+    kubernetes.core.k8s_info:
+      validate_certs: false
+    kubernetes.core.k8s:
+      validate_certs: false
+    kubernetes.core.helm:
+      validate_certs: false
 
   vars:
     #########################################
@@ -10,7 +18,7 @@
 
     # May still need some manual steps for RHACM OAS if on bare-metal
     ## https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.5/html-single/clusters/managing-your-clusters#enable-cim
-    
+
     configure_rhacm: false
     configure_aap2_controller: false
     configure_rh_gitops: false
@@ -32,21 +40,21 @@
 
   tasks:
     - name: Configure RHACM for ZTP feature gated functions
-      when: configure_rhacm|bool
-      include_role:
+      when: configure_rhacm | bool
+      ansible.builtin.include_role:
         name: configure_rhacm_oas
 
     - name: Configure Ansible Automation Platform 2 Controller for ZTP stuff
-      when: configure_aap2_controller|bool
-      include_role:
+      when: configure_aap2_controller | bool
+      ansible.builtin.include_role:
         name: configure_aap2_controller
 
     - name: Configure ArgoCD/Red Hat GitOps for syncing ZTP Spoke Clusters
-      when: configure_rh_gitops|bool
-      include_role:
+      when: configure_rh_gitops | bool
+      ansible.builtin.include_role:
         name: configure_argocd
 
     - name: Print the Playbook output
       when: output_lines | length > 0
-      debug:
+      ansible.builtin.debug:
         msg: "{{ output_lines }}"

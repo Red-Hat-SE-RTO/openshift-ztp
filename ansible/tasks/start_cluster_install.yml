@@ -20,7 +20,7 @@
 #  register: rhacm_route_info
 #
 #- name: Set URL for Cluster Install Endpoint
-#  set_fact:
+#  ansible.builtin.set_fact:
 #    assisted_service_endpoint: "https://{{ rhacm_route_info.resources[0].status.ingress[0].host }}/api/assisted-install/v2"
 #
 #- name: Get Clusters
@@ -34,7 +34,7 @@
 #  register: cluster_info
 #
 #- name: Set the ClusterID when it matches the name
-#  set_fact:
+#  ansible.builtin.set_fact:
 #    cluster_id: "{{ cluster_item.id }}"
 #  loop: "{{ cluster_info.json }}"
 #  loop_control:
