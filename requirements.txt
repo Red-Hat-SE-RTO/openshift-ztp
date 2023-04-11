@@ -1,3 +1,6 @@
+--trusted-host pypi.org
+--trusted-host pypi.python.org
+--trusted-host files.pythonhosted.org
 kubernetes
 jmespath
 jsonpatch

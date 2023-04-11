@@ -1,0 +1,13 @@
+---
+ansible-navigator:
+  ansible:
+    config:
+      path: ansible.cfg
+  color:
+    enable: true
+  execution-environment:
+    container-engine: podman
+    enabled: true
+    image: quay.io/kenmoini/git-aap2-ee:latest
+  logging:
+    level: critical

@@ -8,3 +8,4 @@ legacy/**
 .vault*
 ansible/.myvars
 ansible/.myvars/**
+ansible-navigator.log

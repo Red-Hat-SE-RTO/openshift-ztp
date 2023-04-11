@@ -1,0 +1,6 @@
+tar [platform:rpm]
+jq [platform:rpm]
+git [platform:rpm]
+curl [platform:rpm]
+wget [platform:rpm]
+which [platform:rpm]

@@ -1,0 +1,25 @@
+## This file is used to build your execution environment container image with Ansible
+## You can otherwise use the upstream image at quay.io/kenmoini/ocp4-ai-svc-universal-ee:latest
+
+## Create Containerfile stuffs: `ansible-builder create`
+## Build the EE: `ansible-builder build -t quay.io/yourname/yourimage:tag` - then podman push it
+
+version: 1
+
+build_arg_defaults:
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: "-v"
+  # Uncomment the following line to build on a supported RHEL 8 image
+  # EE_BASE_IMAGE: "registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8"
+
+# ansible_config: 'ansible.cfg'
+
+dependencies:
+  galaxy: collections/requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+
+additional_build_steps:
+  prepend: |
+    RUN dnf update -y && dnf clean all && ansible --version
+  append:
+    - RUN curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xvzf - -C /usr/local/bin/ oc && chmod 755 /usr/local/bin/oc && ln -s /usr/local/bin/oc /usr/local/bin/kubectl
