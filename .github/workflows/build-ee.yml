@@ -1,0 +1,41 @@
+name: EE build and deploy
+
+on:
+  pull_request:
+    paths:
+      - 'collections/**'
+      - requirements.txt
+      - bindep.txt
+      - execution-environment.yml
+  push:
+    branches:
+      - main
+    paths:
+      - 'collections/**'
+      - requirements.txt
+      - bindep.txt
+      - execution-environment.yml
+
+  # Schedule workflow run at 00:00 on Sunday
+  schedule:
+    - cron: '0 0 * * 0'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  call-deploy-workflow:
+    uses: kenmoini/ocp4-ai-svc-universal/.github/workflows/base-build-deploy-ee.yml@main
+    with:
+      EE_FOLDER_NAME: ''
+      EE_IMAGE_NAME: 'openshift-ztp-ee'
+      EE_IMAGE_TAG: 'latest'
+    secrets:
+      REGISTRY_HOSTNAME: ${{ secrets.REGISTRY_HOSTNAME }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      REGISTRY_PATH: ${{ secrets.REGISTRY_PATH }}
+      # REDHAT_USERNAME: ${{ secrets.REDHAT_USERNAME }}
+      # REDHAT_PASSWORD: ${{ secrets.REDHAT_PASSWORD }}
+      # AH_TOKEN: ${{ secrets.AH_TOKEN }}
