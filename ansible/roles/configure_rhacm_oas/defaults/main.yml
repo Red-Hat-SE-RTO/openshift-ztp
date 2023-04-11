@@ -30,7 +30,6 @@ mirror_registry_config: |
     prefix = ""
     location = "quay.io/openshift-release-dev/ocp-release"
     mirror-by-digest-only = true
-    
     [[registry.mirror]]
       location = "quay.io/openshift-release-dev/ocp-release"
 
@@ -38,7 +37,6 @@ mirror_registry_config: |
     prefix = ""
     location = "quay.io/ocpmetal/assisted-installer"
     mirror-by-digest-only = false
-    
     [[registry.mirror]]
       location = "quay.io/ocpmetal/assisted-installer"
 
@@ -46,7 +44,6 @@ mirror_registry_config: |
     prefix = ""
     location = "quay.io/ocpmetal/assisted-installer-agent"
     mirror-by-digest-only = false
-    
     [[registry.mirror]]
       location = "quay.io/ocpmetal/assisted-installer-agent"
 
@@ -54,7 +51,6 @@ mirror_registry_config: |
     prefix = ""
     location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     mirror-by-digest-only = true
-    
     [[registry.mirror]]
       location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
 

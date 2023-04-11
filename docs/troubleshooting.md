@@ -3,7 +3,7 @@
 There are a lot of moving pieces and parts to ZTP, adding additional automation and functions to it increases its complexity even more so.  Here are some common issues you may run into, where to look to debug, and how to fix them.
 
 - **AnsibleJob does not start the Automation Job Pods**
-  
+
   In case the AnsibleJob does not start, there could be a few places it could have caught a snag.
   - Check to make sure the AAP2 Operator was installed in cluster-scoped mode.
   - Check to make sure the AAP2 Controller has RBAC permissions to access the AnsibleJob CRs, Secrets, ConfigMaps, and Jobs/Pods in the spoke cluster namespaces.

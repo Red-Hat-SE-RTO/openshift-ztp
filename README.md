@@ -1,5 +1,7 @@
 # Zero Touch Provisioning by the Southeast RTO Team
 
+![EE Build & Deploy](https://github.com/Red-Hat-SE-RTO/openshift-ztp/actions/workflows/build-ee.yml/badge.svg)
+
 This repository houses assets for deploying OpenShift via ZTP (Zero-Touch Provisioning) to vSphere - other infrastructure platforms will be added as needed.
 
 This process is conducted via Red Hat Advanced Cluster Management ([RH]ACM) as a function of GitOps where clusters and their states and supporting automation are defined in a Git repository for end-to-end provisioning of OpenShift clusters, their governance, policies, and applications.
@@ -97,7 +99,7 @@ ansible-playbook ansible/2_configure.yaml \
   -e configure_rhacm=true \
   -e configure_aap2_controller=true \
   -e configure_rh_gitops=true \
-  -e pull_secret_path="~/rh-ocp-pull-secret.json" 
+  -e pull_secret_path="~/rh-ocp-pull-secret.json"
 
 ## Create credentials for vSphere Infrastructure, Pull Secret, Git credentials, etc
 ansible-playbook \

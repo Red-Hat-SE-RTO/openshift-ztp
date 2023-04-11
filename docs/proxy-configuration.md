@@ -15,8 +15,8 @@ If your Hub Cluster needs to use a Proxy, it is expected that it is configured a
 
 Learn how to configure the cluster-wide proxy here: https://docs.openshift.com/container-platform/4.10/networking/enable-cluster-wide-proxy.html
 
-- When deploying workloads and configuring them on the Hub Cluster, the consumption of cluster-wide proxy settings is automatically set.  
-  This means when you run `ansible-playbook 1_deploy.yaml`, RHACM, Gitea, and so on will automatically use the cluster-wide proxy settings.  
+- When deploying workloads and configuring them on the Hub Cluster, the consumption of cluster-wide proxy settings is automatically set.
+  This means when you run `ansible-playbook 1_deploy.yaml`, RHACM, Gitea, and so on will automatically use the cluster-wide proxy settings.
   This also means that when you run `ansible-playbook 2_configure.yaml`, the configuration of RHACM's OAS, AAP2, and ArgoCD will automatically use the cluster-wide proxy settings!
 
 - When running the AAP2 AnsibleJobs/Ansible Jobs on the Hub Cluster, you will need to pass along some proxy configuration if the ephemeral Execution Environment/Runner is needing to use a proxy to connect to resources.

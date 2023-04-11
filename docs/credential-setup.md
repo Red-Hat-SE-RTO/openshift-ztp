@@ -11,7 +11,7 @@ The easiest way to do this is to create a set of Secrets from stringData manuall
 Reflector will sync ConfigMaps and Secrets to multiple Namespaces.
 
 ```bash
-## Add emberstack repo 
+## Add emberstack repo
 helm repo add emberstack https://emberstack.github.io/helm-charts
 
 ## Update Helm repos

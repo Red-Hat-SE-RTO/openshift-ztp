@@ -3,7 +3,7 @@
 
 - name: Set fact for asset URL
   when: not use_ztp_mirror|bool
-  set_fact:
+  ansible.builtin.set_fact:
     live_iso_asset_url: "https://mirror.openshift.com"
     root_fs_asset_url: "https://mirror.openshift.com"
 
@@ -18,23 +18,23 @@
       register: route_subdomain_r
 
     - name: set route_subdomain
-      set_fact:
+      ansible.builtin.set_fact:
         route_subdomain: "{{ route_subdomain_r.resources[0].status.domain }}"
 
     - name: Set fact for asset URL as a Route
       when: not use_services_not_routes|bool
-      set_fact:
+      ansible.builtin.set_fact:
         live_iso_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
         root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
 
     - name: Set facts for when using the ZTP Mirror as a Service
       when: use_services_not_routes|bool
-      set_fact:
+      ansible.builtin.set_fact:
         live_iso_asset_url: "http://ztp-mirror.ztp-mirror.svc.cluster.local:8080"
         root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
 
     - name: Add information to the output_lines variable
-      set_fact:
+      ansible.builtin.set_fact:
         output_lines: "{{ output_lines + [line_item] }}"
       loop:
         - "OAS live_iso_asset_url: {{ live_iso_asset_url }}"
@@ -50,7 +50,7 @@
   register: r_ocp_version
 
 - name: Add ConfigMaps and Secrets needed for Custom Root CAs
-  include_tasks: create_root_ca_objects.yml
+  ansible.builtin.include_tasks: create_root_ca_objects.yml
   vars:
     target_namespace: "{{ ns_item }}"
     root_ca_bundle_name: "{{ root_ca_object_name }}"
@@ -127,16 +127,16 @@
 #    loop_var: ns_item
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Set empty fact for major release version
-  set_fact:
+  ansible.builtin.set_fact:
     major_release_versions: []
 
 - name: Create a list of just the major versions
   when: (release_item.split('.')[:-1] | join('.')) not in major_release_versions
-  set_fact:
+  ansible.builtin.set_fact:
     major_release_versions: "{{ major_release_versions + [release_item.split('.')[:-1] | join('.')] }}"
   loop: "{{ release_versions }}"
   loop_control:

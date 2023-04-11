@@ -2,7 +2,7 @@
 # tasks file for deploy_rhacm_operator
 
 - name: Clear out facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: ""
     operator_csv_version_index: ""
     operator_api_definition: ""
@@ -16,7 +16,7 @@
   register: r_ocp_version
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Query the advanced-cluster-management PackageManifest for the latest version of the Red Hat Advanced Cluster Management Operator
@@ -28,7 +28,7 @@
   register: r_pm
 
 - name: Set the latest release channels
-  set_fact:
+  ansible.builtin.set_fact:
     operator_release_channels: "{{ operator_release_channels|default([]) + [chan_item.name] }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
   loop_control:
@@ -37,7 +37,7 @@
     label: "{{ chan_item.name }}"
 
 - name: Set the latest CSV version
-  set_fact:
+  ansible.builtin.set_fact:
     operator_channel: "{{ operator_release_channels | sort | last }}"
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
@@ -49,12 +49,12 @@
   when: chan_item.name == operator_release_channels|sort|last
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='MultiClusterHub')].name\") | first }}"
     operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='MultiClusterHub')].version\") | first }}"
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "OpenShift Version: {{ ocp_version }}"
       - "Operator Release version: {{ operator_release_channels | sort | last }}"
@@ -114,7 +114,7 @@
 # ===============================================================================================
 
 - name: Add ConfigMaps and Secrets needed for Custom Root CAs
-  include_tasks: create_root_ca_objects.yml
+  ansible.builtin.include_tasks: create_root_ca_objects.yml
   vars:
     target_namespace: "{{ ns_item }}"
     root_ca_bundle_name: "{{ root_ca_object_name }}"

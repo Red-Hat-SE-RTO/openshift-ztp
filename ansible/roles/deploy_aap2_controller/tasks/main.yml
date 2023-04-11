@@ -2,7 +2,7 @@
 # tasks file for deploy_aap2_controller
 
 - name: Clear out facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: ""
     operator_csv_version_index: ""
     operator_api_definition: ""
@@ -16,7 +16,7 @@
   register: r_ocp_version
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Query the ansible-automation-platform-operator PackageManifest for the latest version of the Red Hat OpenShift GitOps Operator
@@ -28,7 +28,7 @@
   register: r_pm
 
 - name: Set the latest release channels
-  set_fact:
+  ansible.builtin.set_fact:
     operator_release_channels: "{{ operator_release_channels|default([]) + [chan_item.name] }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
   loop_control:
@@ -38,7 +38,7 @@
   when: chan_item.name is search("stable")
 
 - name: Set the latest release channels for cluster-scoped AAP2
-  set_fact:
+  ansible.builtin.set_fact:
     operator_release_channels_cluster: "{{ chan_item }}"
   loop: "{{ operator_release_channels }}"
   loop_control:
@@ -47,7 +47,7 @@
   when: chan_item is search("cluster-scoped")
 
 - name: Set the latest CSV version
-  set_fact:
+  ansible.builtin.set_fact:
     operator_channel: "{{ chan_item.name }}"
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
@@ -59,12 +59,12 @@
   when: chan_item.name == operator_release_channels_cluster
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='AutomationController')].name\") | first }}"
     operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='AutomationController')].version\") | first }}"
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "OpenShift Version: {{ ocp_version }}"
       - "Operator Channel: {{ operator_channel }}"
@@ -155,17 +155,17 @@
 
 #- name: Set the fact for httpProxy
 #  when: (r_cluster_root_ca_aap2.resources[0].status.httpProxy is defined) and (r_cluster_root_ca_aap2.resources[0].status.httpProxy != '')
-#  set_fact:
+#  ansible.builtin.set_fact:
 #    cluster_http_proxy: "{{ r_cluster_root_ca_aap2.resources[0].status.httpProxy }}"
 #
 #- name: Set the fact for httpsProxy
 #  when: (r_cluster_root_ca_aap2.resources[0].status.httpsProxy is defined) and (r_cluster_root_ca_aap2.resources[0].status.httpsProxy != '')
-#  set_fact:
+#  ansible.builtin.set_fact:
 #    cluster_https_proxy: "{{ r_cluster_root_ca_aap2.resources[0].status.httpsProxy }}"
 #
 #- name: Set the fact for noProxy
 #  when: (r_cluster_root_ca_aap2.resources[0].status.noProxy is defined) and (r_cluster_root_ca_aap2.resources[0].status.noProxy != '')
-#  set_fact:
+#  ansible.builtin.set_fact:
 #    cluster_no_proxy: "{{ r_cluster_root_ca_aap2.resources[0].status.noProxy }}"
 
 - name: Deploy the unmanaged PostgreSQL instance
@@ -183,7 +183,7 @@
     - templates/pgsql-statefulset.yaml.j2
   loop_control:
     loop_var: template_item
-  
+
 
 - name: Query the {{ aap_operator_namespace }} namespace for OperatorGroups
   kubernetes.core.k8s_info:

@@ -18,6 +18,13 @@
         name: "{{ vault_namespace }}"
       spec: {}
 
+- name: Update Helm Repositories
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true
+
 - name: Deploy the latest version of the Hashicorp Vault Helm Chart
   kubernetes.core.helm:
     name: vault

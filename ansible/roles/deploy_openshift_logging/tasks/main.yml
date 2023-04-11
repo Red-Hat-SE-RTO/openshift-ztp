@@ -2,7 +2,7 @@
 # tasks file for deploy_openshift_logging
 
 - name: Clear out facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: ""
     operator_csv_version_index: ""
     operator_api_definition: ""
@@ -17,7 +17,7 @@
   register: r_ocp_version
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 ###########################################################################
@@ -33,7 +33,7 @@
   register: r_es_pm
 
 - name: Set the latest ES CSV version
-  set_fact:
+  ansible.builtin.set_fact:
     es_operator_csv_version: "{{ chan_item.currentCSV }}"
     es_operator_csv_version_index: "{{ chan_idx }}"
     es_operator_default_channel: "{{ r_es_pm.resources[0].status.defaultChannel }}"
@@ -45,12 +45,12 @@
   when: chan_item.name ==  r_es_pm.resources[0].status.defaultChannel
 
 - name: Fail if the Current Operator CSV was not found
-  fail:
+  ansible.builtin.fail:
     msg: "Operator CSV for RH Elasticsearch not found for channel {{ r_es_pm.resources[0].status.defaultChannel }}"
   when: es_operator_csv_version is undefined
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     es_operator_api_definition: "{{ r_es_pm.resources[0].status.channels[es_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Elasticsearch')].name\") | first }}"
     es_operator_api_version: "{{ r_es_pm.resources[0].status.channels[es_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Elasticsearch')].version\") | first }}"
 
@@ -67,7 +67,7 @@
   register: r_pm
 
 - name: Set the latest Logging CSV version
-  set_fact:
+  ansible.builtin.set_fact:
     logging_operator_csv_version: "{{ chan_item.currentCSV }}"
     logging_operator_csv_version_index: "{{ chan_idx }}"
     logging_operator_default_channel: "{{ r_pm.resources[0].status.defaultChannel }}"
@@ -79,12 +79,12 @@
   when: chan_item.name ==  r_pm.resources[0].status.defaultChannel
 
 - name: Fail if the Current Operator CSV was not found
-  fail:
+  ansible.builtin.fail:
     msg: "Operator CSV for RH Logging Operator not found for channel {{ r_pm.resources[0].status.defaultChannel }}"
   when: logging_operator_csv_version is undefined
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     logging_operator_api_definition: "{{ r_pm.resources[0].status.channels[logging_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='ClusterLogging')].name\") | first }}"
     logging_operator_api_version: "{{ r_pm.resources[0].status.channels[logging_operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='ClusterLogging')].version\") | first }}"
 
@@ -93,7 +93,7 @@
 ###########################################################################
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "OpenShift Version: {{ ocp_version }}"
       - "ElasticSearch Operator CSV version: {{ es_operator_csv_version }}"

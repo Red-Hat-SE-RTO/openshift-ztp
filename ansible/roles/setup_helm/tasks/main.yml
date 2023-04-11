@@ -1,7 +1,7 @@
 ---
 # tasks file for setup_helm
 - name: Check for Helm binary in PATH
-  shell: "which helm"
+  ansible.builtin.shell: "which helm"
   register: check_helm_result
   ignore_errors: true
 
@@ -9,22 +9,22 @@
   when: check_helm_result.rc != 0
   block:
   - name: Get architecture
-    shell: uname -m
+    ansible.builtin.shell: uname -m
     register: architecture_type_cmd
 
   - name: Create a tmp path
-    file:
+    ansible.builtin.file:
       path: /tmp/helm
       state: directory
 
   - name: Download the Helm release to the tmp folder - x64
-    get_url:
+    ansible.builtin.get_url:
       url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
       dest: /tmp/helm/helm.tar.gz
     when: architecture_type_cmd.stdout == "x86_64"
 
   - name: Check the {{ binary_target_path }} dir
-    stat:
+    ansible.builtin.stat:
       path: "{{ binary_target_path }}"
     register: binary_path_dir_stat
     become: true
@@ -44,19 +44,19 @@
     become: true
 
   - name: Fail if the target binary path is not writable
-    fail:
+    ansible.builtin.fail:
       msg: "The target binary path {{ binary_target_path }} is not writable!  Move /tmp/helm/linux-amd64/helm to a directory in your $PATH!"
     when: not binary_path_dir_stat.stat.writeable and architecture_type_cmd.stdout == "x86_64"
 
   - name: Check helm version
-    shell: helm version
+    ansible.builtin.shell: helm version
     register: helm_version_check
 
   - name: Output the deployed Helm version
-    debug:
+    ansible.builtin.debug:
       msg: "{{ helm_version_check.stdout }}"
 
   - name: Cleanup tmp path
-    file:
+    ansible.builtin.file:
       path: /tmp/helm
       state: absent

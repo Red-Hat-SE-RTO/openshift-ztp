@@ -54,17 +54,17 @@
 
 - name: Set the fact for httpProxy
   when: (r_cluster_root_ca_mirror.resources[0].status.httpProxy is defined) and (r_cluster_root_ca_mirror.resources[0].status.httpProxy != '')
-  set_fact:
+  ansible.builtin.set_fact:
     cluster_wide_http_proxy: "{{ r_cluster_root_ca_mirror.resources[0].status.httpProxy }}"
 
 - name: Set the fact for httpsProxy
   when: (r_cluster_root_ca_mirror.resources[0].status.httpsProxy is defined) and (r_cluster_root_ca_mirror.resources[0].status.httpsProxy != '')
-  set_fact:
+  ansible.builtin.set_fact:
     cluster_wide_https_proxy: "{{ r_cluster_root_ca_mirror.resources[0].status.httpsProxy }}"
 
 - name: Set the fact for noProxy
   when: (r_cluster_root_ca_mirror.resources[0].status.noProxy is defined) and (r_cluster_root_ca_mirror.resources[0].status.noProxy != '')
-  set_fact:
+  ansible.builtin.set_fact:
     cluster_wide_no_proxy: "{{ r_cluster_root_ca_mirror.resources[0].status.noProxy }}"
 
 # ===============================================================================================

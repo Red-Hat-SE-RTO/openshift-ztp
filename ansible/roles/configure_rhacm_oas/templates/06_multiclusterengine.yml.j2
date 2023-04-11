@@ -16,7 +16,7 @@ spec:
       - name: cluster-manager
         enabled: true
       - name: discovery
-        enabled: {{ enable_cluster_discovery|string }}
+        enabled: {{ enable_cluster_discovery | string }}
       - name: hive
         enabled: true
       - name: server-foundation
@@ -24,7 +24,7 @@ spec:
       - name: managedserviceaccount-preview
         enabled: {{ enable_msa_preview | string }}
       - name: hypershift-preview
-        enabled: {{ enable_hypershift|string }}
+        enabled: {{ enable_hypershift | string }}
       - name: console-mce
         enabled: true
   targetNamespace: multicluster-engine

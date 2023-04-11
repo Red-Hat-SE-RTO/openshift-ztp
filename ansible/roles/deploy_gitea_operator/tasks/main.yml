@@ -2,7 +2,7 @@
 # tasks file for deploy_gitea_operator
 
 - name: Clear out facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: ""
     operator_csv_version_index: ""
     operator_api_definition: ""
@@ -49,7 +49,7 @@
   register: r_ocp_version
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Query the gitea-operator PackageManifest for the latest version of the Gitea Operator
@@ -64,7 +64,7 @@
   retries: 3
 
 - name: Set the latest CSV version for {{ gitea_operator_channel }} channel
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
@@ -75,21 +75,21 @@
   when: chan_item.name == gitea_operator_channel
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg: "{{ operator_csv_version }}"
 
 - name: Fail if the Current Operator CSV was not found
-  fail:
+  ansible.builtin.fail:
     msg: "Operator CSV for Gitea not found for channel {{ gitea_operator_channel }}"
   when: operator_csv_version is undefined
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Gitea')].name\") | first }}"
     operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='Gitea')].version\") | first }}"
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "OpenShift Version: {{ ocp_version }}"
       - "Operator CSV version: {{ operator_csv_version }}"

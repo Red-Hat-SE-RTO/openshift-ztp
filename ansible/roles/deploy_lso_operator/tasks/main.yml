@@ -1,12 +1,12 @@
 ---
 # tasks file for deploy_lso_operator
 - name: Fail if lso_hostname_targets is undefined
-  fail:
+  ansible.builtin.fail:
     msg: "lso_hostname_targets is undefined!"
   when: lso_hostname_targets is undefined
 
 - name: Clear out facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: ""
     operator_csv_version_index: ""
     operator_api_definition: ""
@@ -20,7 +20,7 @@
   register: r_ocp_version
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Query the local-storage-operator PackageManifest for the latest version of the Local Storage Operator
@@ -32,7 +32,7 @@
   register: r_pm
 
 - name: Set the latest CSV version
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
@@ -43,17 +43,17 @@
   when: chan_item.name == lso_operator_channel
 
 - name: Fail if the Current Operator CSV was not found
-  fail:
+  ansible.builtin.fail:
     msg: "Operator CSV for LSO not found for channel {{ lso_operator_channel }}"
   when: operator_csv_version is undefined
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='LocalVolume')].name\") | first }}"
     operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='LocalVolume')].version\") | first }}"
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "OpenShift Version: {{ ocp_version }}"
       - "Operator CSV version: {{ operator_csv_version }}"

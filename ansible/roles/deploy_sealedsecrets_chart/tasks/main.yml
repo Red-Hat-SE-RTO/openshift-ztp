@@ -5,6 +5,13 @@
     state: present
     template: templates/chart-repository.yml.j2
 
+- name: Update Helm Repositories
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true
+
 - name: Deploy the latest version of the Sealed Secrets Helm Chart
   kubernetes.core.helm:
     name: sealed-secrets

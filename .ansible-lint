@@ -1,0 +1,24 @@
+---
+# https://ansible-lint.readthedocs.io/configuring/#specifying-configuration-files
+
+# profile:  min, basic, moderate,safety, shared, production
+profile: production
+
+use_default_rules: true
+
+warn_list:
+  - yaml[comments]
+  - yaml[line-length]
+  - role-name
+  - command-instead-of-shell
+  - no-changed-when
+
+exclude_paths:
+  - .cache/ # implicit unless exclude_paths is defined in config
+  - .git/
+  - .github/
+  - docs/
+  - extras/
+  - legacy-files/
+  - ztp-clusters/
+  - ztp-cluster-applications/

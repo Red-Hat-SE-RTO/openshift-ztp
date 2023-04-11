@@ -74,7 +74,7 @@ You need some credentials to connect to different vCenter appliances and Ansible
 Reflector will sync ConfigMaps and Secrets to multiple Namespaces.
 
 ```bash
-## Add emberstack repo 
+## Add emberstack repo
 helm repo add emberstack https://emberstack.github.io/helm-charts
 
 ## Update Helm repos

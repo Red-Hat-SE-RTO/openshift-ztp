@@ -83,7 +83,7 @@ helm install external-secrets external-secrets/external-secrets \
 Reflector will sync ConfigMaps and Secrets to multiple Namespaces.
 
 ```bash
-## Add emberstack repo 
+## Add emberstack repo
 helm repo add emberstack https://emberstack.github.io/helm-charts
 
 ## Update Helm repos

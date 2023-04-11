@@ -2,7 +2,7 @@
 # tasks file for deploy_odf_operator
 
 - name: Clear out facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: ""
     operator_csv_version_index: ""
     operator_api_definition: ""
@@ -31,20 +31,20 @@
   register: r_pm
 
 - name: Set cluster version
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version: "{{ r_ocp_version.resources[0].status.desired.version | split('-') | first }}"
 
 - name: Set cluster version slice
-  set_fact:
+  ansible.builtin.set_fact:
     ocp_version_slice: "{{ ocp_version.split('.') }}"
 
 - name: Set Operator channel version
-  set_fact:
+  ansible.builtin.set_fact:
     #operator_channel: "stable-{{ ocp_version_slice[0] }}.{{ ocp_version_slice[1] }}"
     operator_channel: "{{ r_pm.resources[0].status.defaultChannel }}"
 
 - name: Set the latest CSV version
-  set_fact:
+  ansible.builtin.set_fact:
     operator_csv_version: "{{ chan_item.currentCSV }}"
     operator_csv_version_index: "{{ chan_idx }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
@@ -55,17 +55,17 @@
   when: chan_item.name == operator_channel
 
 - name: Fail if the Current Operator CSV was not found
-  fail:
+  ansible.builtin.fail:
     msg: "Operator CSV for ODF not found for channel {{ operator_channel }}"
   when: operator_csv_version is undefined
 
 - name: Set additional operator specific facts
-  set_fact:
+  ansible.builtin.set_fact:
     operator_api_definition: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='StorageSystem')].name\") | first }}"
     operator_api_version: "{{ r_pm.resources[0].status.channels[operator_csv_version_index].currentCSVDesc.customresourcedefinitions.owned | json_query(\"[?(@.kind=='StorageSystem')].version\") | first }}"
 
 - name: Debug
-  debug:
+  ansible.builtin.debug:
     msg:
       - "OpenShift Version: {{ ocp_version }}"
       - "Operator CSV version: {{ operator_csv_version }}"
@@ -221,7 +221,7 @@
       retries: 200
       delay: 15
       until: r_cm_list.resources | list | length == 1
-    
+
     - name: Reconfigure the rook-ceph-operator-config ConfigMap
       kubernetes.core.k8s:
         state: present

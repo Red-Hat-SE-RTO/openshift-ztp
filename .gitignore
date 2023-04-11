@@ -11,3 +11,5 @@ ansible/.myvars/**
 ansible-navigator.log
 context/
 context/**
+.vscode/
+.vscode/**

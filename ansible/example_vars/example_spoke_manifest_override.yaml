@@ -7,8 +7,8 @@ manifestOverrides:
     filename: 99-cm-spoke-cluster-config.yaml
     content: |
       ---
-      kind: ConfigMap 
-      apiVersion: v1 
+      kind: ConfigMap
+      apiVersion: v1
       metadata:
         name: spoke-cluster-config
         namespace: openshift-config
