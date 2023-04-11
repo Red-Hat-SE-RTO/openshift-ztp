@@ -3,7 +3,7 @@ set -ex
 
 source templates/scripts/shared_functions.sh
 
-checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 
+checkForArgocdcliAndDownloadOrExit argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
 
 ## Login to OpenShift with a cluster-admin user
 OCP_VERSION="4.9"
@@ -14,11 +14,11 @@ SSH_PRIVATE_KEY_PATH=${SSH_PRIVATE_KEY_PATH:="$HOME/.ssh/MasterKemoKey"}
 ## Define the Git repo information
 ## get Gitea URL if you are using Gitea echo https://$(oc get route -n  gpte-deployment |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git
 if [[ -z $GIT_REPO ]];
-then 
+then
   GIT_REPO=$(echo https://$(oc get route -n gitea | grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git)
   GIT_REPO=${GIT_REPO:="git@github.com:kenmoini/openshift-ztp.git"}
-fi 
-## Skip Git validation for https repos 
+fi
+## Skip Git validation for https repos
 SKIP_INSECURE="true"
 
 ARGOCD_PROJECT_NAME="ztp"
@@ -27,15 +27,15 @@ ARGOCD_CLUSTER_ACCESS="true"
 INFRA="vsphere"
 
 if [[ -z $CLUSTER_NAME ]];
-then 
+then
     read -p "Enter cluster name 'Example: sno-ocp' > " CLUSTER_NAME
-fi 
+fi
 
 if [[ -z ${CLUSTER_NAME} ]];
 then
     echo "Cluster name not found exiting"
-    exit 
-fi 
+    exit
+fi
 
 PS3='Please enter your deployment type: '
 options=("sno" "converged" "full" "Quit")
@@ -44,19 +44,19 @@ do
     case $opt in
         "sno")
             echo "you chose choice sno"
-            ## Deployment types sno/converged/full 
+            ## Deployment types sno/converged/full
             DEPLOYMENT_TYPE="sno"
             break
             ;;
         "converged")
             echo "you chose choice converged"
-            ## Deployment types sno/converged/full 
+            ## Deployment types sno/converged/full
             DEPLOYMENT_TYPE="converged"
             break
             ;;
         "full")
             echo "you chose choice full"
-            ## Deployment types sno/converged/full 
+            ## Deployment types sno/converged/full
             DEPLOYMENT_TYPE="full"
             break
             ;;
@@ -138,16 +138,16 @@ $(cat $SSH_PRIVATE_KEY_PATH | awk '{printf "      %s\n", $0}')
   url: ${GIT_REPO}
 type: Opaque
 YAML
-else 
+else
   echo "Creating ArgoCD Git Credential... for ${GIT_REPO}"
   GIT_REPO_NAME=$(echo $GIT_REPO | cut -d '/' -f5 | sed 's/.git$//')
   login-to-argocd
   if [ $SKIP_INSECURE == true ];
-  then 
+  then
     argocd repo add --insecure-skip-server-verification --username user-1 --password openshift ${GIT_REPO}
   else
     argocd repo add ${GIT_REPO}
-  fi 
+  fi
 fi
 ###############################################################################
 ## Create an ArgoCD Application via the oc CLI - modify .spec as needed

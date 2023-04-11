@@ -183,8 +183,8 @@ YAML
 
 function assisted_deployment_spoke_clusterconfig_configmap() {
 cat << YAML
-kind: ConfigMap 
-apiVersion: v1 
+kind: ConfigMap
+apiVersion: v1
 metadata:
   name: '${CLUSTER_NAME}-cluster-config'
   namespace: '${CLUSTER_NAME}'
@@ -210,7 +210,7 @@ data:
   sno_cpu_cores: "${SNO_CPU_CORES}"
   sno_memory_size: "${SNO_MEMORY}"
   sno_mac_address: "${SNO_MAC_ADDRESS}"
-  
+
   ## CONVERGED CONFIG
   control_plane_count: "${MASTER_COUNT}"
   control_plane_disk_size: "${MASTER_HARD_DISK}"

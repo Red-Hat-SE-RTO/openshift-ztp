@@ -35,7 +35,7 @@ spec:
       #    stderrthreshold: 2
       #    v: 0
       #    vmodule:
-      ##   NOTE: the following options are not dynamically run-time 
+      ##   NOTE: the following options are not dynamically run-time
       ##          Configurable and require a nfd-worker restart to take effect
       ##          after being changed
       #    logDir:
@@ -108,7 +108,7 @@ spec:
       #            class: ["0200"]
       #            vendor: ["15b3"]
       #            device: ["1014", "1017"]
-      #        - pciId :
+      #        - pciId:
       #            vendor: ["8086"]
       #            device: ["1000", "1100"]
       #    - name: "my.usb.feature"
@@ -126,4 +126,4 @@ spec:
       #        - pciId:
       #            vendor: ["15b3"]
       #            device: ["1014", "1017"]
-      #          loadedKMod : ["vendor_kmod1", "vendor_kmod2"]
+      #          loadedKMod: ["vendor_kmod1", "vendor_kmod2"]

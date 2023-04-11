@@ -175,7 +175,7 @@ Once ArgoCD syncs the new Spoke Cluster definitions it will kick off a fully aut
 - Expand to Nutanix
 - Expand to Hyper-V
 - Vault integration
-- Quick start Script 
+- Quick start Script
 - [DONE] Swap ArgoCD out for Red Hat GitOps
 - [DONE] Add HA OpenShift cluster examples and workflows (Fix tagging of machines when it populates in cluster)
 - [DONE] Convert Bash script templating of Spoke Clusters to Ansible

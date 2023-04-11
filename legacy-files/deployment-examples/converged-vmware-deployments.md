@@ -4,8 +4,8 @@ This document contains different node configurations for OpenShift deployments. 
 ## Requirements
 * See [mac Generator for OpenShift deployments on VMWARE](https://gist.github.com/tosin2013/eb9e67ab88da09b9597f1b7760f199c9) before starting a unique mac is need for each deployment
 
-### VMWARE DHCP Configuration 
-> This configuration will auto assign ip address and auto assign the dns servers as well. This configuration will auto assign the vips for api and the load balancer. 
+### VMWARE DHCP Configuration
+> This configuration will auto assign ip address and auto assign the dns servers as well. This configuration will auto assign the vips for api and the load balancer.
 
 ![20220223121511](https://i.imgur.com/h2vspd7.png)
 ```
@@ -89,9 +89,9 @@ cluster_nodes:
           mac_address: 00:50:56:68:47:10
           dhcp: true
 ```
-**Additional Settings**  
-* Job Slicing `1`  
-* Options: `Concurrent Jobs`  
+**Additional Settings**
+* Job Slicing `1`
+* Options: `Concurrent Jobs`
 
 ### VMWARE DHCP Static Configuration WIP
 ```

@@ -14,7 +14,7 @@ f = open(JSON_CONFIG)
 
 # returns JSON object as a dictionary
 data = json.load(f)
-  
+
 # Iterating through the json list
 for i in data['assets']:
     print('Beginning file download...' + i['src_url'])

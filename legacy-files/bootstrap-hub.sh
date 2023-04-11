@@ -118,13 +118,13 @@ until oc get packagemanifest gitea-operator -n openshift-marketplace; do echo "W
 
 ODF_INSTALLED=$(oc describe StorageSystem ocs-storagecluster-storagesystem  -n openshift-storage | grep "Reason:.*Ready")
 if [ -z $ODF_INSTALLED ];
-then 
+then
   ####################################################
   ## Label worker nodes as ODF Hosts
   logHeader "Labeling worker nodes as ODF Hosts" 2>&1 | tee -a $LOG_FILE
   WORKER_NODES=$(oc get nodes -l node-role.kubernetes.io/worker -o name)
 
-  echo "$WORKER_NODES" | while read line 
+  echo "$WORKER_NODES" | while read line
   do
     echo -e " - Adding openshift-storage label to $line..." 2>&1 | tee -a $LOG_FILE
     oc label --overwrite $line cluster.ocs.openshift.io/openshift-storage="" &>> $LOG_FILE
@@ -135,7 +135,7 @@ then
   logHeader "Creating Operator Namespaces and Operator Subscriptions" 2>&1 | tee -a $LOG_FILE
   AWS_CHECK=$(oc get sc | grep aws)
   if [ -z ${AWS_CHECK} ];
-  then 
+  then
     echo -e " - LSO Operator..." 2>&1 | tee -a $LOG_FILE
     oc apply -f ./hub-applications/${OCP_VERSION}/operator-subscriptions/local-storage-operator/ &>> $LOG_FILE
   fi

@@ -58,7 +58,7 @@ function checkForProgramAndDownloadOrExit() {
         sudo mv ${TMP_DIR}/$1 $3
         ## Remove the temp directory
         rm -rf ${TMP_DIR}
-        
+
         if [[ $? -eq 0 ]]; then
             printf '  %-72s %-7s\n' $1 "PASSED!";
         else
@@ -81,7 +81,7 @@ function checkForArgocdcliAndDownloadOrExit() {
 
         sudo curl -sSL -o /usr/local/bin/$1 $2
         sudo chmod +x /usr/local/bin/$1
-        
+
         if [[ $? -eq 0 ]]; then
             printf '  %-72s %-7s\n' $1 "PASSED!";
         else

@@ -30,7 +30,7 @@ SCM_CREDENTIAL_USERNAME="user-1"
 SCM_CREDENTIAL_PASSWORD="openshift"
 SCM_CREDENTIAL_NAME="SCM Credentials"
 
-## Using Exteral repo with ssh 
+## Using Exteral repo with ssh
 #SCM_CREDENTIAL_AUTH_TYPE="ssh" # ssh or basic
 #SSH_PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
 #SCM_CREDENTIAL_USERNAME="your-username"

@@ -1,7 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
 source ./templates/scripts/shared_functions.sh
 
-## Configure Gitea repo on OpenShift 
+## Configure Gitea repo on OpenShift
 PROJECT="gpte-deployment"
 SET_PRIVATE_REPO=true
 GITEA_PASSWORD="openshift"
@@ -39,11 +39,11 @@ oc create -f /tmp/gitea-with-admin.yaml -n ${PROJECT}
 sleep 10s
 
 POSTGRESS_POD=$(oc get pods -n ${PROJECT} | grep postgresql-gitea- | awk '{print $1}')
-waitforme $POSTGRESS_POD  ${PROJECT} 
+waitforme $POSTGRESS_POD  ${PROJECT}
 sleep 10s
 
 GITEA_POD=$(oc get pods -n ${PROJECT} | grep ^gitea-with-admin | awk '{print $1}')
-waitforme $GITEA_POD  ${PROJECT} 
+waitforme $GITEA_POD  ${PROJECT}
 
 URL="https://$(oc get route -n  ${PROJECT} |  grep -v NAME | awk '{print $2}')/user-1/openshift-ztp.git"
 echo "GITEA URL: ${URL}"
