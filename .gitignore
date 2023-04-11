@@ -9,3 +9,5 @@ legacy/**
 ansible/.myvars
 ansible/.myvars/**
 ansible-navigator.log
+context/
+context/**
