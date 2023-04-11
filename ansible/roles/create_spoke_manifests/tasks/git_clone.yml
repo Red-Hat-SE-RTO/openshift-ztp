@@ -11,7 +11,7 @@
       register: temp_dir
 
     - name: Create subdirectories in temporary path
-      file:
+      ansible.builtin.file:
         path: "{{ temp_dir.path }}/{{ path_item }}"
         state: directory
       loop:
@@ -35,11 +35,11 @@
   when: source_git_repo == push_git_url
 
 - name: Create a directory for the spoke cluster
-  file:
+  ansible.builtin.file:
     path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
     state: directory
 
 - name: Create a directory for the spoke cluster ArgoCD application
-  file:
+  ansible.builtin.file:
     path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
     state: directory

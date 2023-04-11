@@ -14,7 +14,7 @@
     # ===============================================================================================
     # Setup Root CA Facts
     # ===============================================================================================
-      
+
     - name: Handle Root CA Config
       when: query_hub_for_root_ca|bool
       block:
@@ -26,29 +26,29 @@
             namespace: openshift-config
           register: r_root_ca_config
           when: r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined and r_cluster_proxy_config.resources[0].spec.trustedCA.name != ""
-        
+
         - name: Set the Root CA var as a base64 encoded string
-          set_fact:
+          ansible.builtin.set_fact:
             root_ca_bundle_pem: "{{ r_root_ca_config.resources[0].data['ca-bundle.crt'] | b64encode }}"
 
     # ===============================================================================================
     # Setup Proxy Facts
     # ===============================================================================================
-      
+
     - name: Handle Proxy Config
       when: pass_proxy_to_spoke_from_hub|bool
       block:
         - name: Set the fact for httpProxy
           when: (r_cluster_proxy_config.resources[0].spec.httpProxy is defined) and (r_cluster_proxy_config.resources[0].spec.httpProxy != '')
-          set_fact:
+          ansible.builtin.set_fact:
             spoke_httpProxy: "{{ r_cluster_proxy_config.resources[0].spec.httpProxy }}"
 
         - name: Set the fact for httpsProxy
           when: (r_cluster_proxy_config.resources[0].spec.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].spec.httpsProxy != '')
-          set_fact:
+          ansible.builtin.set_fact:
             spoke_httpsProxy: "{{ r_cluster_proxy_config.resources[0].spec.httpsProxy }}"
 
         - name: Set the fact for noProxy
           when: (r_cluster_proxy_config.resources[0].spec.noProxy is defined) and (r_cluster_proxy_config.resources[0].spec.noProxy != '')
-          set_fact:
+          ansible.builtin.set_fact:
             spoke_noProxy: "{{ r_cluster_proxy_config.resources[0].spec.noProxy }}"

@@ -11,6 +11,6 @@
   register: ssh_secret
 
 - name: Read in the SSH Public Key
-  set_fact:
+  ansible.builtin.set_fact:
     ssh_public_key: "{{ ssh_secret.resources[0].data.ssh_public_key | b64decode }}"
   no_log: true

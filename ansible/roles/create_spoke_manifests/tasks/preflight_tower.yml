@@ -13,5 +13,5 @@
     delegate_to: localhost
 
   - name: Install needed packages in Ansible EE
-    shell: microdnf install -y git --disablerepo="*" --enablerepo="ubi-8-appstream" --enablerepo="ubi-8-baseos"
+    ansible.builtin.shell: microdnf install -y git --disablerepo="*" --enablerepo="ubi-8-appstream" --enablerepo="ubi-8-baseos"
     delegate_to: localhost

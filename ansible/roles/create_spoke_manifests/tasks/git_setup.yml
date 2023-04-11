@@ -13,37 +13,37 @@
   register: git_secret
 
 - name: Fail if the Git credentials secret is not found
-  fail:
+  ansible.builtin.fail:
     msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
   when: git_secret.resources | length == 0
 
 - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
-  set_fact:
+  ansible.builtin.set_fact:
     git_repo_push_target: "{{ git_secret.resources[0].data.git_url | b64decode }}"
 
 - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
-  set_fact:
+  ansible.builtin.set_fact:
     use_https_repo: "{{ git_repo_push_target.startswith('https://') }}"
     use_http_repo: "{{ git_repo_push_target.startswith('http://') }}"
     use_ssh_repo: "{{ git_repo_push_target.startswith('git@') }}"
 
 - name: Set the transport type - HTTPS
   when: use_https_repo|bool
-  set_fact:
+  ansible.builtin.set_fact:
     git_transport: https
 
 - name: Set the transport type - HTTP
   when: use_http_repo|bool
-  set_fact:
+  ansible.builtin.set_fact:
     git_transport: http
 
 - name: Set the transport type - SSH
   when: use_ssh_repo|bool
-  set_fact:
+  ansible.builtin.set_fact:
     git_transport: ssh
 
 - name: debug
-  debug:
+  ansible.builtin.debug:
     msg:
     - "use_https_repo: {{ use_https_repo }}"
     - "use_http_repo: {{ use_http_repo }}"
@@ -51,7 +51,7 @@
     - "git_transport: {{ git_transport }}"
 
 - name: Read in the remaining Git Push Information
-  set_fact:
+  ansible.builtin.set_fact:
     push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
     push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
     push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
@@ -64,17 +64,17 @@
 
 - name: Git HTTP Endpoint - Set the combined Git Push URL, fixes credentials that have special characters
   when: use_http_repo|bool
-  set_fact:
+  ansible.builtin.set_fact:
     push_git_url_combined: "{{ git_transport }}://{{ push_git_username | urlencode }}:{{ push_git_password | urlencode }}@{{ push_git_url | regex_replace('^http?://') }}"
   no_log: true
 
 - name: Git HTTPS Endpoint - Set the combined Git Push URL, fixes credentials that have special characters
   when: use_https_repo|bool
-  set_fact:
+  ansible.builtin.set_fact:
     push_git_url_combined: "{{ git_transport }}://{{ push_git_username | urlencode }}:{{ push_git_password | urlencode }}@{{ push_git_url | regex_replace('^https?://') }}"
   no_log: true
 
 - name: Git SSH Endpoint - Set the combined Git Push URL for simplicity
   when: use_ssh_repo|bool
-  set_fact:
+  ansible.builtin.set_fact:
     push_git_url_combined: "{{ push_git_url }}"
