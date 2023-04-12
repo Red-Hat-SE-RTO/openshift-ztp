@@ -6,7 +6,7 @@
 
 - name: Setup VMWare disk dictionary
   ansible.builtin.set_fact:
-    disks: "{{ disks | default([]) + [{ 'size_gb': disk_item.size, 'type': 'thin' }] }}"
+    disks: "{{ disks | default([]) + [{'size_gb': disk_item.size, 'type': 'thin'}] }}"
   loop: "{{ node_item.vm.disks }}"
   loop_control:
     loop_var: disk_item

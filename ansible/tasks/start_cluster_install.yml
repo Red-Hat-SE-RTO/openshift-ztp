@@ -24,13 +24,13 @@
 #    assisted_service_endpoint: "https://{{ rhacm_route_info.resources[0].status.ingress[0].host }}/api/assisted-install/v2"
 #
 #- name: Get Clusters
-#  uri:
+#  ansible.builtin.uri:
 #    url: "{{ assisted_service_endpoint }}/clusters/"
-#    return_content: yes
+#    return_content: true
 #    method: GET
 #    status_code: 200
 #    body_format: json
-#    validate_certs: no
+#    validate_certs: false
 #  register: cluster_info
 #
 #- name: Set the ClusterID when it matches the name
@@ -43,25 +43,25 @@
 #  when: cluster_item.name == cluster_configmap_info.resources[0].data.cluster_name
 #
 #- name: Ensure the cluster is in a valid state to get ready to install...
-#  uri:
+#  ansible.builtin.uri:
 #    url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}"
-#    return_content: yes
+#    return_content: true
 #    method: GET
 #    status_code: 200
 #    body_format: json
-#    validate_certs: no
+#    validate_certs: false
 #  register: cluster_current_status
 #  until: cluster_current_status.json.status == "ready"
 #  retries: 120
 #  delay: 15
 #
 #- name: Start the Installation of the OpenShift Cluster
-#  uri:
+#  ansible.builtin.uri:
 #    url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/actions/install"
-#    return_content: yes
+#    return_content: true
 #    method: POST
 #    status_code: 202
 #    body_format: json
-#    validate_certs: no
+#    validate_certs: false
 #  when: cluster_current_status.json.status == "ready"
 #  ignore_errors: true

@@ -29,7 +29,7 @@ spec:
     interfaces:
 {% for iface in node_item.network.interfaces %}
       - ipv4:
-{% if not iface.dhcp|bool %}
+{% if not iface.dhcp | bool %}
           address:
 {% for ipv4 in iface.ipv4 %}
             - ip: {{ ipv4.address }}
@@ -37,7 +37,7 @@ spec:
 {% endfor -%}
 {% endif %}
           dhcp: {{ iface.dhcp }}
-{% if iface.dhcp|bool and (cluster_node_network_static_dns_search_domains is not defined) and (cluster_node_network_static_dns_servers is not defined) %}
+{% if iface.dhcp | bool and (cluster_node_network_static_dns_search_domains is not defined) and (cluster_node_network_static_dns_servers is not defined) %}
           auto-dns: true
 {% endif %}
           enabled: true
@@ -45,7 +45,7 @@ spec:
         state: up
         type: ethernet
 {% endfor %}
-{% if ((node_item.network.routes is defined) and (node_item.network.routes|length>0)) %}
+{% if ((node_item.network.routes is defined) and (node_item.network.routes | length > 0)) %}
     routes:
       config:
 {% for route in node_item.network.routes %}

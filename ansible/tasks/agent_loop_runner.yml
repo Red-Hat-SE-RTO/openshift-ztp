@@ -4,10 +4,10 @@
     timeout: 30
 
 - name: Set empty facts
+  #when: task_approved_agents | length < node_count | int
   ansible.builtin.set_fact:
     newly_approved_agents: "{{ task_approved_agents }}"
     total_approved_agents: []
-  #when: task_approved_agents | length < node_count | int
 
 - name: Query the Hub OpenShift Cluster for Agent CRDs
   kubernetes.core.k8s_info:
@@ -19,41 +19,42 @@
   register: agent_crd_info
 
 - name: Add the approved nodes to the list of approved agents
+  when: agent_item.spec.approved
   ansible.builtin.set_fact:
     total_approved_agents: "{{ total_approved_agents | default([]) + [agent_item.metadata.name] }}"
   loop: "{{ agent_crd_info.resources }}"
   loop_control:
     loop_var: agent_item
     label: "{{ agent_item.metadata.name }}"
-  when: agent_item.spec.approved == true
 
 - name: Process an Agent
-  block:
-  - name: Approve nodes
-    kubernetes.core.k8s:
-      state: patched
-      kind: Agent
-      name: "{{ agent_item.metadata.name }}"
-      namespace: "{{ agent_item.metadata.namespace }}"
-      api_version: agent-install.openshift.io/v1beta1
-      definition:
-        spec:
-          approved: true
-    loop: "{{ agent_crd_info.resources }}"
-    loop_control:
-      loop_var: agent_item
-      label: "{{ agent_item.metadata.name }}"
-    when: agent_item.spec.approved == false
-
-  - name: Add the approved node to the list
-    ansible.builtin.set_fact:
-      newly_approved_agents: "{{ newly_approved_agents + [agent_item.metadata.name] }}"
-    loop: "{{ agent_crd_info.resources }}"
-    loop_control:
-      loop_var: agent_item
-      label: "{{ agent_item.metadata.name }}"
-    when: agent_item.spec.approved == false
   when: agent_crd_info.resources | length > 0
+  block:
+
+    - name: Approve nodes
+      when: not agent_item.spec.approved
+      kubernetes.core.k8s:
+        state: patched
+        kind: Agent
+        name: "{{ agent_item.metadata.name }}"
+        namespace: "{{ agent_item.metadata.namespace }}"
+        api_version: agent-install.openshift.io/v1beta1
+        definition:
+          spec:
+            approved: true
+      loop: "{{ agent_crd_info.resources }}"
+      loop_control:
+        loop_var: agent_item
+        label: "{{ agent_item.metadata.name }}"
+
+    - name: Add the approved node to the list
+      when: not agent_item.spec.approved
+      ansible.builtin.set_fact:
+        newly_approved_agents: "{{ newly_approved_agents + [agent_item.metadata.name] }}"
+      loop: "{{ agent_crd_info.resources }}"
+      loop_control:
+        loop_var: agent_item
+        label: "{{ agent_item.metadata.name }}"
 
 - name: Debug
   ansible.builtin.debug:
@@ -63,11 +64,11 @@
       - "total_approved_agents: {{ total_approved_agents | length }}"
 
 #- name: All Nodes have been registered
-#  meta: end_host
 #  when: agent_crd_info.resources | length ==  node_count | int
+#  meta: end_host
 
 - name: INCEPTION
+  when: cluster_nodes | length != total_approved_agents | length
   ansible.builtin.include_tasks: tasks/agent_loop_runner.yml
   vars:
     task_approved_agents: "{{ newly_approved_agents }}"
-  when: cluster_nodes|length != total_approved_agents|length

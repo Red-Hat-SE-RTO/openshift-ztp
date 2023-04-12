@@ -11,14 +11,14 @@
     folder: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
   register: vm_guest_info
 
-- name: debug vm_guest_info
+- name: Debug vm_guest_info
   ansible.builtin.debug:
     msg: "{{ vm_guest_info }}"
 
-- name: debug vm_guest_info.instance
+- name: Debug vm_guest_info.instance
   ansible.builtin.debug:
     msg: "{{ vm_guest_info.instance }}"
 
-- name: debug vm_guest_info.instance
+- name: Debug vm_guest_info.instance
   ansible.builtin.debug:
     msg: "{{ vm_guest_info.instance }}"
