@@ -42,7 +42,7 @@ spec:
         name: cluster-proxy-addon
       - enabled: false
         name: cluster-backup
-{% if deploy_to_infra_nodes|bool %}
+{% if deploy_to_infra_nodes | bool %}
 # https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.6/html/install/installing#installing-on-infra-node
   tolerations:
     - effect: NoSchedule

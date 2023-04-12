@@ -2,33 +2,33 @@
 # tasks file for configure_rhacm_oas
 
 - name: Set fact for asset URL
-  when: not use_ztp_mirror|bool
+  when: not use_ztp_mirror | bool
   ansible.builtin.set_fact:
     live_iso_asset_url: "https://mirror.openshift.com"
     root_fs_asset_url: "https://mirror.openshift.com"
 
 - name: Set facts for when using the ZTP Mirror
-  when: use_ztp_mirror|bool
+  when: use_ztp_mirror | bool
   block:
-    - name: get route subdomain
-      k8s_info:
+    - name: Get route subdomain
+      kubernetes.core.k8s_info:
         kind: IngressController
         name: default
         namespace: openshift-ingress-operator
       register: route_subdomain_r
 
-    - name: set route_subdomain
+    - name: Set route_subdomain
       ansible.builtin.set_fact:
         route_subdomain: "{{ route_subdomain_r.resources[0].status.domain }}"
 
     - name: Set fact for asset URL as a Route
-      when: not use_services_not_routes|bool
+      when: not use_services_not_routes | bool
       ansible.builtin.set_fact:
         live_iso_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
         root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
 
     - name: Set facts for when using the ZTP Mirror as a Service
-      when: use_services_not_routes|bool
+      when: use_services_not_routes | bool
       ansible.builtin.set_fact:
         live_iso_asset_url: "http://ztp-mirror.ztp-mirror.svc.cluster.local:8080"
         root_fs_asset_url: "https://ztp-mirror-ztp-mirror.{{ route_subdomain }}"
@@ -158,9 +158,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/02_clusterImageSet.yml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/02_clusterImageSet.yml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -170,13 +170,13 @@
     loop_var: release_long_version
 
 - name: Apply the Mirror Registry ConfigMap
-  when: configure_registry_mirror|bool and (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
+  when: configure_registry_mirror | bool and (r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined) and (r_cluster_proxy_config.resources[0].spec.trustedCA.name != '')
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/00_mirror_registry_configmap.yml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/00_mirror_registry_configmap.yml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -186,9 +186,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', file_item ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', file_item) | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10

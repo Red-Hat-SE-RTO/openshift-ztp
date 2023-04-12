@@ -15,12 +15,15 @@
         - preflight
 
     - name: Get the absolute path to the generation directory
-      shell: "cd {{ generated_asset_directory }} && pwd"
+      ansible.builtin.shell: "cd {{ generated_asset_directory }} && pwd"
       register: generated_asset_directory_absolute_path
 
     - name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
       community.crypto.openssh_keypair:
         path: "{{ generated_asset_directory }}/id_rsa"
+        size: 4096
+        type: rsa
+        mode: 0400
       tags:
         - preflight
         - ssh_keypair
@@ -46,7 +49,7 @@
           register: iso_check
 
         - name: Pull FCOS OVA if needed
-          get_url:
+          ansible.builtin.get_url:
             url: "https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_version }}/x86_64/fedora-coreos-{{ fcos_version }}-vmware.x86_64.ova"
             dest: "{{ generated_asset_directory }}/fcos.ova"
           when: not iso_check.stat.exists
@@ -61,7 +64,7 @@
           register: butane_check
 
         - name: Download the release of Butane
-          get_url:
+          ansible.builtin.get_url:
             url: "https://github.com/coreos/butane/releases/download/{{ butane_release }}/butane-x86_64-unknown-linux-gnu"
             dest: "{{ generated_asset_directory }}/butane"
           when: not butane_check.stat.exists
@@ -93,17 +96,17 @@
             # url: "https://{{ vcenter_server }}:{{ vcenter_server_port }}/folder/{{ iso_datastore_path }}?dcPath={{ datacenter_name }}&dsName={{ iso_datastore_name }}"
             # user: '{{ vcenter_user }}'
             # password: '{{ vcenter_pass }}'
-            # force_basic_auth: yes
-            # return_content: yes
+            # force_basic_auth: true
+            # return_content: true
             # validate_certs: "{{ validate_vcenter_certificate }}"
           # register: iso_list
 
         # - name: Find the OVA Link listing
-          # set_fact:
+          # ansible.builtin.set_fact:
             # stored_fcos_link: "{{ iso_list.content | regex_search('<\\s*a[^>]*>fcos.ova<\\s*/\\s*a>') }}"
 
         # - name: Execute the upload script because the vsphere_copy module is borked
-          # shell: |
+          # ansible.builtin.shell: |
             # {{ ansible_python_interpreter }} files/upload_iso.py -s {{ vcenter_server }} -o {{ vcenter_server_port }} \
             # -u {{ vcenter_user }} -p '{{ vcenter_pass }}' \
             # {{ validate_vcenter_certificate | ternary('', '-nossl', omit) }} \
@@ -118,16 +121,16 @@
     - name: Create the Ignition file
       block:
         - name: Create butane config from template
-          template:
+          ansible.builtin.template:
             src: jfrog.fcc.j2
             dest: "{{ generated_asset_directory }}/jfrog.fcc"
             mode: 0664
 
         - name: Create FCOS transpiled ignition file
-          shell: "{{ generated_asset_directory }}/butane --pretty --strict < {{ generated_asset_directory }}/jfrog.fcc > {{ generated_asset_directory }}/transpiled_config.ign"
+          ansible.builtin.shell: "{{ generated_asset_directory }}/butane --pretty --strict < {{ generated_asset_directory }}/jfrog.fcc > {{ generated_asset_directory }}/transpiled_config.ign"
 
         - name: Set ign_file Fact
-          set_fact:
+          ansible.builtin.set_fact:
             ign_file: "{{ lookup('file', '{{ generated_asset_directory }}/transpiled_config.ign') | b64encode }}"
       tags:
         - create_ignition_file
@@ -142,8 +145,8 @@
             validate_certs: "{{ validate_vcenter_certificate }}"
             datacenter: "{{ datacenter_name }}"
             datastore: "{{ iso_datastore_name }}"
-            power_on: no
-            allow_duplicates: no
+            power_on: false
+            allow_duplicates: false
             name: "{{ vm_name }}"
             networks: "{u'VM Network':u'{{ vm_network }}'}"
             ovf: "{{ generated_asset_directory_absolute_path.stdout }}/fcos.ova"
@@ -185,7 +188,7 @@
             name: "{{ vm_name }}"
             state: present
             guest_id: coreos64Guest
-            wait_for_customization: yes
+            wait_for_customization: true
 
         - name: Give it a little more RAM
           community.vmware.vmware_guest:
@@ -198,10 +201,10 @@
             state: present
             hardware:
               memory_mb: 8192
-              hotadd_cpu: yes
-              hotadd_memory: yes
+              hotadd_cpu: true
+              hotadd_memory: true
               version: latest
-            wait_for_customization: yes
+            wait_for_customization: true
 
         - name: Give it the ignition config
           community.vmware.vmware_guest:
@@ -221,7 +224,7 @@
               value: "ip={{ vm_ipaddr }}::{{ vm_gateway }}:{{ vm_netmask }}:{{ vm_name }}:ens192:off:{{ vm_dns }}"
               # For DHCP:
               #value: "ip=::::{{ vm_name }}:ens192:on:"
-            wait_for_customization: yes
+            wait_for_customization: true
 
         - name: Start the VM
           community.vmware.vmware_guest:

@@ -1,61 +1,72 @@
 ---
+# noqa exemptions:
+#   command-instead-of-module: We are using git commands instead of modules
+#   because the git module does not support all the options we need, like pushing
 #######################################################
 ## Git Push
 - name: Technologic
   block:
 
-    - name: Git set push user info
+    - name: Git set push user info # noqa: command-instead-of-module
       ansible.builtin.shell: |
         git config user.email "{{ push_git_user_email }}"
         git config user.name "{{ push_git_user_name }}"
       args:
         chdir: "{{ temp_dir.path }}/git"
 
-    - name: Git set push user token info
+    - name: Git set push user token info # noqa: command-instead-of-module
+      when: push_git_auth_method in ["http", "https"]
       ansible.builtin.shell: |
         git config --global github.user {{ push_git_username }}
         git config --global github.token {{ push_git_password }}
       args:
         chdir: "{{ temp_dir.path }}/git"
-      when: push_git_auth_method in ["http", "https"]
 
-    - name: Git add the new cluster
+    - name: Git add the new cluster # noqa: command-instead-of-module
       ansible.builtin.shell: |
         git add {{ target_spoke_git_path }}
         git add {{ argo_application_git_repo_path }}
       args:
         chdir: "{{ temp_dir.path }}/git"
 
-    - name: Git commit the new cluster
+    - name: Git commit the new cluster # noqa: command-instead-of-module
       ansible.builtin.shell: |
         git commit -m "add new ztp cluster: {{ cluster_name }}"
       args:
         chdir: "{{ temp_dir.path }}/git"
 
-    - name: Git set new remote
+    - name: Git set new remote # noqa: command-instead-of-module
+      when: push_git_auth_method == "ssh"
       ansible.builtin.shell: |
         git remote add private {{ push_git_url }}
       args:
         chdir: "{{ temp_dir.path }}/git"
-      when: push_git_auth_method == "ssh"
 
     - name: Save the contents of the SSH Key to a file
-      copy:
+      when: push_git_auth_method == "ssh"
+      ansible.builtin.copy:
         content: "{{ push_git_ssh_key }}"
         dest: "{{ temp_dir.path }}/secrets/push_git_ssh_key"
         mode: 0600
-      when: push_git_auth_method == "ssh"
       no_log: true
 
     - name: Create .ssh folder
-      ansible.builtin.shell: |
-        mkdir -p $HOME/.ssh
-        chmod 0700 $HOME/.ssh
-      args:
-        chdir: "{{ temp_dir.path }}/git"
       when: push_git_auth_method == "ssh"
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.ssh"
+        state: directory
+        mode: 0700
 
-    - name: Git push the new cluster
+    # - name: Create .ssh folder
+      # when: push_git_auth_method == "ssh"
+      # ansible.builtin.shell: |
+        # mkdir -p $HOME/.ssh
+        # chmod 0700 $HOME/.ssh
+      # args:
+        # chdir: "{{ temp_dir.path }}/git"
+
+    - name: Git push the new cluster # noqa: command-instead-of-module
+      when: push_git_auth_method == "ssh"
       ansible.builtin.shell: |
         ssh-keyscan github.com >> $HOME/.ssh/known_hosts
         chmod 0644 $HOME/.ssh/known_hosts
@@ -63,58 +74,57 @@
         git push private {{ push_git_branch }}
       args:
         chdir: "{{ temp_dir.path }}/git"
-      when: push_git_auth_method == "ssh"
 
-    #- name: extract git url
-    #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
-    #  register: extract_output
-    #  when: push_git_auth_method == "basic"
+    # - name: extract git url
+    #   ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
+    #   register: extract_output
+    #   when: push_git_auth_method == "basic"
 
-    #- name: save git url
-    #  ansible.builtin.set_fact:
-    #    git_url_https: "{{ extract_output.stdout }}"
-    #  when: push_git_auth_method == "basic"
+    # - name: save git url
+    #   ansible.builtin.set_fact:
+    #     git_url_https: "{{ extract_output.stdout }}"
+    #   when: push_git_auth_method == "basic"
 
-    #- name: extract git path
-    #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
-    #  register: extract_path_output
-    #  when: push_git_auth_method == "basic"
+    # - name: extract git path
+    #   ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
+    #   register: extract_path_output
+    #   when: push_git_auth_method == "basic"
 
-    #- name: save git path
-    #  ansible.builtin.set_fact:
-    #    extract_path_output: "{{ extract_path_output.stdout }}"
-    #  when: push_git_auth_method == "basic"
+    # - name: save git path
+    #   ansible.builtin.set_fact:
+    #     extract_path_output: "{{ extract_path_output.stdout }}"
+    #   when: push_git_auth_method == "basic"
 
-    #- name: extract git repo
-    #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
-    #  register: extract_repo_output
-    #  when: push_git_auth_method == "basic"
+    # - name: extract git repo
+    #   ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
+    #   register: extract_repo_output
+    #   when: push_git_auth_method == "basic"
 
-    #- name: save git repo
-    #  ansible.builtin.set_fact:
-    #    extract_repo_output: "{{ extract_repo_output.stdout }}"
-    #  when: push_git_auth_method == "basic"
+    # - name: save git repo
+    #   ansible.builtin.set_fact:
+    #     extract_repo_output: "{{ extract_repo_output.stdout }}"
+    #   when: push_git_auth_method == "basic"
 
-    - name: Git set new remote
+    - name: Git set new remote # noqa: command-instead-of-module
+      when: push_git_auth_method == "basic"
       ansible.builtin.shell: |
         git remote add private "{{ push_git_url_combined }}"
       args:
         chdir: "{{ temp_dir.path }}/git"
-      when: push_git_auth_method == "basic"
 
-    - name: git config --list
+    - name: Do a git config --list # noqa: command-instead-of-module
+      when: push_git_auth_method == "basic"
       ansible.builtin.shell: |
         git config --list
       args:
         chdir: "{{ temp_dir.path }}/git"
-      when: push_git_auth_method == "basic"
 
-    - name: Git push the new cluster
+    - name: Git push the new cluster # noqa: command-instead-of-module
+      when: push_git_auth_method == "basic"
       ansible.builtin.shell: |
         git -c http.sslVerify=false push private main
       args:
         chdir: "{{ temp_dir.path }}/git"
-      when: push_git_auth_method == "basic"
 
 #######################################################
 ## Cleanup
@@ -122,6 +132,6 @@
   ansible.builtin.file:
     path: "{{ temp_dir.path }}"
     state: absent
-    force: yes
+    force: true
   tags:
     - always

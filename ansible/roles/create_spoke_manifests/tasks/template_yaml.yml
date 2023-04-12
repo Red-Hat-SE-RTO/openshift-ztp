@@ -2,104 +2,69 @@
 - name: Template the Spoke Cluster Manifests
   block:
 
-  - name: Template non-dependant manifests
-    template:
-      src: "templates/{{ template_item }}.yml.j2"
-      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}.yml"
-    loop:
-      - 00_namespace
-      - 02_agentclusterinstall
-      - 03_clusterdeployment
-      - 04_klusterletaddonconfig
-      - 05_managedcluster
-      - 07_infraenv
-      - 08_cluster_config
-      - 09_ansiblejob
-      #- 12_clustercurator
-      - 15_rbac_capirole
-    loop_control:
-      loop_var: template_item
+    - name: Template non-dependant manifests
+      ansible.builtin.template:
+        src: "templates/{{ template_item }}.yml.j2"
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}.yml"
+        mode: 0644
+      loop:
+        - 00_namespace
+        - 02_agentclusterinstall
+        - 03_clusterdeployment
+        - 04_klusterletaddonconfig
+        - 05_managedcluster
+        - 07_infraenv
+        - 08_cluster_config
+        - 09_ansiblejob
+        #- 12_clustercurator
+        - 15_rbac_capirole
+      loop_control:
+        loop_var: template_item
 
-  - name: Template the Reflected Secrets
-    template:
-      src: "templates/{{ template_item }}.j2"
-      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}"
-    loop:
-      - 01_reflected_ansible_tower_credential.yml
-      - 01_reflected_cluster_ssh_keys.yml
-      - 01_reflected_vcenter_secret.yml
-      - 01_reflected_pull_secret.yml
-    loop_control:
-      loop_var: template_item
-    when: secret_management == "reflector" and template_secrets|bool
+    - name: Template the Reflected Secrets
+      ansible.builtin.template:
+        src: "templates/{{ template_item }}.j2"
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}"
+        mode: 0644
+      loop:
+        - 01_reflected_ansible_tower_credential.yml
+        - 01_reflected_cluster_ssh_keys.yml
+        - 01_reflected_vcenter_secret.yml
+        - 01_reflected_pull_secret.yml
+      loop_control:
+        loop_var: template_item
+      when: secret_management == "reflector" and template_secrets | bool
 
-#  - name: Template the AgentClusterInstall
-#    template:
-#      src: templates/02_agentclusterinstall.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/02_agentclusterinstall.yml"
+    - name: Template the NMState Config for static networks
+      ansible.builtin.template:
+        src: templates/11_nmstate_config.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
+        mode: 0644
+      loop: "{{ cluster_nodes }}"
+      loop_control:
+        loop_var: node_item
 
-#  - name: Template the ClusterDeployment
-#    template:
-#      src: templates/03_clusterdeployment.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/03_clusterdeployment.yml"
+    - name: Template any additional manifests for the Spoke Cluster
+      when: manifestOverrides is defined and manifestOverrides | length > 0
+      ansible.builtin.template:
+        src: templates/30_cm_manifest_overrides.yml.j2
+        dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/30_cm_mo_{{ manifest.name }}.yml"
+        mode: 0644
+      loop: "{{ manifestOverrides }}"
+      loop_control:
+        loop_var: manifest
+        label: "{{ manifest.name }}: {{ manifest.filename }}"
 
-#  - name: Template the KlusterletAddonConfig
-#    template:
-#      src: templates/04_klusterletaddonconfig.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/04_klusterletaddonconfig.yml"
-
-#  - name: Template the ManagedCluster
-#    template:
-#      src: templates/05_managedcluster.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/05_managedcluster.yml"
-
-#  - name: Template the InfraEnv
-#    template:
-#      src: templates/07_infraenv.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/07_infraenv.yml"
-
-#  - name: Template the ClusterConfig
-#    template:
-#      src: templates/08_cluster_config.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/08_cluster_config.yml"
-
-#  - name: Template the AnsibleJob
-#    template:
-#      src: templates/09_ansiblejob.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/09_ansiblejob.yml"
-
-  - name: Template the NMState Config for static networks
-    template:
-      src: templates/11_nmstate_config.yml.j2
-      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
-    loop: "{{ cluster_nodes }}"
-    loop_control:
-      loop_var: node_item
-
-#  - name: Template the ClusterCurator
-#    template:
-#      src: templates/12_clustercurator.yml.j2
-#      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/12_clustercurator.yml"
-
-  - name: Template any additional manifests for the Spoke Cluster
-    when: manifestOverrides is defined and manifestOverrides | length > 0
-    loop: "{{ manifestOverrides }}"
-    loop_control:
-      loop_var: manifest
-      label: "{{ manifest.name }}: {{ manifest.filename }}"
-    template:
-      src: templates/30_cm_manifest_overrides.yml.j2
-      dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/30_cm_mo_{{ manifest.name }}.yml"
-
-  - name: Add the ArgoCD Application
-    when: create_argo_application|bool
-    block:
-    - name: Template the ArgoCD Application
-      template:
-        src: templates/99_argocd_application.yml.j2
-        dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
-      vars:
-        application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
-        git_repo_path: "{{ target_spoke_git_path }}"
-        git_repo_url: "{{ push_git_url }}"
-        project_name: "{{ argocd_project_name }}"
+    - name: Add the ArgoCD Application
+      when: create_argo_application | bool
+      block:
+        - name: Template the ArgoCD Application
+          ansible.builtin.template:
+            src: templates/99_argocd_application.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
+            mode: 0644
+          vars:
+            application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
+            git_repo_path: "{{ target_spoke_git_path }}"
+            git_repo_url: "{{ push_git_url }}"
+            project_name: "{{ argocd_project_name }}"

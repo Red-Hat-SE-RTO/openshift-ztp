@@ -42,18 +42,18 @@ spec:
     - {{ ntp }}
 {% endfor %}
 {% endif %}
-{% if insert_proxy_infraenv|bool %}
-{% if (spoke_httpProxy is defined) or (spoke_httpsProxy is defined) or (spoke_noProxy is defined) %}
+{% if insert_proxy_infraenv | bool %}
+{% if (spoke_httpproxy is defined) or (spoke_httpsproxy is defined) or (spoke_noproxy is defined) %}
   # spoke Proxy just needs to be defined once in the AgentClusterInstall CR
   proxy:
-{% if spoke_httpProxy is defined %}
-    httpProxy: {{ spoke_httpProxy }}
+{% if spoke_httpproxy is defined %}
+    httpProxy: {{ spoke_httpproxy }}
 {% endif %}
-{% if spoke_httpsProxy is defined %}
-    httpsProxy: {{ spoke_httpsProxy }}
+{% if spoke_httpsproxy is defined %}
+    httpsProxy: {{ spoke_httpsproxy }}
 {% endif %}
-{% if spoke_noProxy is defined %}
-    noProxy: {{ spoke_noProxy }}
+{% if spoke_noproxy is defined %}
+    noProxy: {{ spoke_noproxy }}
 {% endif %}
 {% endif %}
 {% endif %}

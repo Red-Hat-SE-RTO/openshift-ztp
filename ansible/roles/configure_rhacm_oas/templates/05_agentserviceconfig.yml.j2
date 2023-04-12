@@ -27,7 +27,7 @@ spec:
     resources:
       requests:
         storage: 40Gi
-{% if configure_registry_mirror|bool %}
+{% if configure_registry_mirror | bool %}
   mirrorRegistryRef:
     name: "{{ mirror_registry_root_ca_configmap_name }}"
 {% endif %}

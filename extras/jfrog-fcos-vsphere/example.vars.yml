@@ -17,7 +17,7 @@ vcenter_pass: "passw0rd!"
 datacenter_name: "LabDC"
 cluster_name: "LabCluster"
 vm_network: "VM Network"
-validate_vcenter_certificate: no
+validate_vcenter_certificate: false
 
 iso_datastore_name: nvme
 iso_datastore_path: ISOs

@@ -22,7 +22,7 @@ spec:
               - {{ host }}
 {% endfor %}
   storageClassName: {{ lso_storage_class_name }}
-{% if deploy_to_infra_nodes|bool %}
+{% if deploy_to_infra_nodes | bool %}
   tolerations:
     - effect: NoSchedule
       key: node.ocs.openshift.io/storage

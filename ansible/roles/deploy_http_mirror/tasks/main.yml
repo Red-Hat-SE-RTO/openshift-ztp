@@ -7,8 +7,8 @@
     kind: Namespace
     api_version: v1
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: "{{ http_mirror_operator_namespace }}"
@@ -38,8 +38,8 @@
     kind: ConfigMap
     namespace: "{{ http_mirror_operator_namespace }}"
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: trusted-ca
@@ -75,8 +75,8 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition: "{{ lookup('template', template_item) | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed

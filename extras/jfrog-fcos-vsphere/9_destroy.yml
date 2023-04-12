@@ -31,7 +31,7 @@
             datacenter: "{{ datacenter_name }}"
             name: "{{ vm_name }}"
             state: poweredoff
-            force: yes
+            force: true
 
         - name: Get the VM disk info
           community.vmware.vmware_guest_disk_info:

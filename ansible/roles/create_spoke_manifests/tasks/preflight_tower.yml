@@ -1,17 +1,17 @@
 ---
 ## Tower Preflight - this can be skipped if using the quay.io/kenmoini/git-aap2-ee execution environment
 - name: Preflight for Tower
-  when: tower_job_id is defined and install_packages|bool
+  when: tower_job_id is defined and install_packages | bool
   block:
-  - name: Install needed pip modules if running in Tower
-    pip:
-      name:
-        - kubernetes
-        - openshift==0.12.1
-        - jmespath
-      extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
-    delegate_to: localhost
+    - name: Install needed pip modules if running in Tower
+      ansible.builtin.pip:
+        name:
+          - kubernetes
+          - openshift==0.12.1
+          - jmespath
+        extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
+      delegate_to: localhost
 
-  - name: Install needed packages in Ansible EE
-    ansible.builtin.shell: microdnf install -y git --disablerepo="*" --enablerepo="ubi-8-appstream" --enablerepo="ubi-8-baseos"
-    delegate_to: localhost
+    - name: Install needed packages in Ansible EE
+      ansible.builtin.shell: microdnf install -y git --disablerepo="*" --enablerepo="ubi-8-appstream" --enablerepo="ubi-8-baseos"
+      delegate_to: localhost

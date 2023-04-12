@@ -1,10 +1,10 @@
 ---
 - name: Post Cluster Automation - Configure the Spoke Cluster with an Identity Provider for AAD
   hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
-    - name: debug facts
+    - name: Debug facts
       vars:
         msg: |
           Module Variables ("vars"):

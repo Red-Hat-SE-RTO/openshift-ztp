@@ -28,12 +28,12 @@
     - name: Use Internal Gitea - Set the Git Repo fact to the Route
       ansible.builtin.set_fact:
         git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
-      when: gitea_route.resources | length > 0 and not use_services_not_routes|bool
+      when: gitea_route.resources | length > 0 and not use_services_not_routes | bool
 
     - name: Use Internal Gitea - Set the Git Repo fact to the Service
       ansible.builtin.set_fact:
         git_repo_url: "http://gitea.gitea.svc.cluster.local:3000/user-1/openshift-ztp.git"
-      when: gitea_service.resources | length > 0 and use_services_not_routes|bool
+      when: gitea_service.resources | length > 0 and use_services_not_routes | bool
 
 ###############################################################################################
 ## ArgoCD
@@ -43,9 +43,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/rolebinding.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/rolebinding.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -55,9 +55,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/appproject.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/appproject.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -67,9 +67,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/cluster-appproject.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/cluster-appproject.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -79,9 +79,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/repo-secret.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/repo-secret.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -91,9 +91,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/cluster-applications.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/cluster-applications.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10

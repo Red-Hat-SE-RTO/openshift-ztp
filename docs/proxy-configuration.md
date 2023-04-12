@@ -64,10 +64,10 @@ https_proxy: 'http://192.168.51.1:3128/'
 no_proxy: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost,127.0.0.1,.apps.core-ocp.lab.kemo.network"
 
 ## Spoke Proxy Configuration
-spoke_httpProxy: "http://192.168.77.1:3128/"
-# spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
-#spoke_httpsProxy: "http://192.168.77.1:3128/"
-spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
+spoke_httpproxy: "http://192.168.77.1:3128/"
+# spoke_httpsproxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
+#spoke_httpsproxy: "http://192.168.77.1:3128/"
+spoke_noproxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
 ```
 
 ---
@@ -75,7 +75,7 @@ spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,1
 ## Proxy Configuration for Spoke Clusters
 
 - The only place Proxy Configuration should be set is on the `AgentClusterInstall` - do not set it twice via install-config overrides or the InfraEnv, multiple proxy definitions will cause problems.
-- Pass along some extra variables to the `create_spoke_manifests.yml` Playbook as the `spoke_httpProxy`, `spoke_httpsProxy`, and `spoke_noProxy` variables.  This will embed it in the needed places for the Spoke Cluster to consume.
+- Pass along some extra variables to the `create_spoke_manifests.yml` Playbook as the `spoke_httpproxy`, `spoke_httpsproxy`, and `spoke_noproxy` variables.  This will embed it in the needed places for the Spoke Cluster to consume.
 
 ## Root CA for the Spoke Clusters
 

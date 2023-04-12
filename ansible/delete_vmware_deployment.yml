@@ -1,7 +1,7 @@
 ---
 - name: Delete vSphere Infrastructure for ZT
   hosts: all
-  gather_facts: no
+  gather_facts: false
   vars:
     vcenter_credentials_secret:
       namespace: "{{ vcenter_credentials_secret_namespace }}"
@@ -26,17 +26,6 @@
     K8S_AUTH_NO_PROXY: "{{ no_proxy | default('') }}"
 
   tasks:
-    #- name: Preflight for Tower
-    #  block:
-    #  - name: Install needed pip modules
-    #    pip:
-    #      name:
-    #        - kubernetes
-    #        - openshift==0.12.1
-    #      extra_args: --upgrade
-    #    delegate_to: localhost
-    #  when: tower_job_id is defined
-
     - name: Query OpenShift for needed Configs & Secrets
       block:
         - name: Get the vCenter Credentials
@@ -89,7 +78,7 @@
             datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
             path: "ISOs/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
             state: absent
-          ignore_errors: yes
+          ignore_errors: true
 
         - name: ArgoCD Application instance
           kubernetes.core.k8s:
@@ -98,7 +87,7 @@
             kind: Application
             namespace: "{{ argocd_namespace }}"
             name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
-          ignore_errors: yes
+          ignore_errors: true
 
         - name: Remove Managed cluster
           kubernetes.core.k8s:
@@ -106,7 +95,7 @@
             api_version: cluster.open-cluster-management.io/v1
             kind: ManagedCluster
             name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
-          ignore_errors: yes
+          ignore_errors: true
 
         - name: Cluster namespace
           kubernetes.core.k8s:
@@ -114,4 +103,4 @@
             api_version: v1
             kind: Namespace
             name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
-          ignore_errors: yes
+          ignore_errors: true

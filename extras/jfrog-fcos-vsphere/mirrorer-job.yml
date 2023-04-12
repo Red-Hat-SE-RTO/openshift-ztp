@@ -1,0 +1,188 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: oc-mirrorer-sa
+  namespace: oc-mirrorer
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mirrorer-scc-anyuid
+  namespace: oc-mirrorer
+rules:
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - anyuid
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: sa-to-mirrorer-scc-anyuid
+  namespace: oc-mirrorer
+subjects:
+  - kind: ServiceAccount
+    name: oc-mirrorer-sa
+roleRef:
+  kind: Role
+  name: mirrorer-scc-anyuid
+  apiGroup: rbac.authorization.k8s.io
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mirrorer-secret-mounter
+rules:
+  - verbs:
+      - get
+      - list
+    apiGroups:
+      - ''
+    resources:
+      - secrets
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mirrorer-secret-mounter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mirrorer-secret-mounter
+subjects:
+- kind: ServiceAccount
+  name: oc-mirrorer-sa
+  namespace: oc-mirrorer
+---
+
+# FROM oc create secret docker-registry registry-auth --docker-server="https://jfrog-artifactory.d70.lab.kemo.network" --docker-username="admin" --docker-password='Passw0rd123!' --dry-run=client -o yaml
+# ADD CURRENT DOCKER AUTH CONFIG:
+# jq -Mcr '.' $HOME/.docker/config.json > $HOME/.docker/config.json.min
+# oc create secret docker-registry registry-auth --from-file=.dockerconfigjson=$HOME/.docker/config.json.min --dry-run=client -o yaml
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJodHRwczovL2pmcm9nLWFydGlmYWN0b3J5LmQ3MC5sYWIua2Vtby5uZXR3b3JrIjp7InVzZXJuYW1lIjoiYWRtaW4iLCJwYXNzd29yZCI6IlBhc3N3MHJkMTIzISIsImF1dGgiOiJZV1J0YVc0NlVHRnpjM2N3Y21ReE1qTWgifX19
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: registry-auth
+  namespace: oc-mirrorer
+type: kubernetes.io/dockerconfigjson
+
+---
+# https://docs.openshift.com/container-platform/4.11/installing/disconnected_install/installing-mirroring-disconnected.html#oc-mirror-imageset-config-params_installing-mirroring-disconnected
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: imagesetconfig-cm
+data:
+  imageSetConfig.yml: |
+    kind: ImageSetConfiguration
+    apiVersion: mirror.openshift.io/v1alpha2
+    archiveSize: 4
+    storageConfig:
+      registry:
+        imageURL: "jfrog-artifactory.d70.lab.kemo.network/ocp4/oc-mirror-metadata"
+        skipTLS: True
+    mirror:
+      platform:
+        channels:
+        - name: stable-4.11
+          type: ocp
+      operators:
+      - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.11
+        packages:
+        - name: serverless-operator
+          channels:
+          - name: stable
+      additionalImages:
+      - name: registry.redhat.io/ubi8/ubi:latest
+      - name: quay.io/kmoini/infinite_mario:latest
+      helm: {}
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: oc-mirrorer-
+  namespace: oc-mirrorer
+spec:
+  selector: {}
+  template:
+    metadata:
+      name: oc-mirrorer
+    spec:
+      containers:
+        - name: oc-mirrorer
+          image: "quay.io/kenmoini/oc-mirrorer@sha256:af05e1a8d8107e9ec268c8474a920d7e1ba9d183e6c577340df02fa6aa844600"
+          env:
+            - name: PATH
+              value: "$PATH:/usr/local/bin:/usr/bin"
+            - name: HOME
+              value: "/home/mirrorer"
+            - name: PRIVATE_IMAGE_REGISTRY
+              value: jfrog-artifactory.d70.lab.kemo.network/ocp4
+
+            - name: LOCAL_REGISTRY
+              value: jfrog-artifactory.d70.lab.kemo.network:8081
+            - name: LOCAL_REPOSITORY
+              value: ocp4/release
+            - name: LOCAL_SECRET_JSON
+              value: "/home/mirrorer/.docker/config.json"
+
+            - name: OCP_RELEASE
+              value: "4.10.3"
+            - name: PRODUCT_REPO
+              value: openshift-release-dev
+            - name: RELEASE_NAME
+              value: ocp-release
+            - name: ARCHITECTURE
+              value: x86_64
+
+          command:
+            - /bin/bash
+            - -c
+            - >
+                cd $HOME;
+                oc adm release mirror -a ${LOCAL_SECRET_JSON}
+                --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE}-${ARCHITECTURE}
+                --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}
+                --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}-${ARCHITECTURE} --insecure=true
+
+              #oc mirror --config=$HOME/.isc/imageSetConfig.yml docker://${PRIVATE_IMAGE_REGISTRY} --dest-skip-tls --source-skip-tls;
+          securityContext:
+            runAsUser: 1420
+            fsGroup: 0
+          volumeMounts:
+          - name: registry-auth
+            mountPath: "/home/mirrorer/.docker"
+            readOnly: true
+          - name: image-set-config
+            mountPath: "/home/mirrorer/.isc"
+            readOnly: true
+      restartPolicy: Never
+      imagePullPolicy: Always
+      volumes:
+        - name: registry-auth
+          secret:
+            secretName: registry-auth
+            items:
+            - key: .dockerconfigjson
+              path: config.json
+        - name: image-set-config
+          configMap:
+            name: imagesetconfig-cm
+      serviceAccount: oc-mirrorer-sa
+      serviceAccountName: oc-mirrorer-sa
+
+---

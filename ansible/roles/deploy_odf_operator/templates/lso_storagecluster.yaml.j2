@@ -46,7 +46,7 @@ spec:
   externalStorage: {}
   version: 4.9.0
   flexibleScaling: true
-{% if deploy_to_infra_nodes|bool %}
+{% if deploy_to_infra_nodes | bool %}
   # https://access.redhat.com/articles/6408481
   placement:
     all:

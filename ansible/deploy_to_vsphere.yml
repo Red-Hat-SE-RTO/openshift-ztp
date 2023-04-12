@@ -1,7 +1,7 @@
 ---
 - name: Deploy vSphere Infrastructure for ZTP via RHACM OAS Discovery ISO
   hosts: all
-  gather_facts: no
+  gather_facts: false
   vars:
     vcenter_credentials_secret:
       namespace: "{{ vcenter_credentials_secret_namespace }}"
@@ -32,204 +32,189 @@
 
   tasks:
 
-  #===================================================================================
-  # Preflight
-  #===================================================================================
+    #===================================================================================
+    # Query the needed OpenShift objects
+    #===================================================================================
 
-  ## Tower Preflight - this can be skipped if using the quay.io/kenmoini/git-aap2-ee execution environment
-  #- name: Preflight for Tower
-  #  block:
-  #  - name: Install needed pip modules
-  #    pip:
-  #      name:
-  #        - kubernetes
-  #        - openshift==0.12.1
-  #        - pyvmomi
-  #        - jmespath
-  #      extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
-  #    delegate_to: localhost
-  #  when: tower_job_id is defined
-
-  #===================================================================================
-  # Query the needed OpenShift objects
-  #===================================================================================
-
-  - name: Query OpenShift for needed Configs & Secrets
-    block:
-    - name: Get the vCenter Credentials
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Secret
-        namespace: "{{ vcenter_credentials_secret.namespace }}"
-        name: "{{ vcenter_credentials_secret.name }}"
-      register: vsphere_secret
-
-    - name: Fail if the vCenter credentials secret is not found
-      ansible.builtin.fail:
-        msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
-      when: vsphere_secret.resources | length == 0
-
-    - name: Get the Git Push Secret
-      when: git_push_secret is defined
+    - name: Query OpenShift for needed Configs & Secrets
       block:
-        - name: Get the Git Push Secret
+
+        - name: Get the vCenter Credentials
           kubernetes.core.k8s_info:
             api_version: v1
             kind: Secret
-            namespace: "{{ git_push_secret.namespace }}"
-            name: "{{ git_push_secret.name }}"
-          register: git_push_secret_object
+            namespace: "{{ vcenter_credentials_secret.namespace }}"
+            name: "{{ vcenter_credentials_secret.name }}"
+          register: vsphere_secret
 
-        - name: Fail if the Git Push Secret is not found
+        - name: Fail if the vCenter credentials secret is not found
+          when: vsphere_secret.resources | length == 0
           ansible.builtin.fail:
-            msg: "No Git Push Secret found! Looking for {{ git_push_secret.namespace }}/{{ git_push_secret.name }}"
-          when: git_push_secret_object.resources | length == 0
+            msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
 
-    - name: Query vCenter for a connectivity test
-      community.vmware.vmware_datacenter_info:
+        - name: Get the Git Push Secret
+          when: git_push_secret is defined
+          block:
+            - name: Get the Git Push Secret
+              kubernetes.core.k8s_info:
+                api_version: v1
+                kind: Secret
+                namespace: "{{ git_push_secret.namespace }}"
+                name: "{{ git_push_secret.name }}"
+              register: git_push_secret_object
+
+            - name: Fail if the Git Push Secret is not found
+              when: git_push_secret_object.resources | length == 0
+              ansible.builtin.fail:
+                msg: "No Git Push Secret found! Looking for {{ git_push_secret.namespace }}/{{ git_push_secret.name }}"
+
+        - name: Query vCenter for a connectivity test
+          community.vmware.vmware_datacenter_info:
+            hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+            username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
+            password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
+            validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
+          register: vcenter_test_info
+
+        - name: Fail if the vCenter instance cannot be connected to
+          when: vcenter_test_info.datacenter_info | length == 0
+          ansible.builtin.fail:
+            msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
+
+        - name: Get the Cluster Configuration
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: ConfigMap
+            namespace: "{{ cluster_configmap.namespace }}"
+            name: "{{ cluster_configmap.name }}"
+          register: cluster_configmap_info
+
+        - name: Fail if the Cluster Config ConfigMap is not found
+          when: cluster_configmap_info.resources | length == 0
+          ansible.builtin.fail:
+            msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
+
+        - name: Unmarshal the Cluster ConfigMap
+          ansible.builtin.set_fact:
+            cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
+
+        - name: Create a total array of interfaces and set dynamic_mac to false
+          ansible.builtin.set_fact:
+            cluster_interfaces: "{{ cluster_interfaces | default([]) + node_item.network.interfaces }}"
+            dynamic_mac: false
+          loop: "{{ cluster_nodes }}"
+          loop_control:
+            loop_var: node_item
+            label: "{{ node_item.name }}"
+
+        - name: Loop through all of the interfaces and set dynamic_mac to true if there is no MAC address defined on an interface
+          when: interface_item.mac_address is not defined
+          ansible.builtin.set_fact:
+            dynamic_mac: true
+          loop: "{{ cluster_interfaces }}"
+          loop_control:
+            loop_var: interface_item
+            label: "{{ interface_item.name }}"
+
+    #===================================================================================
+    # Create infra organizational items
+    #===================================================================================vcenter_validate_ssl
+
+    - name: Create the ISOs directory on the datacenter/datastore
+      community.vmware.vsphere_file:
+        host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+        username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
+        password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
+        validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
+        datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+        datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
+        path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('/ISOs') }}"
+        state: directory
+
+    - name: Create a VM folder on given datacenter
+      community.vmware.vcenter_folder:
         hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
         username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
         password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
         validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-      register: vcenter_test_info
+        datacenter_name: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+        folder_name: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
+        folder_type: vm
+        state: present
 
-    - name: Fail if the vCenter instance cannot be connected to
-      ansible.builtin.fail:
-        msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
-      when: vcenter_test_info.datacenter_info | length == 0
+    #===================================================================================
+    # Create infra when the cluster is using dynamic mac addresses
+    #===================================================================================
 
-    - name: Get the Cluster Configuration
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: ConfigMap
-        namespace: "{{ cluster_configmap.namespace }}"
-        name: "{{ cluster_configmap.name }}"
-      register: cluster_configmap_info
+    - name: Run loop divergence when dynamic mac addresses are used
+      when: dynamic_mac | bool
+      block:
 
-    - name: Fail if the Cluster Config ConfigMap is not found
-      ansible.builtin.fail:
-        msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
-      when: cluster_configmap_info.resources | length == 0
+        - name: Create the VMs without a CDROM defined
+          ansible.builtin.include_tasks: tasks/create_vmware_infra_no_cdrom_mac.yml
+          loop: "{{ cluster_nodes }}"
+          loop_control:
+            loop_var: node_item
 
-    - name: Unmarshal the Cluster ConfigMap
-      ansible.builtin.set_fact:
-        cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
+        - name: Remap the MAC addresses on the interfaces and NMState Configs
+          ansible.builtin.include_tasks: tasks/create_vmware_infra_remap_mac_addresses.yml
+          loop: "{{ cluster_nodes }}"
+          loop_control:
+            loop_var: node_item
+            label: "{{ node_item.name }}"
 
-    - name: Create a total array of interfaces and set dynamic_mac to false
-      ansible.builtin.set_fact:
-        cluster_interfaces: "{{ cluster_interfaces|default([]) + node_item.network.interfaces }}"
-        dynamic_mac: false
+        - name: Pause for 5 seconds for the Assisted Service to regenerate the ISO
+          ansible.builtin.pause:
+            seconds: 5
+
+        - name: Process ISO downloading and uploading
+          ansible.builtin.include_tasks: tasks/create_vmware_infra_iso.yml
+
+        - name: Attach the ISOs to the VMs and boot
+          ansible.builtin.include_tasks: tasks/create_vmware_infra_attach_iso.yml
+          loop: "{{ cluster_nodes }}"
+          loop_control:
+            loop_var: node_item
+            label: "{{ node_item.name }}"
+
+    #===================================================================================
+    # Create infra when the cluster is not using dynamic mac addresses
+    #===================================================================================
+
+    - name: Process infrastructure when dynamic mac addresses are not used
+      when: not dynamic_mac | bool
+      block:
+
+        - name: Process ISO downloading and uploading
+          ansible.builtin.include_tasks: tasks/create_vmware_infra_iso.yml
+
+        - name: Process VMs when dynamic mac addresses are not used
+          loop: "{{ cluster_nodes }}"
+          loop_control:
+            loop_var: node_item
+          ansible.builtin.include_tasks: tasks/create_vmware_infra.yml
+
+    #===========================================================
+    # Agent Approval, Metadata Setting
+    #===========================================================
+
+    - name: Loop through Agents
+      ansible.builtin.include_tasks: tasks/agent_loop_runner.yml
+      vars:
+        task_approved_agents: "{{ approved_agents }}"
+
+    - name: Loop through Agents and Set Hostname and Role
+      ansible.builtin.include_tasks: tasks/set_hostname.yml
       loop: "{{ cluster_nodes }}"
       loop_control:
         loop_var: node_item
         label: "{{ node_item.name }}"
+      #when: cluster_configmap_info.resources[0].data.cluster_type != "sno"
 
-    - name: Loop through all of the interfaces and set dynamic_mac to true if there is no MAC address defined on an interface
-      ansible.builtin.set_fact:
-        dynamic_mac: true
-      loop: "{{ cluster_interfaces }}"
-      loop_control:
-        loop_var: interface_item
-        label: "{{ interface_item.name }}"
-      when: interface_item.mac_address is not defined
+    #===========================================================
+    # Start Cluster Install
+    #===========================================================
 
-  #===================================================================================
-  # Create infra organizational items
-  #===================================================================================vcenter_validate_ssl
-
-  - name: Create the ISOs directory on the datacenter/datastore
-    community.vmware.vsphere_file:
-      host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
-      username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
-      password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-      datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
-      datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
-      path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('/ISOs') }}"
-      state: directory
-
-  - name: Create a VM folder on given datacenter
-    community.vmware.vcenter_folder:
-      hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
-      username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
-      password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
-      validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-      datacenter_name: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
-      folder_name: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
-      folder_type: vm
-      state: present
-
-  #===================================================================================
-  # Create infra when the cluster is using dynamic mac addresses
-  #===================================================================================
-
-  - name: Run loop divergence when dynamic mac addresses are used
-    when: dynamic_mac|bool
-    block:
-      - name: Create the VMs without a CDROM defined
-        ansible.builtin.include_tasks: tasks/create_vmware_infra_no_cdrom_mac.yml
-        loop: "{{ cluster_nodes }}"
-        loop_control:
-          loop_var: node_item
-
-      - name: Remap the MAC addresses on the interfaces and NMState Configs
-        ansible.builtin.include_tasks: tasks/create_vmware_infra_remap_mac_addresses.yml
-        loop: "{{ cluster_nodes }}"
-        loop_control:
-          loop_var: node_item
-          label: "{{ node_item.name }}"
-
-      - name: Pause for 5 seconds for the Assisted Service to regenerate the ISO
-        pause:
-          seconds: 5
-
-      - name: Process ISO downloading and uploading
-        ansible.builtin.include_tasks: tasks/create_vmware_infra_iso.yml
-
-      - name: Attach the ISOs to the VMs and boot
-        ansible.builtin.include_tasks: tasks/create_vmware_infra_attach_iso.yml
-        loop: "{{ cluster_nodes }}"
-        loop_control:
-          loop_var: node_item
-          label: "{{ node_item.name }}"
-
-  #===================================================================================
-  # Create infra when the cluster is not using dynamic mac addresses
-  #===================================================================================
-
-  - name: Process infrastructure when dynamic mac addresses are not used
-    when: not dynamic_mac|bool
-    block:
-      - name: Process ISO downloading and uploading
-        ansible.builtin.include_tasks: tasks/create_vmware_infra_iso.yml
-
-      - name: Process VMs when dynamic mac addresses are not used
-        loop: "{{ cluster_nodes }}"
-        loop_control:
-          loop_var: node_item
-        ansible.builtin.include_tasks: tasks/create_vmware_infra.yml
-
-  #===========================================================
-  # Agent Approval, Metadata Setting
-  #===========================================================
-
-  - name: Loop through Agents
-    ansible.builtin.include_tasks: tasks/agent_loop_runner.yml
-    vars:
-      task_approved_agents: "{{ approved_agents }}"
-
-  - name: Loop through Agents and Set Hostname and Role
-    ansible.builtin.include_tasks: tasks/set_hostname.yml
-    loop: "{{ cluster_nodes }}"
-    loop_control:
-      loop_var: node_item
-      label: "{{ node_item.name }}"
-    #when: cluster_configmap_info.resources[0].data.cluster_type != "sno"
-
-  #===========================================================
-  # Start Cluster Install
-  #===========================================================
-
-  - name: Start the cluster install
-    ansible.builtin.include_tasks: tasks/start_cluster_install.yml
-    #when: cluster_configmap_info.resources[0].data.cluster_type == "full"
+    - name: Start the cluster install
+      ansible.builtin.include_tasks: tasks/start_cluster_install.yml
+      #when: cluster_configmap_info.resources[0].data.cluster_type == "full"

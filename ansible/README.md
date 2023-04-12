@@ -238,13 +238,13 @@ no_proxy: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,127.0.0.1,172.30
 
 ### Proxy Configuration for the Spoke Cluster
 
-If your Spoke Cluster that will be created also needs Proxy configuration set, you can pass it the `spoke_httpProxy`, `spoke_httpsProxy`, and `spoke_noProxy` variables when running the Playbook.
+If your Spoke Cluster that will be created also needs Proxy configuration set, you can pass it the `spoke_httpproxy`, `spoke_httpsproxy`, and `spoke_noproxy` variables when running the Playbook.
 
 ```yaml
 # https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
 ## Spoke Proxy Configuration
-spoke_httpProxy: "http://192.168.77.1:3128/"
-# spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
-#spoke_httpsProxy: "http://192.168.77.1:3128/"
-spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
+spoke_httpproxy: "http://192.168.77.1:3128/"
+# spoke_httpsproxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
+#spoke_httpsproxy: "http://192.168.77.1:3128/"
+spoke_noproxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
 ```

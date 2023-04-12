@@ -18,6 +18,6 @@ gitea_user_password: openshift
 
 gitea_bootstrap_repositories: true
 gitea_bootstrap_repositories_list:
-- repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp.git
-  name: openshift-ztp
-  private: false
+  - repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp.git
+    name: openshift-ztp
+    private: false

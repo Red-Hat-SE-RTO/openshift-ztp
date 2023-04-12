@@ -109,8 +109,8 @@
     kind: Namespace
     api_version: v1
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: "{{ logging_operator_namespace }}"
@@ -128,8 +128,8 @@
     kind: Namespace
     api_version: v1
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: "{{ elasticsearch_operator_namespace }}"
@@ -145,7 +145,7 @@
 ## OperatorGroup
 ###########################################################################
 
-- name: Query the {{ elasticsearch_operator_namespace }} namespace for OperatorGroups
+- name: Query the namespace for OperatorGroups
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1
     kind: OperatorGroup
@@ -155,15 +155,15 @@
 - name: Create Operator OperatorGroup
   kubernetes.core.k8s:
     state: present
-    apply: yes
-    definition: "{{ lookup('template', 'templates/es_operatorgroup.yaml.j2' ) | from_yaml }}"
+    apply: true
+    definition: "{{ lookup('template', 'templates/es_operatorgroup.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
   retries: 3
   when: r_og_list.resources | length == 0
 
-- name: Query the {{ logging_operator_namespace }} namespace for OperatorGroups
+- name: Query the namespace for OperatorGroups
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1
     kind: OperatorGroup
@@ -173,8 +173,8 @@
 - name: Create Operator OperatorGroup
   kubernetes.core.k8s:
     state: present
-    apply: yes
-    definition: "{{ lookup('template', 'templates/logging_operatorgroup.yaml.j2' ) | from_yaml }}"
+    apply: true
+    definition: "{{ lookup('template', 'templates/logging_operatorgroup.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -189,9 +189,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/es_subscription.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/es_subscription.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -227,9 +227,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/logging_subscription.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/logging_subscription.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -265,9 +265,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/clusterlogging.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/clusterlogging.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -291,7 +291,7 @@
     kind: Pod
     namespace: "{{ logging_operator_namespace }}"
     name: "{{ r_es_pod.resources[0].metadata.name }}"
-    wait: yes
+    wait: true
     wait_sleep: 10
     wait_timeout: 720
     wait_condition:

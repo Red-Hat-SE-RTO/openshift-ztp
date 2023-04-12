@@ -1,0 +1,33 @@
+name: ansible-lint Repo
+on:
+  push:
+    paths:
+      - 'ansible/example_vars/**'
+      - 'ansible/roles/**'
+      - 'ansible/tasks/**'
+      - 'ansible/templates/**'
+      - 'ansible/*'
+
+  pull_request:
+    paths:
+      - 'ansible/example_vars/**'
+      - 'ansible/roles/**'
+      - 'ansible/tasks/**'
+      - 'ansible/templates/**'
+      - 'ansible/*'
+
+jobs:
+  lint:
+    name: Ansible Lint Repo # Naming the build is important to use it as a status check
+    runs-on: ubuntu-latest
+    concurrency: linting
+
+    steps:
+      # Important: This sets up your GITHUB_WORKSPACE environment variable
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # needed for progressive mode to work
+
+      - name: Run ansible-lint on the entire repo
+        # replace `main` with any valid ref, or tags like `v6`
+        uses: ansible/ansible-lint-action@main

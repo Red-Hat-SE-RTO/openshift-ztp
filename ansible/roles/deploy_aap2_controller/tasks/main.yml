@@ -29,7 +29,7 @@
 
 - name: Set the latest release channels
   ansible.builtin.set_fact:
-    operator_release_channels: "{{ operator_release_channels|default([]) + [chan_item.name] }}"
+    operator_release_channels: "{{ operator_release_channels | default([]) + [chan_item.name] }}"
   loop: "{{ r_pm.resources[0].status.channels }}"
   loop_control:
     loop_var: chan_item
@@ -78,8 +78,8 @@
     kind: Namespace
     api_version: v1
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: "{{ aap_operator_namespace }}"
@@ -109,8 +109,8 @@
     kind: ConfigMap
     namespace: "{{ aap_operator_namespace }}"
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: cluster-root-ca-bundle
@@ -138,8 +138,8 @@
     kind: Secret
     namespace: "{{ aap_operator_namespace }}"
     merge_type:
-    - strategic-merge
-    - merge
+      - strategic-merge
+      - merge
     definition:
       metadata:
         name: cluster-root-ca-aap2-bundle
@@ -171,8 +171,8 @@
 - name: Deploy the unmanaged PostgreSQL instance
   kubernetes.core.k8s:
     state: present
-    apply: yes
-    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    apply: true
+    definition: "{{ lookup('template', template_item) | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -185,7 +185,7 @@
     loop_var: template_item
 
 
-- name: Query the {{ aap_operator_namespace }} namespace for OperatorGroups
+- name: Query the namespace for OperatorGroups
   kubernetes.core.k8s_info:
     api_version: operators.coreos.com/v1
     kind: OperatorGroup
@@ -195,8 +195,8 @@
 - name: Create Operator OperatorGroup
   kubernetes.core.k8s:
     state: present
-    apply: yes
-    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2' ) | from_yaml }}"
+    apply: true
+    definition: "{{ lookup('template', 'templates/operatorgroup.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -207,9 +207,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/subscription.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/subscription.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -241,9 +241,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', 'templates/instance.yaml.j2' ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/instance.yaml.j2') | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
@@ -253,9 +253,9 @@
   kubernetes.core.k8s:
     state: present
     merge_type:
-    - strategic-merge
-    - merge
-    definition: "{{ lookup('template', file_item ) | from_yaml }}"
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', file_item) | from_yaml }}"
   register: k8s_run
   until: k8s_run is not failed
   delay: 10

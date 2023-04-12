@@ -28,27 +28,27 @@
     use_ssh_repo: "{{ git_repo_push_target.startswith('git@') }}"
 
 - name: Set the transport type - HTTPS
-  when: use_https_repo|bool
+  when: use_https_repo | bool
   ansible.builtin.set_fact:
     git_transport: https
 
 - name: Set the transport type - HTTP
-  when: use_http_repo|bool
+  when: use_http_repo | bool
   ansible.builtin.set_fact:
     git_transport: http
 
 - name: Set the transport type - SSH
-  when: use_ssh_repo|bool
+  when: use_ssh_repo | bool
   ansible.builtin.set_fact:
     git_transport: ssh
 
-- name: debug
+- name: Debug
   ansible.builtin.debug:
     msg:
-    - "use_https_repo: {{ use_https_repo }}"
-    - "use_http_repo: {{ use_http_repo }}"
-    - "use_ssh_repo: {{ use_ssh_repo }}"
-    - "git_transport: {{ git_transport }}"
+      - "use_https_repo: {{ use_https_repo }}"
+      - "use_http_repo: {{ use_http_repo }}"
+      - "use_ssh_repo: {{ use_ssh_repo }}"
+      - "git_transport: {{ git_transport }}"
 
 - name: Read in the remaining Git Push Information
   ansible.builtin.set_fact:
@@ -63,18 +63,18 @@
   no_log: true
 
 - name: Git HTTP Endpoint - Set the combined Git Push URL, fixes credentials that have special characters
-  when: use_http_repo|bool
+  when: use_http_repo | bool
   ansible.builtin.set_fact:
     push_git_url_combined: "{{ git_transport }}://{{ push_git_username | urlencode }}:{{ push_git_password | urlencode }}@{{ push_git_url | regex_replace('^http?://') }}"
   no_log: true
 
 - name: Git HTTPS Endpoint - Set the combined Git Push URL, fixes credentials that have special characters
-  when: use_https_repo|bool
+  when: use_https_repo | bool
   ansible.builtin.set_fact:
     push_git_url_combined: "{{ git_transport }}://{{ push_git_username | urlencode }}:{{ push_git_password | urlencode }}@{{ push_git_url | regex_replace('^https?://') }}"
   no_log: true
 
 - name: Git SSH Endpoint - Set the combined Git Push URL for simplicity
-  when: use_ssh_repo|bool
+  when: use_ssh_repo | bool
   ansible.builtin.set_fact:
     push_git_url_combined: "{{ push_git_url }}"

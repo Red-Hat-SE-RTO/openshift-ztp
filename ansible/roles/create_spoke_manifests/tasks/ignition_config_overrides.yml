@@ -19,30 +19,30 @@
 
         # There seem to be some new validation on the platform: type field
 
-        #- name: Set Install Config Overrides for the Platform Type
-        #  when: deployment_type|lower in ['vsphere', 'vcenter', 'vmware']
-        #  ansible.builtin.set_fact:
-        #    install_config_overrides_platform_type:
-        #      platform:
-        #        type: "vsphere"
+        # - name: Set Install Config Overrides for the Platform Type
+        #   when: deployment_type|lower in ['vsphere', 'vcenter', 'vmware']
+        #   ansible.builtin.set_fact:
+        #     install_config_overrides_platform_type:
+        #       platform:
+        #         type: "vsphere"
 
-        #- name: Set Install Config Overrides for the Platform Type
-        #  when: deployment_type|lower not in ['vsphere', 'vcenter', 'vmware']
-        #  ansible.builtin.set_fact:
-        #    install_config_overrides_platform_type:
-        #      platform:
-        #        none: {}
+        # - name: Set Install Config Overrides for the Platform Type
+        #   when: deployment_type|lower not in ['vsphere', 'vcenter', 'vmware']
+        #   ansible.builtin.set_fact:
+        #     install_config_overrides_platform_type:
+        #       platform:
+        #         none: {}
 
         - name: Set the fact for the install config overrides
           ansible.builtin.set_fact:
-            install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_platform_type )  }}"
+            install_config_overrides: "{{ install_config_overrides | combine(install_config_overrides_platform_type) }}"
 
         - name: New ICO
           ansible.builtin.debug:
             msg: "{{ install_config_overrides }}"
 
 #    - name: Set Install Config Overrides when a Proxy is provided
-#      when: spoke_httpProxy is defined or spoke_httpsProxy is defined or spoke_noProxy is defined
+#      when: spoke_httpproxy is defined or spoke_httpsproxy is defined or spoke_noproxy is defined
 #      block:
 #        - name: Current ICO
 #          ansible.builtin.debug:
@@ -51,12 +51,12 @@
 #          ansible.builtin.set_fact:
 #            install_config_overrides_proxy:
 #              proxy:
-#                httpProxy: "{{ spoke_httpProxy | default(omit) }}"
-#                httpsProxy: "{{ spoke_httpsProxy | default(omit) }}"
-#                noProxy: "{{ spoke_noProxy | default(omit) }}"
+#                httpProxy: "{{ spoke_httpproxy | default(omit) }}"
+#                httpsProxy: "{{ spoke_httpsproxy | default(omit) }}"
+#                noProxy: "{{ spoke_noproxy | default(omit) }}"
 #        - name: Set the fact for the install config overrides
 #          ansible.builtin.set_fact:
-#            install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_proxy )  }}"
+#            install_config_overrides: "{{ install_config_overrides | combine(install_config_overrides_proxy) }}"
 #        - name: New ICO
 #          ansible.builtin.debug:
 #            msg: "{{ install_config_overrides }}"
@@ -74,7 +74,7 @@
 #                {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
 #        - name: Set the fact for the install config overrides
 #          ansible.builtin.set_fact:
-#            install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_additionalTrustBundle )  }}"
+#            install_config_overrides: "{{ install_config_overrides | combine(install_config_overrides_additionalTrustBundle) }}"
 #        - name: New ICO
 #          ansible.builtin.debug:
 #            msg: "{{ install_config_overrides }}"

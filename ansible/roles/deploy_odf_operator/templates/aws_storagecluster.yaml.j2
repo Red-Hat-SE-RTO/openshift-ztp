@@ -65,7 +65,7 @@ spec:
   nodeTopologies: {}
   externalStorage: {}
   version: {{ ocp_version_slice[0] }}.{{ ocp_version_slice[1] }}.0
-{% if deploy_to_infra_nodes|bool %}
+{% if deploy_to_infra_nodes | bool %}
   # https://access.redhat.com/articles/6408481
   placement:
     all:

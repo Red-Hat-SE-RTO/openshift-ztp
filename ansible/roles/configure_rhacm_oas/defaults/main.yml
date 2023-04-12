@@ -4,13 +4,13 @@ acm_operator_namespace: open-cluster-management
 pull_secret_path: ~/ocp-pull-secret
 # release_versions
 release_versions:
-- 4.9.9
-- 4.9.19
-- 4.10.3
-- 4.10.55
-- 4.11.9
-- 4.11.33
-- 4.12.9
+  - 4.9.9
+  - 4.9.19
+  - 4.10.3
+  - 4.10.55
+  - 4.11.9
+  - 4.11.33
+  - 4.12.9
 #ztp_config_namespace: ztp-config
 root_ca_object_name: root-ca-bundle
 custom_root_ca_name: custom-root-ca-certs
@@ -25,32 +25,27 @@ enable_msa_preview: false
 
 mirror_registry_config: |
   unqualified-search-registries = ["registry.access.redhat.com", "quay.io", "docker.io"]
-
   [[registry]]
     prefix = ""
     location = "quay.io/openshift-release-dev/ocp-release"
     mirror-by-digest-only = true
     [[registry.mirror]]
       location = "quay.io/openshift-release-dev/ocp-release"
-
   [[registry]]
     prefix = ""
     location = "quay.io/ocpmetal/assisted-installer"
     mirror-by-digest-only = false
     [[registry.mirror]]
       location = "quay.io/ocpmetal/assisted-installer"
-
   [[registry]]
     prefix = ""
     location = "quay.io/ocpmetal/assisted-installer-agent"
     mirror-by-digest-only = false
     [[registry.mirror]]
       location = "quay.io/ocpmetal/assisted-installer-agent"
-
   [[registry]]
     prefix = ""
     location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     mirror-by-digest-only = true
     [[registry.mirror]]
       location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
-

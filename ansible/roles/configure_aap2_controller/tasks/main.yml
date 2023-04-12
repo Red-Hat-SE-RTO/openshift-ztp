@@ -2,11 +2,14 @@
 # tasks file for configure_aap2_controller
 - name: Load manifest into variable
   local_action:
-    module: slurp
+    module: ansible.builtin.slurp
     src: "{{ subscription_manifest_path }}"
   register: manifest_file
 
 - name: Proxy and Root CA Things
+  tags:
+    - proxy
+    - root_ca
   block:
 
     - name: Check to see if the cluster-wide certificates and proxy config are set
@@ -34,11 +37,10 @@
       when: (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '')
       ansible.builtin.set_fact:
         cluster_no_proxy: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
-  tags:
-    - proxy
-    - root_ca
 
 - name: Kubernetes Queries
+  tags:
+    - k8s_queries
   block:
     - name: Get Cluster Version
       kubernetes.core.k8s_info:
@@ -70,36 +72,36 @@
     - name: Create the ServiceAccount Token Secret if K8s/OpenShift version is > 1.24/4.10
       when: ocp_version is version('4.11.0', operator='ge', strict=True)
       block:
-      - name: Create the ServiceAccount Token Secret
-        kubernetes.core.k8s:
-          state: present
-          merge_type:
-          - strategic-merge
-          - merge
-          definition: "{{ lookup('template', 'templates/serviceaccount_token_secret.yaml.j2' ) | from_yaml }}"
-        register: k8s_run
-        until: k8s_run is not failed
-        delay: 10
-        retries: 3
+        - name: Create the ServiceAccount Token Secret
+          kubernetes.core.k8s:
+            state: present
+            merge_type:
+              - strategic-merge
+              - merge
+            definition: "{{ lookup('template', 'templates/serviceaccount_token_secret.yaml.j2') | from_yaml }}"
+          register: k8s_run
+          until: k8s_run is not failed
+          delay: 10
+          retries: 3
 
-      - name: Add the name of the ServiceAccount Token Secret to the AAP2 ServiceAccount
-        kubernetes.core.k8s:
-          state: present
-          merge_type:
-          - strategic-merge
-          - merge
-          definition:
-            apiVersion: v1
-            kind: ServiceAccount
-            metadata:
-              name: "{{ aap2_serviceaccount_name }}"
-              namespace: "{{ aap2_operator_namespace }}"
-            secrets:
-            - name: "{{ aap2_serviceaccount_name }}-sa-token"
-        register: k8s_run
-        until: k8s_run is not failed
-        delay: 10
-        retries: 3
+        - name: Add the name of the ServiceAccount Token Secret to the AAP2 ServiceAccount
+          kubernetes.core.k8s:
+            state: present
+            merge_type:
+              - strategic-merge
+              - merge
+            definition:
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: "{{ aap2_serviceaccount_name }}"
+                namespace: "{{ aap2_operator_namespace }}"
+              secrets:
+                - name: "{{ aap2_serviceaccount_name }}-sa-token"
+          register: k8s_run
+          until: k8s_run is not failed
+          delay: 10
+          retries: 3
 
     - name: Get the ac-tower ServiceAccount service account
       kubernetes.core.k8s_info:
@@ -149,9 +151,9 @@
       kubernetes.core.k8s:
         state: present
         merge_type:
-        - strategic-merge
-        - merge
-        definition: "{{ lookup('template', 'templates/rolebinding.yaml.j2' ) | from_yaml }}"
+          - strategic-merge
+          - merge
+        definition: "{{ lookup('template', 'templates/rolebinding.yaml.j2') | from_yaml }}"
       register: k8s_run
       until: k8s_run is not failed
       delay: 10
@@ -161,20 +163,20 @@
       kubernetes.core.k8s:
         state: present
         merge_type:
-        - strategic-merge
-        - merge
-        definition: "{{ lookup('template', 'templates/consolelink.yaml.j2' ) | from_yaml }}"
+          - strategic-merge
+          - merge
+        definition: "{{ lookup('template', 'templates/consolelink.yaml.j2') | from_yaml }}"
       register: k8s_run
       until: k8s_run is not failed
       delay: 10
       retries: 3
-  tags:
-    - k8s_queries
 
 - name: Token cleanup block
+  tags:
+    - aap2_configuration # skips config, just returns info
   block:
     - name: Log into the Controller and get an OAuth Token
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/tokens/"
         method: POST
         status_code:
@@ -182,7 +184,7 @@
           - 302
         url_username: admin
         url_password: "{{ aap2_admin_password }}"
-        validate_certs: no
+        validate_certs: false
         force_basic_auth: true
         headers:
           Content-Type: application/json
@@ -193,75 +195,75 @@
       retries: 120
 
     - name: Get the current license status
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/config/"
         method: GET
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
       register: config_response
 
     - name: Post manifest file if not subscribed
       when: config_response.json.license_info.date_expired is not defined
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/config/"
         method: POST
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
         body: '{ "eula_accepted": true, "manifest": "{{ manifest_file.content }}" }'
         body_format: json
-        validate_certs: no
+        validate_certs: false
 
     - name: Pause for a few seconds for Tower to parse the license
       when: config_response.json.license_info.date_expired is not defined
-      pause:
+      ansible.builtin.pause:
         seconds: 5
 
     - name: Get the current User ID
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/me/"
         method: GET
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
       register: user_response
       ignore_errors: true
 
     - name: Get the SCM Credential Type ID
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/credential_types/?name=Source%20Control"
         method: GET
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
       register: credential_types_response
       ignore_errors: true
 
     - name: Get the K8s Credential Type ID
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/credential_types/?name=OpenShift%20or%20Kubernetes%20API%20Bearer%20Token"
         method: GET
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
       register: k8s_credential_types_response
       ignore_errors: true
 
     - name: Get the Ansible Galaxy Credential Type ID
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/credential_types/?name={{ 'Ansible Galaxy/Automation Hub API Token' | urlencode }}"
         method: GET
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
       register: galaxy_credential_types_response
       ignore_errors: true
 
     - name: Get the Ansible Galaxy Credential ID
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/credential_types/{{ galaxy_credential_types_response.json.results[0].id }}/credentials/?order_by=created"
         method: GET
-        validate_certs: no
+        validate_certs: false
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"
       register: galaxy_credentials_response
@@ -273,6 +275,8 @@
 
     - name: Use Internal Gitea
       when: git_repo_url is not defined or git_repo_url == ""
+      tags:
+        - gitea
       block:
 
         - name: Use Internal Gitea - Get the Gitea Service
@@ -292,28 +296,29 @@
           register: gitea_route
 
         - name: Use Internal Gitea - Set the Git Repo fact to the Route
-          when: gitea_route.resources | length > 0 and not use_services_not_routes|bool
+          when: gitea_route.resources | length > 0 and not use_services_not_routes | bool
           ansible.builtin.set_fact:
             git_repo_url: "https://{{ gitea_route.resources[0].status.ingress[0].host }}/user-1/openshift-ztp.git"
 
         - name: Use Internal Gitea - Set the Git Repo fact to the Service
-          when: gitea_service.resources | length > 0 and use_services_not_routes|bool
+          when: gitea_service.resources | length > 0 and use_services_not_routes | bool
           ansible.builtin.set_fact:
             git_repo_url: "http://gitea.gitea.svc.cluster.local:3000/user-1/openshift-ztp.git"
-      tags:
-        - gitea
 
     ###############################################################################################
     ## Job Config
     ###############################################################################################
 
     - name: Disable Git SSL verification
+      tags:
+        - job_config
+        - job_config_disable_git_ssl_verification
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: job_settings_response
@@ -325,14 +330,14 @@
 
         - name: Patch the API with the new JSON setting
           when: job_settings_response.json['AWX_TASK_ENV']['GIT_SSL_NO_VERIFY'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
@@ -340,57 +345,53 @@
             job_settings_json: ""
             job_settings_response: {}
 
+    - name: Disable the Ansible Galaxy SSL verification
       tags:
         - job_config
-        - job_config_disable_git_ssl_verification
-
-    - name: Disable the Ansible Galaxy SSL verification
+        - job_config_disable_galaxy_ssl_verification
       block:
         - name: Patch the API with the new JSON setting for disabling Galaxy SSL verification
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ \"GALAXY_IGNORE_CERTS\": true }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: galaxy_job_settings_patch_response
-      tags:
-        - job_config
-        - job_config_disable_galaxy_ssl_verification
 
     - name: Enable mounting of host paths to the Execution Environments
+      tags:
+        - job_config
+        - job_config_enable_mounts
       block:
         - name: Patch the API with the new JSON setting for enabling mounting of host paths to the Execution Environments
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ \"AWX_MOUNT_ISOLATED_PATHS_ON_K8S\": true }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: mounts_job_settings_patch_response
-      tags:
-        - job_config
-        - job_config_enable_mounts
 
     - name: Enable use of jinja2 Templates in extra vars
+      tags:
+        - job_config
+        - job_config_enable_jinja_extra_vars
       block:
         - name: Patch the API with the new JSON setting for enabling use of jinja2 Templates in extra vars
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ \"ALLOW_JINJA_IN_EXTRA_VARS\": \"always\" }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: mounts_job_settings_patch_response
-      tags:
-        - job_config
-        - job_config_enable_jinja_extra_vars
 
     ###############################################################################################
     ## Proxy Config - HTTP
@@ -398,12 +399,15 @@
 
     - name: Configure the HTTP Proxy Configuration
       when: cluster_http_proxy is defined
+      tags:
+        - proxy_config
+        - http_proxy
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: http_job_settings_response
@@ -420,23 +424,20 @@
 
         - name: Patch the API with the new JSON setting - HTTP_PROXY
           when: http_job_settings_response.json['AWX_TASK_ENV']['HTTP_PROXY'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
           ansible.builtin.set_fact:
             job_settings_json: ""
             http_job_settings_response: {}
-      tags:
-        - proxy_config
-        - http_proxy
 
     ###############################################################################################
     ## Proxy Config - HTTPS
@@ -444,12 +445,15 @@
 
     - name: Configure the HTTPS Proxy Configuration
       when: cluster_https_proxy is defined
+      tags:
+        - proxy_config
+        - https_proxy
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: https_job_settings_response
@@ -466,23 +470,20 @@
 
         - name: Patch the API with the new JSON setting - HTTPS_PROXY
           when: https_job_settings_response.json['AWX_TASK_ENV']['HTTPS_PROXY'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
           ansible.builtin.set_fact:
             job_settings_json: ""
             https_job_settings_response: {}
-      tags:
-        - proxy_config
-        - https_proxy
 
     ###############################################################################################
     ## Proxy Config - NO_PROXY
@@ -490,12 +491,15 @@
 
     - name: Configure the https Proxy Configuration
       when: cluster_no_proxy is defined
+      tags:
+        - proxy_config
+        - no_proxy
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: no_proxy_job_settings_response
@@ -512,23 +516,20 @@
 
         - name: Patch the API with the new JSON setting - NO_PROXY
           when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['NO_PROXY'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
           ansible.builtin.set_fact:
             job_settings_json: ""
             no_proxy_job_settings_response: {}
-      tags:
-        - proxy_config
-        - no_proxy
 
     ###############################################################################################
     ## Proxy Config - http
@@ -536,12 +537,15 @@
 
     - name: Configure the HTTP Proxy Configuration
       when: cluster_http_proxy is defined
+      tags:
+        - proxy_config
+        - http_proxy
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: http_job_settings_response
@@ -558,23 +562,20 @@
 
         - name: Patch the API with the new JSON setting - http_proxy
           when: http_job_settings_response.json['AWX_TASK_ENV']['http_proxy'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
           ansible.builtin.set_fact:
             job_settings_json: ""
             http_job_settings_response: {}
-      tags:
-        - proxy_config
-        - http_proxy
 
     ###############################################################################################
     ## Proxy Config - https
@@ -582,12 +583,15 @@
 
     - name: Configure the https Proxy Configuration
       when: cluster_https_proxy is defined
+      tags:
+        - proxy_config
+        - https_proxy
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: https_job_settings_response
@@ -604,23 +608,20 @@
 
         - name: Patch the API with the new JSON setting - https_proxy
           when: https_job_settings_response.json['AWX_TASK_ENV']['https_proxy'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
           ansible.builtin.set_fact:
             job_settings_json: ""
             https_job_settings_response: {}
-      tags:
-        - proxy_config
-        - https_proxy
 
     ###############################################################################################
     ## Proxy Config - no_proxy
@@ -628,12 +629,15 @@
 
     - name: Configure the https Proxy Configuration
       when: cluster_no_proxy is defined
+      tags:
+        - proxy_config
+        - no_proxy
       block:
         - name: Get the current Job Settings
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: no_proxy_job_settings_response
@@ -650,35 +654,34 @@
 
         - name: Patch the API with the new JSON setting - no_proxy
           when: no_proxy_job_settings_response.json['AWX_TASK_ENV']['no_proxy'] is not defined
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/settings/jobs/"
             method: PATCH
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body: "{ 'AWX_TASK_ENV': {{ job_settings_json }} }"
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: job_settings_patch_response
 
         - name: Reset facts
           ansible.builtin.set_fact:
             job_settings_json: ""
             no_proxy_job_settings_response: {}
-      tags:
-        - proxy_config
-        - no_proxy
 
     ###############################################################################################
     ## Organization
     ###############################################################################################
 
     - name: Organization
+      tags:
+        - organization
       block:
         - name: Get the Organization ID from the target Organization Name
-          uri:
-            url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization|urlencode() }}/"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization | urlencode() }}/"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: org_response
@@ -686,7 +689,7 @@
 
         - name: Create Organization if it is not found
           when: org_response.status == 404
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/organizations/"
             method: POST
             status_code: 201
@@ -694,7 +697,7 @@
               Authorization: "Bearer {{ login_response.json.token }}"
             body: '{ "name": "{{ aap2_organization }}" }'
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: create_org_response
 
         - name: Set fact for Organization ID when existing
@@ -712,7 +715,7 @@
         #### TODO
 
         - name: Create Organization Galaxy Credentials
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/galaxy_credentials/"
             method: POST
             status_code:
@@ -722,25 +725,25 @@
               Authorization: "Bearer {{ login_response.json.token }}"
             body: '{ "name": "Galaxy Credentials", "description": "Galaxy Credentials", "credential_type": {{ galaxy_credential_types_response.json.results[0].id }}, "id": {{ galaxy_credentials_response.json.results[0].id }} }'
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: create_org_galaxy_creds_response
           until: create_org_galaxy_creds_response is not failed
           retries: 10
           delay: 10
-      tags:
-        - organization
 
     ###############################################################################################
     ## Execution Environment
     ###############################################################################################
 
     - name: Execution Environment
+      tags:
+        - execution_environment
       block:
         - name: Check for an Execution Environment
-          uri:
-            url: "{{ aap2_route }}/api/v2/execution_environments/?name={{ aap2_execution_environments_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/execution_environments/?name={{ aap2_execution_environments_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: execution_environments_response
@@ -753,15 +756,15 @@
 
         - name: Create the Execution Environment if it does not exist
           when: execution_environments_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/execution_environments/"
             method: POST
             status_code: 201
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
-            body: '{ "name": "{{ aap2_execution_environments_name }}", "description": "EE with Git and Pip modules for ZTP preinstalled", "organization": null, "image": "quay.io/kenmoini/git-aap2-ee:latest", "credential": null, "pull": "missing" }'
+            body: '{ "name": "{{ aap2_execution_environments_name }}", "description": "EE with Git and Pip modules for ZTP preinstalled", "organization": null, "image": "{{ aap2_ee_image }}", "credential": null, "pull": "missing" }'
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: create_execution_environments_response
 
         - name: Set fact for Execution Environment ID when created
@@ -769,21 +772,20 @@
           ansible.builtin.set_fact:
             aap2_execution_environments_id: "{{ create_execution_environments_response.json.id }}"
             aap2_execution_environments: "{{ create_execution_environments_response.json }}"
-      tags:
-        - execution_environment
 
     ###############################################################################################
     ## Inventory
     ###############################################################################################
 
     - name: Inventory
+      tags:
+        - inventory
       block:
-
         - name: Check for an Inventory
-          uri:
-            url: "{{ aap2_route }}/api/v2/inventories/?name={{ aap2_inventory_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/inventories/?name={{ aap2_inventory_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: inventory_response
@@ -796,15 +798,15 @@
 
         - name: Create the Inventory if it does not exist
           when: inventory_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/inventories/"
             method: POST
             status_code: 201
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
-            body: '{ "name": "{{ aap2_inventory_name }}", "description": "{{ aap2_inventory_description|default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "variables": {}, "host_filter": "", "host_vars": {}, "group_vars": {}, "groups": [], "hosts": [] }'
+            body: '{ "name": "{{ aap2_inventory_name }}", "description": "{{ aap2_inventory_description | default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "variables": {}, "host_filter": "", "host_vars": {}, "group_vars": {}, "groups": [], "hosts": [] }'
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: create_inventory_response
 
         - name: Set fact for Inventory ID when created
@@ -812,27 +814,27 @@
           ansible.builtin.set_fact:
             aap2_inventory_id: "{{ create_inventory_response.json.id }}"
             aap2_inventory: "{{ create_inventory_response.json }}"
-      tags:
-        - inventory
 
     ###############################################################################################
     ## Inventory Host
     ###############################################################################################
 
     - name: Inventory Host
+      tags:
+        - inventory_host
       block:
         - name: Check for the localhost in the target Inventory
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/inventories/{{ aap2_inventory_id }}/hosts/?name=localhost"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_host_response
 
         - name: Create the localhost in the target Inventory if it does not exist
           when: check_host_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/inventories/{{ aap2_inventory_id }}/hosts/"
             method: POST
             status_code: 201
@@ -840,50 +842,50 @@
               Authorization: "Bearer {{ login_response.json.token }}"
             body: '{"name": "localhost", "description": "", "organization": {{ aap2_organization_id }}, "variables": "---\nansible_connection: local\nansible_python_interpreter: \"{% raw %}{{ ansible_playbook_python }}{% endraw %}\"", "host_filter": "", "kind": ""}'
             body_format: json
-            validate_certs: no
+            validate_certs: false
           register: create_inventory_host_response
-      tags:
-        - inventory_host
 
     ###############################################################################################
     ## Credentials - SCM
     ###############################################################################################
 
     - name: Credentials - SCM
+      tags:
+        - credentials
       block:
         - name: Check for SCM Credentials
-          uri:
-            url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/?name={{ aap2_scm_credential_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/?name={{ aap2_scm_credential_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_scm_credential_response
 
         - name: Create the SCM Credentials if it does not exist - SSH Authentication
           when: check_scm_credential_response.json.count == 0 and scm_credential_type == "ssh"
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
-            body: '{ "name": "{{ aap2_scm_credential_name }}", "description": "{{ aap2_scm_credential_description|default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "inputs": { "ssh_key_data": "{{ lookup("file", scm_credential_private_key) }}" }, "credential_type": {{ credential_types_response.json.results[0].id }} }'
+            body: '{ "name": "{{ aap2_scm_credential_name }}", "description": "{{ aap2_scm_credential_description | default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "inputs": { "ssh_key_data": "{{ lookup("file", scm_credential_private_key) }}" }, "credential_type": {{ credential_types_response.json.results[0].id }} }'
           register: create_scm_credential_response
 
         - name: Create the SCM Credentials if it does not exist - Basic Authentication
           when: check_scm_credential_response.json.count == 0 and scm_credential_type == "basic"
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/organizations/{{ aap2_organization_id }}/credentials/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
-            body: '{ "name": "{{ aap2_scm_credential_name }}", "description": "{{ aap2_scm_credential_description|default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "inputs": { "username": "{{ scm_credential_username }}", "password": "{{ scm_credential_password }}" }, "credential_type": {{ credential_types_response.json.results[0].id }} }'
+            body: '{ "name": "{{ aap2_scm_credential_name }}", "description": "{{ aap2_scm_credential_description | default("") }}", "organization": {{ aap2_organization_id }}, "kind": "", "inputs": { "username": "{{ scm_credential_username }}", "password": "{{ scm_credential_password }}" }, "credential_type": {{ credential_types_response.json.results[0].id }} }'
           register: create_scm_credential_response
 
         - name: Set fact for SCM Credential ID when created
@@ -897,35 +899,35 @@
           ansible.builtin.set_fact:
             aap2_scm_credential_id: "{{ check_scm_credential_response.json.results[0].id }}"
             aap2_scm_credential: "{{ check_scm_credential_response.json.results[0] }}"
-      tags:
-        - credentials
 
     ###############################################################################################
     ## Project
     ###############################################################################################
 
     - name: Project Creation
+      tags:
+        - project
       block:
         - name: Check for Project
-          uri:
-            url: "{{ aap2_route }}/api/v2/projects/?name={{ aap2_project_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/projects/?name={{ aap2_project_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_project_response
 
         - name: Create the Project if it does not exist
           when: check_project_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/projects/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
-            body: '{ "name": "{{ aap2_project_name }}", "description": "{{ aap2_project_description|default("") }}", "organization": {{ aap2_organization_id }}, "scm_type": "git", "scm_url": "{{ git_repo_url }}", "scm_clean": true, "scm_track_submodules": false, "scm_delete_on_update": false, "credential": {{ aap2_scm_credential_id }}, "timeout": 0, "scm_update_on_launch": true, "scm_update_cache_timeout": 0, "allow_override": false, "default_environment": null }'
+            body: '{ "name": "{{ aap2_project_name }}", "description": "{{ aap2_project_description | default("") }}", "organization": {{ aap2_organization_id }}, "scm_type": "git", "scm_url": "{{ git_repo_url }}", "scm_clean": true, "scm_track_submodules": false, "scm_delete_on_update": false, "credential": {{ aap2_scm_credential_id }}, "timeout": 0, "scm_update_on_launch": true, "scm_update_cache_timeout": 0, "allow_override": false, "default_environment": null }'
           register: create_project_response
 
         - name: Set Project ID when created
@@ -939,35 +941,35 @@
           ansible.builtin.set_fact:
             aap2_project_id: "{{ check_project_response.json.results[0].id }}"
             aap2_project: "{{ check_project_response.json.results[0] }}"
-      tags:
-        - project
 
     ###############################################################################################
     ## Application
     ###############################################################################################
 
     - name: Application
+      tags:
+        - application
       block:
         - name: Check for Application
-          uri:
-            url: "{{ aap2_route }}/api/v2/applications/?name={{ aap2_application_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/applications/?name={{ aap2_application_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_application_response
 
         - name: Create Application if it does not exist
           when: check_application_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/applications/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
-            body: '{ "name": "{{ aap2_application_name }}", "description": "{{ aap2_application_description|default("") }}", "organization": {{ aap2_organization_id }}, "client_type": "confidential", "redirect_uris": "", "authorization_grant_type": "password", "skip_authorization": false }'
+            body: '{ "name": "{{ aap2_application_name }}", "description": "{{ aap2_application_description | default("") }}", "organization": {{ aap2_organization_id }}, "client_type": "confidential", "redirect_uris": "", "authorization_grant_type": "password", "skip_authorization": false }'
           register: create_application_response
 
         - name: Set Application ID when created
@@ -981,31 +983,31 @@
           ansible.builtin.set_fact:
             aap2_application_id: "{{ check_application_response.json.results[0].id }}"
             aap2_application: "{{ check_application_response.json.results[0] }}"
-      tags:
-        - application
 
     ###############################################################################################
     ## User Application Token
     ###############################################################################################
 
     - name: User Application Token
+      tags:
+        - user_application_token
       block:
         - name: Check for User Application Token
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/users/{{ user_response.json.results[0].id }}/tokens/?application={{ aap2_application_id }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_user_application_token_response
 
         - name: Create User Application Token if it does not exist
           when: check_user_application_token_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/users/{{ user_response.json.results[0].id }}/tokens/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
@@ -1029,31 +1031,32 @@
               stringData:
                 token: "{{ aap2_user_application_token_id }}"
             state: present
-      tags:
-        - user_application_token
 
     ###############################################################################################
     ## Templates - Create vSphere Infrastructure
     ###############################################################################################
 
     - name: Templates - Create vSphere Infrastructure
+      tags:
+        - templates
+        - create_vsphere_infra
       block:
         - name: Check for "Create vSphere Infrastructure" Job Template
-          uri:
-            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_infra_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_infra_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_vsphere_infra_job_template_response
 
         - name: Add "Create vSphere Infrastructure" Job Template when it does not exist
           when: check_create_vsphere_infra_job_template_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
@@ -1080,32 +1083,31 @@
             aap2_create_vsphere_infra_template_id: "{{ check_create_vsphere_infra_job_template_response.json.results[0].id }}"
             aap2_create_vsphere_infra_template: "{{ check_create_vsphere_infra_job_template_response.json.results[0] }}"
 
-      tags:
-        - templates
-        - create_vsphere_infra
-
     ###############################################################################################
     ## Templates - Delete vSphere Infrastructure
     ###############################################################################################
 
     - name: Templates - Delete vSphere Infrastructure
+      tags:
+        - templates
+        - delete_vsphere_infra
       block:
         - name: Check for "Delete vSphere Infrastructure" Job Template
-          uri:
-            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_delete_infra_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_delete_infra_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_delete_vsphere_infra_job_template_response
 
         - name: Add "Delete vSphere Infrastructure" Job Template when it does not exist
           when: check_delete_vsphere_infra_job_template_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
@@ -1131,32 +1133,32 @@
           ansible.builtin.set_fact:
             aap2_delete_vsphere_infra_template_id: "{{ check_delete_vsphere_infra_job_template_response.json.results[0].id }}"
             aap2_delete_vsphere_infra_template: "{{ check_delete_vsphere_infra_job_template_response.json.results[0] }}"
-      tags:
-        - templates
-        - delete_vsphere_infra
 
     ###############################################################################################
     ## Templates - Create Spoke Manifests
     ###############################################################################################
 
     - name: Templates - Create Spoke Manifests
+      tags:
+        - templates
+        - create_spoke_manifests
       block:
         - name: Check for "Create Spoke Manifests" Job Template
-          uri:
-            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_spoke_manifests_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_spoke_manifests_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_spoke_manifests_job_template_response
 
         - name: Add "Create Spoke Manifests" Job Template when it does not exist
           when: check_create_spoke_manifests_job_template_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
@@ -1182,32 +1184,32 @@
           ansible.builtin.set_fact:
             aap2_create_spoke_manifests_template_id: "{{ check_create_spoke_manifests_job_template_response.json.results[0].id }}"
             aap2_create_spoke_manifests_template: "{{ check_create_spoke_manifests_job_template_response.json.results[0] }}"
-      tags:
-        - templates
-        - create_spoke_manifests
 
     ###############################################################################################
     ## Templates - Create Credentials
     ###############################################################################################
 
     - name: Templates - Create Credentials
+      tags:
+        - templates
+        - create_credentials
       block:
         - name: Check for "Create Credentials" Job Template
-          uri:
-            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_credentials_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/?name={{ aap2_job_template_create_credentials_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_credentials_job_template_response
 
         - name: Add "Create Credentials" Job Template when it does not exist
           when: check_create_credentials_job_template_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
@@ -1233,32 +1235,32 @@
           ansible.builtin.set_fact:
             aap2_create_credential_template_id: "{{ check_create_credentials_job_template_response.json.results[0].id }}"
             aap2_create_credential_template: "{{ check_create_credentials_job_template_response.json.results[0] }}"
-      tags:
-        - templates
-        - create_credentials
 
     ###############################################################################################
     ## Credentials - K8s
     ###############################################################################################
 
     - name: Credentials - Kubernetes/OpenShift
+      tags:
+        - credentials
+        - credentials_k8s
       block:
         - name: Check for K8s Credentials
-          uri:
-            url: "{{ aap2_route }}/api/v2/credentials/?name={{ aap2_k8s_credential_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/credentials/?name={{ aap2_k8s_credential_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_k8s_credential_r
 
         - name: Create the K8s Credentials if it does not exist
           when: check_k8s_credential_r.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/credentials/"
             method: POST
             status_code: 201
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
@@ -1276,137 +1278,134 @@
           ansible.builtin.set_fact:
             aap2_k8s_credential_id: "{{ check_k8s_credential_r.json.results[0].id }}"
             aap2_k8s_credential: "{{ check_k8s_credential_r.json.results[0] }}"
-      tags:
-        - credentials
-        - credentials_k8s
 
     ###############################################################################################
     ## Credentials - K8s - "Create Credential"
     ###############################################################################################
 
     - name: Credentials - K8s - "Create Credential"
+      tags:
+        - credentials
+        - credentials_k8s
+        - credentials_k8s_create_credential
       block:
         - name: Check for K8s Credentials for the "Create Credential" Template
-          uri:
-            url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_credential_template_id }}/credentials/?name={{ aap2_k8s_credential_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_credential_template_id }}/credentials/?name={{ aap2_k8s_credential_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_k8s_credential_response
 
         - name: Associate the K8s Credentials with the "Create Credential" Template
           when: check_k8s_credential_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_credential_template_id }}/credentials/"
             method: POST
             status_code: 204
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
             #body: "{{ lookup('template', 'ansible_credential.json.j2') }}"
             body: '{"associate": true, "id": {{ aap2_k8s_credential_id }}}'
-      tags:
-        - credentials
-        - credentials_k8s
-        - credentials_k8s_create_credential
 
     ###############################################################################################
     ## Credentials - K8s - "Create Spoke Manifests"
     ###############################################################################################
 
     - name: Credentials - K8s - "Create Spoke Manifests"
+      tags:
+        - credentials
+        - credentials_k8s
+        - credentials_k8s_create_spoke_manifests
       block:
         - name: Check for K8s Credentials for the "Create Spoke Manifests" Template
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_spoke_manifests_template_id }}/credentials/?credential_type={{ k8s_credential_types_response.json.results[0].id | int }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_spoke_manifests_k8s_credential_response
 
         - name: Associate the K8s Credentials with the "Create Spoke Manifests" Template
           when: check_create_spoke_manifests_k8s_credential_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_spoke_manifests_template_id }}/credentials/"
             method: POST
             status_code: 204
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
             #body: "{{ lookup('template', 'ansible_credential.json.j2') }}"
             body: '{"associate": true, "id": {{ aap2_k8s_credential_id }}}'
-      tags:
-        - credentials
-        - credentials_k8s
-        - credentials_k8s_create_spoke_manifests
 
     ###############################################################################################
     ## Credentials - K8s - "Delete vSphere Infrastructures"
     ###############################################################################################
 
     - name: Credentials - K8s - "Delete vSphere Infrastructures"
-      block:
-      - name: Check for K8s Credentials for the "Delete vSphere Infrastructures" Template
-        uri:
-          url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_delete_vsphere_infra_template_id }}/credentials/?name={{ aap2_k8s_credential_name|urlencode() }}"
-          method: GET
-          validate_certs: no
-          headers:
-            Authorization: "Bearer {{ login_response.json.token }}"
-        register: check_delete_vsphere_infra_k8s_credential_response
-
-      - name: Associate the K8s Credentials with the "Delete vSphere Infrastructure" Template
-        when: check_delete_vsphere_infra_k8s_credential_response.json.count == 0
-        uri:
-          url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_delete_vsphere_infra_template_id }}/credentials/"
-          method: POST
-          status_code: 204
-          validate_certs: no
-          headers:
-            Authorization: "Bearer {{ login_response.json.token }}"
-          body_format: json
-          #body: "{{ lookup('template', 'ansible_credential.json.j2') }}"
-          body: '{"associate": true, "id": {{ aap2_k8s_credential_id }}}'
       tags:
         - credentials
         - credentials_k8s
         - credentials_k8s_delete_vsphere_infra
+      block:
+        - name: Check for K8s Credentials for the "Delete vSphere Infrastructures" Template
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_delete_vsphere_infra_template_id }}/credentials/?name={{ aap2_k8s_credential_name | urlencode() }}"
+            method: GET
+            validate_certs: false
+            headers:
+              Authorization: "Bearer {{ login_response.json.token }}"
+          register: check_delete_vsphere_infra_k8s_credential_response
+
+        - name: Associate the K8s Credentials with the "Delete vSphere Infrastructure" Template
+          when: check_delete_vsphere_infra_k8s_credential_response.json.count == 0
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_delete_vsphere_infra_template_id }}/credentials/"
+            method: POST
+            status_code: 204
+            validate_certs: false
+            headers:
+              Authorization: "Bearer {{ login_response.json.token }}"
+            body_format: json
+            #body: "{{ lookup('template', 'ansible_credential.json.j2') }}"
+            body: '{"associate": true, "id": {{ aap2_k8s_credential_id }}}'
 
     ###############################################################################################
     ## Credentials - K8s - "Create vSphere Infrastructures"
     ###############################################################################################
 
     - name: Credentials - K8s - "Create vSphere Infrastructures"
+      tags:
+        - credentials
+        - credentials_k8s
+        - credentials_k8s_create_vsphere_infra
       block:
         - name: Check for K8s Credentials for the "Create vSphere Infrastructures" Template
-          uri:
-            url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_vsphere_infra_template_id }}/credentials/?name={{ aap2_k8s_credential_name|urlencode() }}"
+          ansible.builtin.uri:
+            url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_vsphere_infra_template_id }}/credentials/?name={{ aap2_k8s_credential_name | urlencode() }}"
             method: GET
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
           register: check_create_vsphere_infra_k8s_credential_response
 
         - name: Associate the K8s Credentials with the "Create vSphere Infrastructure" Template
           when: check_create_vsphere_infra_k8s_credential_response.json.count == 0
-          uri:
+          ansible.builtin.uri:
             url: "{{ aap2_route }}/api/v2/job_templates/{{ aap2_create_vsphere_infra_template_id }}/credentials/"
             method: POST
             status_code: 204
-            validate_certs: no
+            validate_certs: false
             headers:
               Authorization: "Bearer {{ login_response.json.token }}"
             body_format: json
             #body: "{{ lookup('template', 'ansible_credential.json.j2') }}"
             body: '{"associate": true, "id": {{ aap2_k8s_credential_id }}}'
-      tags:
-        - credentials
-        - credentials_k8s
-        - credentials_k8s_create_vsphere_infra
 
     ###############################################################################################
     ## Debug
@@ -1429,15 +1428,13 @@
           #- "AAP 2 Application: {{ aap2_application }}"
           - "AAP 2 Execution Environment ID: {{ aap2_execution_environments_id }}"
           #- "AAP 2 Execution Environment: {{ aap2_execution_environments }}"
-  tags:
-    - aap2_configuration
 
   always:
     - name: Delete on-demand generated OAuth token
-      uri:
+      ansible.builtin.uri:
         url: "{{ aap2_route }}/api/v2/tokens/{{ login_response.json.id }}/"
         method: DELETE
-        validate_certs: no
+        validate_certs: false
         status_code: 204
         headers:
           Authorization: "Bearer {{ login_response.json.token }}"

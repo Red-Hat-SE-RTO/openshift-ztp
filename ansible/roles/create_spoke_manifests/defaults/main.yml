@@ -4,6 +4,8 @@
 # source_git_repo should probably be overridden at execution with whatever repo you're pushing/pulling to
 source_git_repo: https://github.com/Red-Hat-SE-RTO/openshift-ztp
 
+source_git_repo_branch: main
+
 target_spoke_git_path: "ztp-clusters/{{ deployment_type }}/{{ cluster_type }}/{{ cluster_name }}"
 
 ######################################################################################
@@ -56,16 +58,16 @@ query_hub_for_root_ca: true
 
 #root_ca_secret_name: cluster-root-ca-bundle
 
-# pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpProxy, spoke_httpsProxy, spoke_noProxy vars
+# pass_proxy_to_spoke_from_hub - if set to false, you can add proxy info with spoke_httpproxy, spoke_httpsproxy, spoke_noproxy vars
 pass_proxy_to_spoke_from_hub: false
 
 ## https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
 ## Spoke Proxy Configuration
 
-#spoke_httpProxy: "http://192.168.77.1:3128/"
-# spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
-#spoke_httpsProxy: "http://192.168.77.1:3128/"
-#spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
+#spoke_httpproxy: "http://192.168.77.1:3128/"
+# spoke_httpsproxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
+#spoke_httpsproxy: "http://192.168.77.1:3128/"
+#spoke_noproxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
 
 insert_proxy_infraenv: true
 insert_proxy_agent: true

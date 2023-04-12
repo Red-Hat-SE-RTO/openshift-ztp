@@ -1,7 +1,7 @@
 ---
 - name: Create a Spoke Cluster Manifest Set
   hosts: all
-  gather_facts: no
+  gather_facts: false
 
   environment:
     http_proxy: "{{ http_proxy | default('') }}"
@@ -14,582 +14,543 @@
     K8S_AUTH_NO_PROXY: "{{ no_proxy | default('') }}"
 
   tasks:
-  #######################################################
-  ## Tower Preflight - this can be skipped if using the quay.io/kenmoini/git-aap2-ee execution environment
-#  - name: Preflight for Tower
-#    when: tower_job_id is defined
-#    block:
-#    - name: Install needed pip modules if running in Tower
-#      pip:
-#        name:
-#          - kubernetes
-#          - openshift==0.12.1
-#          - jmespath
-#        extra_args: --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
-#      delegate_to: localhost
-#
-#    - name: Install needed packages in Ansible EE
-#      ansible.builtin.shell: microdnf install -y git --disablerepo="*" --enablerepo="ubi-8-appstream" --enablerepo="ubi-8-baseos"
-#      delegate_to: localhost
 
-  #######################################################
-  ## General Preflight
-  #- name: Program Preflight
-  #  when: tower_job_id is not defined
-  #  block:
-  #  - name: Check for required programs
-  #    ansible.builtin.shell: "which {{ item }}"
-  #    register: program_check
-  #    ignore_errors: true
-  #    with_items:
-  #      - git
+    - name: General variable Preflight
+      block:
+        - name: Check cluster_nodes count against the different cluster_types
+          ansible.builtin.fail:
+            msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_nodes | length }} nodes were found!"
+          failed_when: cluster_type != "sno" and cluster_nodes | length <= 2
 
-  #  - name: Fail if needed programs are not found
-  #    ansible.builtin.fail:
-  #      msg: "{{ item.cmd | replace('which ','') }} is not found! You need to install it first."
-  #    failed_when: item.rc != 0
-  #    loop: "{{ program_check.results }}"
-  #    loop_control:
-  #      label: "{{ item.cmd | replace('which ','') }}"
+        - name: Single node OpenShift can only be a single node!
+          ansible.builtin.fail:
+            msg: "cluster_type {{ cluster_type }} requires only 1 control-plane nodes but {{ cluster_nodes | length }} nodes were configured!"
+          failed_when: cluster_type == "sno" and cluster_nodes | length >= 2
 
-  - name: General variable Preflight
-    block:
+    #######################################################
+    ## OpenShift Query Preflights
+    - name: Get the Git Credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: "{{ git_push_credentials_secret_namespace }}"
+        name: "{{ git_push_credentials_secret_name }}"
+      register: git_secret
+      #when: generate_ssh_keys | bool
 
-      - name: Check cluster_nodes count against the different cluster_types
-        ansible.builtin.fail:
-          msg: "cluster_type {{ cluster_type }} requires at least 3 control-plane nodes, but only {{ cluster_nodes|length }} nodes were found!"
-        failed_when: cluster_type != "sno" and cluster_nodes|length <= 2
+    - name: Fail if the Git credentials secret is not found
+      ansible.builtin.fail:
+        msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
+      when: git_secret.resources | length == 0
 
-      - name: Single node OpenShift can only be a single node!
-        ansible.builtin.fail:
-          msg: "cluster_type {{ cluster_type }} requires only 1 control-plane nodes but {{ cluster_nodes|length }} nodes were configured!"
-        failed_when: cluster_type == "sno" and cluster_nodes|length >= 2
+    - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
+      ansible.builtin.set_fact:
+        git_repo_push_target: "{{ git_secret.resources[0].data.git_url | b64decode }}"
 
-  #######################################################
-  ## OpenShift Query Preflights
-  - name: Get the Git Credentials
-    kubernetes.core.k8s_info:
-      api_version: v1
-      kind: Secret
-      namespace: "{{ git_push_credentials_secret_namespace }}"
-      name: "{{ git_push_credentials_secret_name }}"
-    register: git_secret
-    #when: generate_ssh_keys|bool
+    - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
+      ansible.builtin.set_fact:
+        use_https_repo: "{{ git_repo_push_target.startswith('https') }}"
+        git_transport: https
 
-  - name: Fail if the Git credentials secret is not found
-    ansible.builtin.fail:
-      msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
-    when: git_secret.resources | length == 0
+    - name: Check for source repo, if it is an HTTP repo, set use_http_repo to true
+      ansible.builtin.set_fact:
+        use_http_repo: "{{ git_repo_push_target.startswith('http') }}"
+        git_transport: http
 
-  - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
-    ansible.builtin.set_fact:
-      git_repo_push_target: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+    - name: Debug
+      ansible.builtin.debug:
+        msg: "use_https_repo: {{ use_https_repo }}"
 
-  - name: Check for source repo, if it is an HTTPS repo, set use_https_repo to true
-    ansible.builtin.set_fact:
-      use_https_repo: "{{ git_repo_push_target.startswith('https') }}"
-      git_transport: https
+    - name: Query OpenShift for needed Configs & Secrets with ssh key
+      when: use_https_repo | bool == false and use_http_repo | bool == false
+      block:
+        - name: Read in the Git Push Information
+          when: generate_ssh_keys | bool
+          ansible.builtin.set_fact:
+            push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
+            push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
+            push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
+            push_git_username: "{{ git_secret.resources[0].data.git_username | b64decode }}"
+            push_git_ssh_key: "{{ git_secret.resources[0].data.git_ssh_key | b64decode }}"
+            push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+            push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
+            push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
+          no_log: true
 
-  - name: Check for source repo, if it is an HTTP repo, set use_http_repo to true
-    ansible.builtin.set_fact:
-      use_http_repo: "{{ git_repo_push_target.startswith('http') }}"
-      git_transport: http
+    ## OpenShift Query Preflights
+    - name: Query OpenShift for Proxy and Root CA Info
+      when: query_hub_for_root_ca | bool or pass_proxy_to_spoke_from_hub | bool
+      block:
+        - name: Check to see if the cluster-wide certificates and proxy config are set
+          kubernetes.core.k8s_info:
+            api_version: config.openshift.io/v1
+            kind: Proxy
+            name: cluster
+          register: r_cluster_proxy_config
 
-  - name: debug
-    ansible.builtin.debug:
-      msg: "use_https_repo: {{ use_https_repo }}"
+        # ===============================================================================================
+        # Setup Root CA Facts
+        # ===============================================================================================
 
-  - name: Query OpenShift for needed Configs & Secrets with ssh key
-    when: use_https_repo|bool == false and use_http_repo|bool == false
-    block:
-      - name: Read in the Git Push Information
-        when: generate_ssh_keys|bool
-        ansible.builtin.set_fact:
-          push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
-          push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
-          push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
-          push_git_username: "{{ git_secret.resources[0].data.git_username | b64decode }}"
-          push_git_ssh_key: "{{ git_secret.resources[0].data.git_ssh_key | b64decode }}"
-          push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
-          push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
-          push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
-        no_log: true
+        - name: Handle Root CA Config
+          when: query_hub_for_root_ca | bool
+          block:
+            - name: Query OpenShift for the Root CA ConfigMap
+              kubernetes.core.k8s_info:
+                api_version: v1
+                kind: ConfigMap
+                name: "{{ r_cluster_proxy_config.resources[0].spec.trustedCA.name }}"
+                namespace: openshift-config
+              register: r_root_ca_config
+              when: r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined and r_cluster_proxy_config.resources[0].spec.trustedCA.name != ""
 
-  ## OpenShift Query Preflights
-  - name: Query OpenShift for Proxy and Root CA Info
-    when: query_hub_for_root_ca|bool or pass_proxy_to_spoke_from_hub|bool
-    block:
-      - name: Check to see if the cluster-wide certificates and proxy config are set
-        kubernetes.core.k8s_info:
-          api_version: config.openshift.io/v1
-          kind: Proxy
-          name: cluster
-        register: r_cluster_proxy_config
+            - name: Set the Root CA var as a base64 encoded string
+              ansible.builtin.set_fact:
+                root_ca_bundle_pem: "{{ r_root_ca_config.resources[0].data['ca-bundle.crt'] | b64encode }}"
 
-      # ===============================================================================================
-      # Setup Root CA Facts
-      # ===============================================================================================
+        # ===============================================================================================
+        # Setup Proxy Facts
+        # ===============================================================================================
 
-      - name: Handle Root CA Config
-        when: query_hub_for_root_ca|bool
-        block:
-          - name: Query OpenShift for the Root CA ConfigMap
-            kubernetes.core.k8s_info:
-              api_version: v1
-              kind: ConfigMap
-              name: "{{ r_cluster_proxy_config.resources[0].spec.trustedCA.name }}"
-              namespace: openshift-config
-            register: r_root_ca_config
-            when: r_cluster_proxy_config.resources[0].spec.trustedCA.name is defined and r_cluster_proxy_config.resources[0].spec.trustedCA.name != ""
+        - name: Handle Proxy Config
+          when: pass_proxy_to_spoke_from_hub | bool
+          block:
+            - name: Set the fact for httpProxy
+              when: (r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpProxy != '')
+              ansible.builtin.set_fact:
+                spoke_httpproxy: "{{ r_cluster_proxy_config.resources[0].status.httpProxy }}"
 
-          - name: Set the Root CA var as a base64 encoded string
-            ansible.builtin.set_fact:
-              root_ca_bundle_pem: "{{ r_root_ca_config.resources[0].data['ca-bundle.crt'] | b64encode }}"
+            - name: Set the fact for httpsProxy
+              when: (r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpsProxy != '')
+              ansible.builtin.set_fact:
+                spoke_httpsproxy: "{{ r_cluster_proxy_config.resources[0].status.httpsProxy }}"
 
-      # ===============================================================================================
-      # Setup Proxy Facts
-      # ===============================================================================================
+            - name: Set the fact for noProxy
+              when: (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '')
+              ansible.builtin.set_fact:
+                spoke_noproxy: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
 
-      - name: Handle Proxy Config
-        when: pass_proxy_to_spoke_from_hub|bool
-        block:
-          - name: Set the fact for httpProxy
-            when: (r_cluster_proxy_config.resources[0].status.httpProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpProxy != '')
-            ansible.builtin.set_fact:
-              spoke_httpProxy: "{{ r_cluster_proxy_config.resources[0].status.httpProxy }}"
+    - name: Query OpenShift for needed Configs & Secrets without ssh key
+      when: use_https_repo | bool or use_http_repo | bool
+      block:
+        - name: Get the Git Credentials
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Secret
+            namespace: "{{ git_push_credentials_secret_namespace }}"
+            name: "{{ git_push_credentials_secret_name }}"
+          register: git_secret
+          when: use_https_repo | bool  or use_http_repo | bool
 
-          - name: Set the fact for httpsProxy
-            when: (r_cluster_proxy_config.resources[0].status.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].status.httpsProxy != '')
-            ansible.builtin.set_fact:
-              spoke_httpsProxy: "{{ r_cluster_proxy_config.resources[0].status.httpsProxy }}"
+        - name: Fail if the Git credentials secret is not found
+          ansible.builtin.fail:
+            msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
+          when: git_secret.resources | length == 0
 
-          - name: Set the fact for noProxy
-            when: (r_cluster_proxy_config.resources[0].status.noProxy is defined) and (r_cluster_proxy_config.resources[0].status.noProxy != '')
-            ansible.builtin.set_fact:
-              spoke_noProxy: "{{ r_cluster_proxy_config.resources[0].status.noProxy }}"
+        - name: Read in the Git Push Information
+          ansible.builtin.set_fact:
+            push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
+            push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
+            push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
+            push_git_username: "{{ git_secret.resources[0].data.git_username | b64decode }}"
+            push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
+            push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
+            push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
+            push_git_url_combined: "{{ git_transport }}://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace('^https?://') }}"
+          no_log: true
 
-  - name: Query OpenShift for needed Configs & Secrets without ssh key
-    when: use_https_repo|bool or use_http_repo|bool
-    block:
-      - name: Get the Git Credentials
-        kubernetes.core.k8s_info:
-          api_version: v1
-          kind: Secret
-          namespace: "{{ git_push_credentials_secret_namespace }}"
-          name: "{{ git_push_credentials_secret_name }}"
-        register: git_secret
-        when: use_https_repo|bool  or use_http_repo|bool
+    - name: Set Install Config Overrides
+      block:
+        - name: Set the fact for the install config overrides
+          ansible.builtin.set_fact:
+            install_config_overrides: "{{ install_config_overrides | default([]) }}"
 
-      - name: Fail if the Git credentials secret is not found
-        ansible.builtin.fail:
-          msg: "No Git credentials secret found! Looking for {{ git_push_credentials_secret_namespace }}/{{ git_push_credentials_secret_name }}"
-        when: git_secret.resources | length == 0
+        - name: Current ICO
+          ansible.builtin.debug:
+            msg: "{{ install_config_overrides }}"
 
-      - name: Read in the Git Push Information
-        ansible.builtin.set_fact:
-          push_git_auth_method: "{{ git_secret.resources[0].data.git_auth_method | b64decode }}"
-          push_git_branch: "{{ git_secret.resources[0].data.git_branch | b64decode }}"
-          push_git_password: "{{ git_secret.resources[0].data.git_password | b64decode }}"
-          push_git_username: "{{ git_secret.resources[0].data.git_username | b64decode }}"
-          push_git_url: "{{ git_secret.resources[0].data.git_url | b64decode }}"
-          push_git_user_name: "{{ git_secret.resources[0].data.git_user_name | b64decode }}"
-          push_git_user_email: "{{ git_secret.resources[0].data.git_user_email | b64decode }}"
-          push_git_url_combined: "{{ git_transport }}://{{ git_secret.resources[0].data.git_username | b64decode | urlencode }}:{{ git_secret.resources[0].data.git_password | b64decode | urlencode }}@{{ git_secret.resources[0].data.git_url | b64decode | regex_replace('^https?://') }}"
-        no_log: true
+  #      - name: Set Install Config Overrides when a Proxy is provided
+  #        when: spoke_httpproxy is defined or spoke_httpsproxy is defined or spoke_noproxy is defined
+  #        block:
+  #          - name: Current ICO
+  #            ansible.builtin.debug:
+  #              msg: "{{ install_config_overrides }}"
+  #
+  #          - name: Set Install Config Overrides for the Proxy
+  #            ansible.builtin.set_fact:
+  #              install_config_overrides_proxy:
+  #                proxy:
+  #                  httpProxy: "{{ spoke_httpproxy | default(omit) }}"
+  #                  httpsProxy: "{{ spoke_httpsproxy | default(omit) }}"
+  #                  noProxy: "{{ spoke_noproxy | default(omit) }}"
+  #
+  #          - name: Set the fact for the install config overrides
+  #            ansible.builtin.set_fact:
+  #              install_config_overrides: "{{ install_config_overrides | combine(install_config_overrides_proxy) }}"
+  #
+  #          - name: New ICO
+  #            ansible.builtin.debug:
+  #              msg: "{{ install_config_overrides }}"
 
-  - name: Set Install Config Overrides
-    block:
-      - name: Set the fact for the install config overrides
-        ansible.builtin.set_fact:
-          install_config_overrides: "{{ install_config_overrides | default([]) }}"
+  #      - name: Set Install Config Overrides when a Root CA is provided
+  #        when: root_ca_bundle_pem is defined
+  #        block:
+  #          - name: Current ICO
+  #            ansible.builtin.debug:
+  #              msg: "{{ install_config_overrides }}"
+  #
+  #          - name: Set Install Config Overrides for the Root CA
+  #            ansible.builtin.set_fact:
+  #              install_config_overrides_additionalTrustBundle:
+  #                additionalTrustBundle: |
+  #                  {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
+  #
+  #          - name: Set the fact for the install config overrides
+  #            ansible.builtin.set_fact:
+  #              install_config_overrides: "{{ install_config_overrides | combine(install_config_overrides_additionalTrustBundle) }}"
+  #
+  #          - name: New ICO
+  #            ansible.builtin.debug:
+  #              msg: "{{ install_config_overrides }}"
 
-      - name: Current ICO
-        ansible.builtin.debug:
-          msg: "{{ install_config_overrides }}"
+        - name: Set Install Config Overrides for platform type
+          when: deployment_type is defined
+          block:
+            - name: Current ICO
+              ansible.builtin.debug:
+                msg: "{{ install_config_overrides }}"
 
-#      - name: Set Install Config Overrides when a Proxy is provided
-#        when: spoke_httpProxy is defined or spoke_httpsProxy is defined or spoke_noProxy is defined
-#        block:
-#          - name: Current ICO
-#            ansible.builtin.debug:
-#              msg: "{{ install_config_overrides }}"
-#
-#          - name: Set Install Config Overrides for the Proxy
-#            ansible.builtin.set_fact:
-#              install_config_overrides_proxy:
-#                proxy:
-#                  httpProxy: "{{ spoke_httpProxy | default(omit) }}"
-#                  httpsProxy: "{{ spoke_httpsProxy | default(omit) }}"
-#                  noProxy: "{{ spoke_noProxy | default(omit) }}"
-#
-#          - name: Set the fact for the install config overrides
-#            ansible.builtin.set_fact:
-#              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_proxy )  }}"
-#
-#          - name: New ICO
-#            ansible.builtin.debug:
-#              msg: "{{ install_config_overrides }}"
+            - name: Set Install Config Overrides for the Platform Type
+              when: deployment_type in ['vsphere', 'vcenter', 'vmware']
+              ansible.builtin.set_fact:
+                install_config_overrides_platform_type:
+                  platform:
+                    vsphere: {}
 
-#      - name: Set Install Config Overrides when a Root CA is provided
-#        when: root_ca_bundle_pem is defined
-#        block:
-#          - name: Current ICO
-#            ansible.builtin.debug:
-#              msg: "{{ install_config_overrides }}"
-#
-#          - name: Set Install Config Overrides for the Root CA
-#            ansible.builtin.set_fact:
-#              install_config_overrides_additionalTrustBundle:
-#                additionalTrustBundle: |
-#                  {{ r_root_ca_config.resources[0].data['ca-bundle.crt'] }}
-#
-#          - name: Set the fact for the install config overrides
-#            ansible.builtin.set_fact:
-#              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_additionalTrustBundle )  }}"
-#
-#          - name: New ICO
-#            ansible.builtin.debug:
-#              msg: "{{ install_config_overrides }}"
+            - name: Set Install Config Overrides for the Platform Type
+              when: deployment_type not in ['vsphere', 'vcenter', 'vmware']
+              ansible.builtin.set_fact:
+                install_config_overrides_platform_type:
+                  platform:
+                    none: {}
 
-      - name: Set Install Config Overrides for platform type
-        when: deployment_type is defined
-        block:
-          - name: Current ICO
-            ansible.builtin.debug:
-              msg: "{{ install_config_overrides }}"
+            - name: Set the fact for the install config overrides
+              ansible.builtin.set_fact:
+                install_config_overrides: "{{ install_config_overrides | combine(install_config_overrides_platform_type) }}"
 
-          - name: Set Install Config Overrides for the Platform Type
-            when: deployment_type in ['vsphere', 'vcenter', 'vmware']
-            ansible.builtin.set_fact:
-              install_config_overrides_platform_type:
-                platform:
-                  vsphere: {}
+            - name: New ICO
+              ansible.builtin.debug:
+                msg: "{{ install_config_overrides }}"
 
-          - name: Set Install Config Overrides for the Platform Type
-            when: deployment_type not in ['vsphere', 'vcenter', 'vmware']
-            ansible.builtin.set_fact:
-              install_config_overrides_platform_type:
-                platform:
-                  none: {}
+    #######################################################
+    ## Filesystem Operations
+    - name: Filesystem Configuration
+      block:
+        - name: Create a temporary directory
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: build
+          register: temp_dir
 
-          - name: Set the fact for the install config overrides
-            ansible.builtin.set_fact:
-              install_config_overrides: "{{ install_config_overrides | combine( install_config_overrides_platform_type )  }}"
+        - name: Create subdirectories in temporary path
+          ansible.builtin.file:
+            path: "{{ temp_dir.path }}/{{ path_item }}"
+            state: directory
+          loop:
+            - git
+            - secrets
+          loop_control:
+            loop_var: path_item
 
-          - name: New ICO
-            ansible.builtin.debug:
-              msg: "{{ install_config_overrides }}"
+    - name: Clone down the repo
+      ansible.builtin.git:
+        repo: "{{ source_git_repo }}"
+        dest: "{{ temp_dir.path }}/git"
+        clone: true
+      when: source_git_repo != push_git_url
 
-  #######################################################
-  ## Filesystem Operations
-  - name: Filesystem Configuration
-    block:
-    - name: Create a temporary directory
-      ansible.builtin.tempfile:
-        state: directory
-        suffix: build
-      register: temp_dir
+    - name: Clone down the repo
+      ansible.builtin.git:
+        repo: "{{ push_git_url_combined }}"
+        dest: "{{ temp_dir.path }}/git"
+        clone: true
+      when: source_git_repo == push_git_url
 
-    - name: Create subdirectories in temporary path
+    - name: Create a directory for the spoke cluster
       ansible.builtin.file:
-        path: "{{ temp_dir.path }}/{{ path_item }}"
+        path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
         state: directory
-      loop:
-        - git
-        - secrets
-      loop_control:
-        loop_var: path_item
 
-  - name: Clone down the repo
-    ansible.builtin.git:
-      repo: "{{ source_git_repo }}"
-      dest: "{{ temp_dir.path }}/git"
-      clone: yes
-    when: source_git_repo != push_git_url
+    - name: Create a directory for the spoke cluster ArgoCD application
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
+        state: directory
 
-  - name: Clone down the repo
-    ansible.builtin.git:
-      repo: "{{ push_git_url_combined }}"
-      dest: "{{ temp_dir.path }}/git"
-      clone: yes
-    when: source_git_repo == push_git_url
+    #######################################################
+    ## Cluster SSH Key Operations
+    - name: Set the SSH Key
+      when: generate_ssh_keys | bool
+      block:
+        - name: Create a new SSH Key Pair
+          community.crypto.openssh_keypair:
+            path: "{{ temp_dir.path }}/secrets/ssh_key"
 
-  - name: Create a directory for the spoke cluster
-    ansible.builtin.file:
-      path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
-      state: directory
+        - name: Set the SSH Key facts for path
+          ansible.builtin.set_fact:
+            ssh_private_key_path: "{{ temp_dir.path }}/secrets/ssh_key"
+            ssh_public_key_path: "{{ temp_dir.path }}/secrets/ssh_key.pub"
+          no_log: true
 
-  - name: Create a directory for the spoke cluster ArgoCD application
-    ansible.builtin.file:
-      path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
-      state: directory
+        - name: Set the SSH Key facts
+          ansible.builtin.set_fact:
+            ssh_private_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key') }}"
+            ssh_public_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key.pub') }}"
+          no_log: true
 
-  #######################################################
-  ## Cluster SSH Key Operations
-  - name: Set the SSH Key
-    when: generate_ssh_keys|bool
-    block:
-      - name: Create a new SSH Key Pair
-        community.crypto.openssh_keypair:
-          path: "{{ temp_dir.path }}/secrets/ssh_key"
+    - name: Read in the SSH Keys
+      when: (generate_ssh_keys | bool == false and use_https_repo | bool == false and use_http_repo | bool == false)
+      block:
+        - name: Set the SSH Key facts
+          ansible.builtin.set_fact:
+            ssh_private_key: "{{ lookup('file', ssh_private_key_path) }}"
+            ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
+          no_log: true
 
-      - name: Set the SSH Key facts for path
-        ansible.builtin.set_fact:
-          ssh_private_key_path: "{{ temp_dir.path }}/secrets/ssh_key"
-          ssh_public_key_path: "{{ temp_dir.path }}/secrets/ssh_key.pub"
-        no_log: true
+    #######################################################
+    ## Set Fact logic
 
-      - name: Set the SSH Key facts
-        ansible.builtin.set_fact:
-          ssh_private_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key') }}"
-          ssh_public_key: "{{ lookup('file', temp_dir.path+'/secrets/ssh_key.pub') }}"
-        no_log: true
+    - name: Set facts for cluster network info
+      block:
+        - name: Set general facts
+          ansible.builtin.set_fact:
+            node_network_type: "{{ cluster_node_network_ipam }}"
 
-  - name: Read in the SSH Keys
-    when: (generate_ssh_keys|bool == false and use_https_repo|bool == false and use_http_repo|bool == false)
-    block:
-      - name: Set the SSH Key facts
-        ansible.builtin.set_fact:
-          ssh_private_key: "{{ lookup('file', ssh_private_key_path) }}"
-          ssh_public_key: "{{ lookup('file', ssh_public_key_path) }}"
-        no_log: true
+    #- name: Set facts
+    #  block:
+    #  - name: Set general facts for vips
+    #    ansible.builtin.set_fact:
+    #      api_vip: "{{ cluster_api_vip }}"
+    #      ingress_vip: "{{ cluster_load_balancer_vip }}"
+    #    when: (cluster_nodes | length > 1) and (node_network_type == 'static')
 
-  #######################################################
-  ## Set Fact logic
-
-  - name: Set facts for cluster network info
-    block:
-      - name: Set general facts
-        ansible.builtin.set_fact:
-          node_network_type: "{{ cluster_node_network_ipam }}"
-
-  #- name: Set facts
-  #  block:
-  #  - name: Set general facts for vips
-  #    ansible.builtin.set_fact:
-  #      api_vip: "{{ cluster_api_vip }}"
-  #      ingress_vip: "{{ cluster_load_balancer_vip }}"
-  #    when: (cluster_nodes | length > 1) and (node_network_type == 'static')
-
-  #- name: Set facts for cluster network info
-  #  block:
-  #  - name: Set general facts
-  #    ansible.builtin.set_fact:
-  #      machine_network_cidr: "{{ cluster_node_cidr }}"
-  #    when: cluster_type  == 'sno'
+    #- name: Set facts for cluster network info
+    #  block:
+    #  - name: Set general facts
+    #    ansible.builtin.set_fact:
+    #      machine_network_cidr: "{{ cluster_node_cidr }}"
+    #    when: cluster_type  == 'sno'
 
 
-  #######################################################
-  ## Spoke Cluster Manifest Templating
-  - name: Template the Spoke Cluster Manifests
-    block:
+    #######################################################
+    ## Spoke Cluster Manifest Templating
+    - name: Template the Spoke Cluster Manifests
+      block:
 
-      - name: Template the Namepsace
-        template:
-          src: templates/00_namespace.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/00_namespace.yml"
+        - name: Template the Namepsace
+          ansible.builtin.template:
+            src: templates/00_namespace.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/00_namespace.yml"
 
-      - name: Template the Reflected Secrets
-        when: secret_management == "reflector" and template_secrets|bool
-        template:
-          src: "templates/{{ template_item }}.j2"
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}"
-        loop:
-          - 01_reflected_ansible_tower_credential.yml
-          - 01_reflected_pull_secret.yml
-          - 01_reflected_vcenter_secret.yml
-        loop_control:
-          loop_var: template_item
+        - name: Template the Reflected Secrets
+          when: secret_management == "reflector" and template_secrets | bool
+          ansible.builtin.template:
+            src: "templates/{{ template_item }}.j2"
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/{{ template_item }}"
+          loop:
+            - 01_reflected_ansible_tower_credential.yml
+            - 01_reflected_pull_secret.yml
+            - 01_reflected_vcenter_secret.yml
+          loop_control:
+            loop_var: template_item
 
-      - name: Template the AgentClusterInstall
-        template:
-          src: templates/02_agentclusterinstall.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/02_agentclusterinstall.yml"
+        - name: Template the AgentClusterInstall
+          ansible.builtin.template:
+            src: templates/02_agentclusterinstall.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/02_agentclusterinstall.yml"
 
-      - name: Template the ClusterDeployment
-        template:
-          src: templates/03_clusterdeployment.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/03_clusterdeployment.yml"
+        - name: Template the ClusterDeployment
+          ansible.builtin.template:
+            src: templates/03_clusterdeployment.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/03_clusterdeployment.yml"
 
-      - name: Template the KlusterletAddonConfig
-        template:
-          src: templates/04_klusterletaddonconfig.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/04_klusterletaddonconfig.yml"
+        - name: Template the KlusterletAddonConfig
+          ansible.builtin.template:
+            src: templates/04_klusterletaddonconfig.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/04_klusterletaddonconfig.yml"
 
-      - name: Template the ManagedCluster
-        template:
-          src: templates/05_managedcluster.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/05_managedcluster.yml"
+        - name: Template the ManagedCluster
+          ansible.builtin.template:
+            src: templates/05_managedcluster.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/05_managedcluster.yml"
 
-      - name: Template the InfraEnv
-        template:
-          src: templates/07_infraenv.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/07_infraenv.yml"
+        - name: Template the InfraEnv
+          ansible.builtin.template:
+            src: templates/07_infraenv.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/07_infraenv.yml"
 
-      - name: Template the ClusterConfig
-        template:
-          src: templates/08_cluster_config.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/08_cluster_config.yml"
+        - name: Template the ClusterConfig
+          ansible.builtin.template:
+            src: templates/08_cluster_config.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/08_cluster_config.yml"
 
-      - name: Template the AnsibleJob
-        template:
-          src: templates/09_ansiblejob.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/09_ansiblejob.yml"
+        - name: Template the AnsibleJob
+          ansible.builtin.template:
+            src: templates/09_ansiblejob.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/09_ansiblejob.yml"
 
-      - name: Template the NMState Config for static networks
-        template:
-          src: templates/11_nmstate_config.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
-        loop: "{{ cluster_nodes }}"
-        loop_control:
-          loop_var: node_item
+        - name: Template the NMState Config for static networks
+          ansible.builtin.template:
+            src: templates/11_nmstate_config.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
+          loop: "{{ cluster_nodes }}"
+          loop_control:
+            loop_var: node_item
 
-      - name: Template any additional manifests for the Spoke Cluster
-        when: manifestOverrides is defined and manifestOverrides | length > 0
-        loop: "{{ manifestOverrides }}"
-        loop_control:
-          loop_var: manifest
-          label: "{{ manifest.name }}: {{ manifest.filename }}"
-        template:
-          src: templates/30_cm_manifest_overrides.yml.j2
-          dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/30_cm_mo_{{ manifest.name }}.yml"
+        - name: Template any additional manifests for the Spoke Cluster
+          when: manifestOverrides is defined and manifestOverrides | length > 0
+          loop: "{{ manifestOverrides }}"
+          loop_control:
+            loop_var: manifest
+            label: "{{ manifest.name }}: {{ manifest.filename }}"
+          ansible.builtin.template:
+            src: templates/30_cm_manifest_overrides.yml.j2
+            dest: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}/30_cm_mo_{{ manifest.name }}.yml"
 
-      - name: Add the ArgoCD Application
-        when: create_argo_application|bool
-        block:
-        - name: Template the ArgoCD Application
-          template:
-            src: templates/99_argocd_application.yml.j2
-            dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
-          vars:
-            application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
-            git_repo_path: "{{ target_spoke_git_path }}"
-            git_repo_url: "{{ push_git_url }}"
-            project_name: "{{ argocd_project_name }}"
+        - name: Add the ArgoCD Application
+          when: create_argo_application | bool
+          block:
+            - name: Template the ArgoCD Application
+              ansible.builtin.template:
+                src: templates/99_argocd_application.yml.j2
+                dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
+              vars:
+                application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
+                git_repo_path: "{{ target_spoke_git_path }}"
+                git_repo_url: "{{ push_git_url }}"
+                project_name: "{{ argocd_project_name }}"
 
-  #######################################################
-  ## Git Push
-  - name: Technologic
-    block:
+    #######################################################
+    ## Git Push
+    - name: Technologic
+      block:
+        - name: Git set push user info
+          ansible.builtin.shell: |
+            git config user.email "{{ push_git_user_email }}"
+            git config user.name "{{ push_git_user_name }}"
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git set push user info
-        ansible.builtin.shell: |
-          git config user.email "{{ push_git_user_email }}"
-          git config user.name "{{ push_git_user_name }}"
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Git set push user token info
+          when: push_git_auth_method == "https"
+          ansible.builtin.shell: |
+            git config --global github.user {{ push_git_username }}
+            git config --global github.token {{ push_git_password }}
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git set push user token info
-        when: push_git_auth_method == "https"
-        ansible.builtin.shell: |
-          git config --global github.user {{ push_git_username }}
-          git config --global github.token {{ push_git_password }}
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Git add the new cluster
+          ansible.builtin.shell: |
+            git add {{ target_spoke_git_path }}
+            git add {{ argo_application_git_repo_path }}
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git add the new cluster
-        ansible.builtin.shell: |
-          git add {{ target_spoke_git_path }}
-          git add {{ argo_application_git_repo_path }}
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Git commit the new cluster
+          ansible.builtin.shell: |
+            git commit -m "add new ztp cluster: {{ cluster_name }}"
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git commit the new cluster
-        ansible.builtin.shell: |
-          git commit -m "add new ztp cluster: {{ cluster_name }}"
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Git set new remote
+          when: push_git_auth_method == "ssh"
+          ansible.builtin.shell: |
+            git remote add private {{ push_git_url }}
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git set new remote
-        when: push_git_auth_method == "ssh"
-        ansible.builtin.shell: |
-          git remote add private {{ push_git_url }}
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Save the contents of the SSH Key to a file
+          when: push_git_auth_method == "ssh"
+          ansible.builtin.copy:
+            content: "{{ push_git_ssh_key }}"
+            dest: "{{ temp_dir.path }}/secrets/push_git_ssh_key"
+            mode: 0600
+          no_log: true
 
-      - name: Save the contents of the SSH Key to a file
-        when: push_git_auth_method == "ssh"
-        copy:
-          content: "{{ push_git_ssh_key }}"
-          dest: "{{ temp_dir.path }}/secrets/push_git_ssh_key"
-          mode: 0600
-        no_log: true
+        - name: Create .ssh folder
+          when: push_git_auth_method == "ssh"
+          ansible.builtin.shell: |
+            mkdir -p $HOME/.ssh
+            chmod 0700 $HOME/.ssh
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Create .ssh folder
-        when: push_git_auth_method == "ssh"
-        ansible.builtin.shell: |
-          mkdir -p $HOME/.ssh
-          chmod 0700 $HOME/.ssh
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Git push the new cluster
+          when: push_git_auth_method == "ssh"
+          ansible.builtin.shell: |
+            ssh-keyscan github.com >> $HOME/.ssh/known_hosts
+            chmod 0644 $HOME/.ssh/known_hosts
+            git config core.sshCommand "ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
+            git push private {{ push_git_branch }}
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git push the new cluster
-        when: push_git_auth_method == "ssh"
-        ansible.builtin.shell: |
-          ssh-keyscan github.com >> $HOME/.ssh/known_hosts
-          chmod 0644 $HOME/.ssh/known_hosts
-          git config core.sshCommand "ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
-          git push private {{ push_git_branch }}
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        #- name: extract git url
+        #  when: push_git_auth_method == "basic"
+        #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
+        #  register: extract_output
 
-      #- name: extract git url
-      #  when: push_git_auth_method == "basic"
-      #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $2}'
-      #  register: extract_output
+        #- name: save git url
+        #  when: push_git_auth_method == "basic"
+        #  ansible.builtin.set_fact:
+        #    git_url_https: "{{ extract_output.stdout }}"
 
-      #- name: save git url
-      #  when: push_git_auth_method == "basic"
-      #  ansible.builtin.set_fact:
-      #    git_url_https: "{{ extract_output.stdout }}"
+        #- name: extract git path
+        #  when: push_git_auth_method == "basic"
+        #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
+        #  register: extract_path_output
 
-      #- name: extract git path
-      #  when: push_git_auth_method == "basic"
-      #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $3}'
-      #  register: extract_path_output
+        #- name: save git path
+        #  when: push_git_auth_method == "basic"
+        #  ansible.builtin.set_fact:
+        #    extract_path_output: "{{ extract_path_output.stdout }}"
 
-      #- name: save git path
-      #  when: push_git_auth_method == "basic"
-      #  ansible.builtin.set_fact:
-      #    extract_path_output: "{{ extract_path_output.stdout }}"
+        #- name: extract git repo
+        #  when: push_git_auth_method == "basic"
+        #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
+        #  register: extract_repo_output
 
-      #- name: extract git repo
-      #  when: push_git_auth_method == "basic"
-      #  ansible.builtin.shell: echo "{{ push_git_url }}" | tr "/" " " | awk '{print $4}'
-      #  register: extract_repo_output
+        #- name: save git repo
+        #  when: push_git_auth_method == "basic"
+        #  ansible.builtin.set_fact:
+        #    extract_repo_output: "{{ extract_repo_output.stdout }}"
 
-      #- name: save git repo
-      #  when: push_git_auth_method == "basic"
-      #  ansible.builtin.set_fact:
-      #    extract_repo_output: "{{ extract_repo_output.stdout }}"
+        - name: Git set new remote
+          when: push_git_auth_method == "basic"
+          ansible.builtin.shell: |
+            git remote add private "{{ push_git_url_combined }}"
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git set new remote
-        when: push_git_auth_method == "basic"
-        ansible.builtin.shell: |
-          git remote add private "{{ push_git_url_combined }}"
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: git config --list
+          when: push_git_auth_method == "basic"
+          ansible.builtin.shell: |
+            git config --list
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: git config --list
-        when: push_git_auth_method == "basic"
-        ansible.builtin.shell: |
-          git config --list
-        args:
-          chdir: "{{ temp_dir.path }}/git"
+        - name: Git push the new cluster
+          when: push_git_auth_method == "basic"
+          ansible.builtin.shell: |
+            git -c http.sslVerify=false push private main
+          args:
+            chdir: "{{ temp_dir.path }}/git"
 
-      - name: Git push the new cluster
-        when: push_git_auth_method == "basic"
-        ansible.builtin.shell: |
-          git -c http.sslVerify=false push private main
-        args:
-          chdir: "{{ temp_dir.path }}/git"
-
-  #######################################################
-  ## Cleanup
-  - name: Delete the temporary directory
-    ansible.builtin.file:
-      path: "{{ temp_dir.path }}"
-      state: absent
-      force: yes
-    tags:
-      - always
+    #######################################################
+    ## Cleanup
+    - name: Delete the temporary directory
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: absent
+        force: true
+      tags:
+        - always

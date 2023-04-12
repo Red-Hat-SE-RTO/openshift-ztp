@@ -25,8 +25,8 @@
         kind: ConfigMap
         namespace: "{{ target_namespace }}"
         merge_type:
-        - strategic-merge
-        - merge
+          - strategic-merge
+          - merge
         definition:
           metadata:
             name: "{{ custom_root_ca_name }}"
@@ -41,8 +41,8 @@
         kind: Secret
         namespace: "{{ target_namespace }}"
         merge_type:
-        - strategic-merge
-        - merge
+          - strategic-merge
+          - merge
         definition:
           metadata:
             name: "{{ custom_root_ca_name }}"
@@ -57,8 +57,8 @@
         kind: ConfigMap
         namespace: "{{ target_namespace }}"
         merge_type:
-        - strategic-merge
-        - merge
+          - strategic-merge
+          - merge
         definition:
           metadata:
             name: "{{ root_ca_bundle_name }}"
@@ -85,8 +85,8 @@
         kind: Secret
         namespace: "{{ target_namespace }}"
         merge_type:
-        - strategic-merge
-        - merge
+          - strategic-merge
+          - merge
         definition:
           metadata:
             name: "{{ root_ca_bundle_name }}"

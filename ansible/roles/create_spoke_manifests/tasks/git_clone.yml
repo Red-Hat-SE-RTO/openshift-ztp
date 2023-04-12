@@ -14,6 +14,7 @@
       ansible.builtin.file:
         path: "{{ temp_dir.path }}/{{ path_item }}"
         state: directory
+        mode: 0755
       loop:
         - git
         - secrets
@@ -21,25 +22,29 @@
         loop_var: path_item
 
 - name: Clone down the repo
+  when: source_git_repo != push_git_url
   ansible.builtin.git:
     repo: "{{ source_git_repo }}"
     dest: "{{ temp_dir.path }}/git"
-    clone: yes
-  when: source_git_repo != push_git_url
+    clone: true
+    version: "{{ source_git_repo_branch }}"
 
 - name: Clone down the repo
+  when: source_git_repo == push_git_url
   ansible.builtin.git:
     repo: "{{ push_git_url_combined }}"
     dest: "{{ temp_dir.path }}/git"
-    clone: yes
-  when: source_git_repo == push_git_url
+    clone: true
+    version: "{{ source_git_repo_branch }}"
 
 - name: Create a directory for the spoke cluster
   ansible.builtin.file:
     path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
     state: directory
+    mode: 0755
 
 - name: Create a directory for the spoke cluster ArgoCD application
   ansible.builtin.file:
     path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
     state: directory
+    mode: 0755

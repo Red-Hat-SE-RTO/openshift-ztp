@@ -2,7 +2,7 @@
 
 ## Proxy and Root CA Query Preflights
 - name: Query OpenShift for Proxy and Root CA Info
-  when: query_hub_for_root_ca|bool or pass_proxy_to_spoke_from_hub|bool
+  when: query_hub_for_root_ca | bool or pass_proxy_to_spoke_from_hub | bool
   block:
     - name: Check to see if the cluster-wide certificates and proxy config are set
       kubernetes.core.k8s_info:
@@ -16,7 +16,7 @@
     # ===============================================================================================
 
     - name: Handle Root CA Config
-      when: query_hub_for_root_ca|bool
+      when: query_hub_for_root_ca | bool
       block:
         - name: Query OpenShift for the Root CA ConfigMap
           kubernetes.core.k8s_info:
@@ -36,19 +36,19 @@
     # ===============================================================================================
 
     - name: Handle Proxy Config
-      when: pass_proxy_to_spoke_from_hub|bool
+      when: pass_proxy_to_spoke_from_hub | bool
       block:
         - name: Set the fact for httpProxy
           when: (r_cluster_proxy_config.resources[0].spec.httpProxy is defined) and (r_cluster_proxy_config.resources[0].spec.httpProxy != '')
           ansible.builtin.set_fact:
-            spoke_httpProxy: "{{ r_cluster_proxy_config.resources[0].spec.httpProxy }}"
+            spoke_httpproxy: "{{ r_cluster_proxy_config.resources[0].spec.httpProxy }}"
 
         - name: Set the fact for httpsProxy
           when: (r_cluster_proxy_config.resources[0].spec.httpsProxy is defined) and (r_cluster_proxy_config.resources[0].spec.httpsProxy != '')
           ansible.builtin.set_fact:
-            spoke_httpsProxy: "{{ r_cluster_proxy_config.resources[0].spec.httpsProxy }}"
+            spoke_httpsproxy: "{{ r_cluster_proxy_config.resources[0].spec.httpsProxy }}"
 
         - name: Set the fact for noProxy
           when: (r_cluster_proxy_config.resources[0].spec.noProxy is defined) and (r_cluster_proxy_config.resources[0].spec.noProxy != '')
           ansible.builtin.set_fact:
-            spoke_noProxy: "{{ r_cluster_proxy_config.resources[0].spec.noProxy }}"
+            spoke_noproxy: "{{ r_cluster_proxy_config.resources[0].spec.noProxy }}"

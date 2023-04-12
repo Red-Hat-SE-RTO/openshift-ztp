@@ -5,6 +5,6 @@ https_proxy: http://192.168.51.1:3128/
 no_proxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost,.apps.core-ocp.lab.kemo.network,localhost,127.0.0.1"
 
 ## spoke_ prefixed proxy configuration is used when the spoke is needing to be configured to use a proxy
-spoke_httpProxy: "http://192.168.77.1:3128/"
-spoke_httpsProxy: "http://192.168.77.1:3128/"
-spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"
+spoke_httpproxy: "http://192.168.77.1:3128/"
+spoke_httpsproxy: "http://192.168.77.1:3128/"
+spoke_noproxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.51.0/24,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},localhost,127.0.0.1"

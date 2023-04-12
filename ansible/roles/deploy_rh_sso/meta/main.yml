@@ -1,12 +1,12 @@
 galaxy_info:
-  author: your name
-  description: your role description
-  company: your company (optional)
+  author: Ken Moini
+  description: Deploys and configures a Red Hat Single Sign-On operator-backed instance
+  company: Red Hat
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value
   issue_tracker_url: https://github.com/Red-Hat-SE-RTO/openshift-ztp/issues
-  
+
   license: MIT
 
   min_ansible_version: "2.9"

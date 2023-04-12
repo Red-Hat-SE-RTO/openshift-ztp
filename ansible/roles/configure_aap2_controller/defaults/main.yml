@@ -25,6 +25,8 @@ aap2_job_template_create_spoke_manifests_playbook: ansible/4_create_spoke_manife
 aap2_job_template_create_credentials_name: 3 - Create Credentials
 aap2_job_template_create_credentials_playbook: ansible/3_create_credentials.yaml
 
+aap2_ee_image: quay.io/kenmoini/openshift-ztp-ee:latest
+
 subscription_manifest_path: ~/aap2-subscription-manifest.zip
 
 # git_credential_type: ssh | basic
