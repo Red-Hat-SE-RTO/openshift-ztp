@@ -16,13 +16,13 @@
     ansible.builtin.file:
       path: /tmp/helm
       state: directory
-      mode: 0755
+      mode: "0755"
 
   - name: Download the Helm release to the tmp folder - x64
     ansible.builtin.get_url:
       url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
       dest: /tmp/helm/helm.tar.gz
-      mode: 0644
+      mode: "0644"
     when: architecture_type_cmd.stdout == "x86_64"
 
   - name: Check the {{ binary_target_path }}
@@ -41,7 +41,7 @@
       remote_src: true
       src: /tmp/helm/linux-amd64/helm
       dest: "{{ binary_target_path }}/helm"
-      mode: 0755
+      mode: "0755"
     when: (binary_path_dir_stat.stat.writeable | default(false)) and architecture_type_cmd.stdout == "x86_64"
     become: true
 

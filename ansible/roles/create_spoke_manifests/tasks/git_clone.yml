@@ -14,7 +14,7 @@
       ansible.builtin.file:
         path: "{{ temp_dir.path }}/{{ path_item }}"
         state: directory
-        mode: 0755
+        mode: "0755"
       loop:
         - git
         - secrets
@@ -41,10 +41,10 @@
   ansible.builtin.file:
     path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Create a directory for the spoke cluster ArgoCD application
   ansible.builtin.file:
     path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
     state: directory
-    mode: 0755
+    mode: "0755"

@@ -1063,10 +1063,10 @@
             body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
           register: create_vsphere_infra_response
           vars:
-            job_template_name: "{{ aap2_job_template_create_infra_name }}"
-            aap2_inventory_id: "{{ aap2_inventory_id }}"
-            aap2_project_id: "{{ aap2_project_id }}"
-            job_template_playbook: "{{ aap2_job_template_create_infra_playbook }}"
+            t_job_template_name: "{{ aap2_job_template_create_infra_name }}"
+            t_aap2_inventory_id: "{{ aap2_inventory_id }}"
+            t_aap2_project_id: "{{ aap2_project_id }}"
+            t_job_template_playbook: "{{ aap2_job_template_create_infra_playbook }}"
           until: create_vsphere_infra_response.status == 201
           delay: 10
           retries: 60
@@ -1114,10 +1114,10 @@
             body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
           register: delete_vsphere_infra_response
           vars:
-            job_template_name: "{{ aap2_job_template_delete_infra_name }}"
-            aap2_inventory_id: "{{ aap2_inventory_id }}"
-            aap2_project_id: "{{ aap2_project_id }}"
-            job_template_playbook: "{{ aap2_job_template_delete_infra_playbook }}"
+            t_job_template_name: "{{ aap2_job_template_delete_infra_name }}"
+            t_aap2_inventory_id: "{{ aap2_inventory_id }}"
+            t_aap2_project_id: "{{ aap2_project_id }}"
+            t_job_template_playbook: "{{ aap2_job_template_delete_infra_playbook }}"
           until: delete_vsphere_infra_response.status == 201
           delay: 10
           retries: 6
@@ -1165,10 +1165,10 @@
             body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
           register: create_spoke_manifests_response
           vars:
-            job_template_name: "{{ aap2_job_template_create_spoke_manifests_name }}"
-            aap2_inventory_id: "{{ aap2_inventory_id }}"
-            aap2_project_id: "{{ aap2_project_id }}"
-            job_template_playbook: "{{ aap2_job_template_create_spoke_manifests_playbook }}"
+            t_job_template_name: "{{ aap2_job_template_create_spoke_manifests_name }}"
+            t_aap2_inventory_id: "{{ aap2_inventory_id }}"
+            t_aap2_project_id: "{{ aap2_project_id }}"
+            t_job_template_playbook: "{{ aap2_job_template_create_spoke_manifests_playbook }}"
           until: create_spoke_manifests_response.status == 201
           delay: 10
           retries: 3
@@ -1216,10 +1216,10 @@
             body: "{{ lookup('template', 'ansible_job_template.json.j2') }}"
           register: create_credentials_response
           vars:
-            job_template_name: "{{ aap2_job_template_create_credentials_name }}"
-            aap2_inventory_id: "{{ aap2_inventory_id }}"
-            aap2_project_id: "{{ aap2_project_id }}"
-            job_template_playbook: "{{ aap2_job_template_create_credentials_playbook }}"
+            t_job_template_name: "{{ aap2_job_template_create_credentials_name }}"
+            t_aap2_inventory_id: "{{ aap2_inventory_id }}"
+            t_aap2_project_id: "{{ aap2_project_id }}"
+            t_job_template_playbook: "{{ aap2_job_template_create_credentials_playbook }}"
           until: create_credentials_response.status == 201
           delay: 10
           retries: 3

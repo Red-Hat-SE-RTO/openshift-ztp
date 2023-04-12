@@ -23,7 +23,7 @@
         path: "{{ generated_asset_directory }}/id_rsa"
         size: 4096
         type: rsa
-        mode: 0400
+        mode: "0400"
       tags:
         - preflight
         - ssh_keypair
@@ -124,7 +124,7 @@
           ansible.builtin.template:
             src: jfrog.fcc.j2
             dest: "{{ generated_asset_directory }}/jfrog.fcc"
-            mode: 0664
+            mode: "0664"
 
         - name: Create FCOS transpiled ignition file
           ansible.builtin.shell: "{{ generated_asset_directory }}/butane --pretty --strict < {{ generated_asset_directory }}/jfrog.fcc > {{ generated_asset_directory }}/transpiled_config.ign"

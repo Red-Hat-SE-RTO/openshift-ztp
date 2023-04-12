@@ -17,7 +17,7 @@
     url: "{{ infraenv_info.resources[0].status.isoDownloadURL }}"
     dest: "/tmp/discovery-iso-{{ cluster_configmap_info.resources[0].data.cluster_name }}.iso"
     validate_certs: false
-    mode: 0644
+    mode: "0644"
 
 - name: Delete the previous iso if present
   community.vmware.vsphere_file:
