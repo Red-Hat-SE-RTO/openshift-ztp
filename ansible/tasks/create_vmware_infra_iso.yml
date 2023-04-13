@@ -1,4 +1,8 @@
 ---
+# noqa exemptions:
+#   ignore-errors: Because I am dumb and haven't tested
+#    better error checks from the vSphere modules
+#######################################################
 
 - name: Query the RHACM OAS InfraEnv for the Discovery ISO
   kubernetes.core.k8s_info:
@@ -19,7 +23,7 @@
     validate_certs: false
     mode: "0644"
 
-- name: Delete the previous iso if present
+- name: Delete the previous iso if present # noqa: ignore-errors
   community.vmware.vsphere_file:
     host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
     username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'

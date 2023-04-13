@@ -15,5 +15,5 @@
 
   tasks:
     - name: Create the Spoke YAML Manifests and push them to a Git repo
-      include_role:
+      ansible.builtin.include_role:
         name: create_spoke_manifests
