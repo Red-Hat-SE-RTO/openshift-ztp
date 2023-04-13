@@ -15,7 +15,7 @@
     username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
     password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
     validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-    datacenter: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
     name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
@@ -42,7 +42,7 @@
     username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
     password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
     validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-    datacenter: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
     datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
     cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
     name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
@@ -60,7 +60,7 @@
 #    password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
 #    validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
 #    name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
-#    datacenter: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+#    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
 #    folder: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
 #  register: vm_guest_info
 #
@@ -75,7 +75,7 @@
 #    username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
 #    password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
 #    validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-#    datacenter: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+#    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
 #    datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
 #    cluster: "{{ cluster_configmap_info.resources[0].data.vsphere_cluster }}"
 #    name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"

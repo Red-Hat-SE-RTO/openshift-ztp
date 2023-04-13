@@ -7,7 +7,7 @@
     password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
     validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
     name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}-{{ node_item.name }}"
-    datacenter: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+    datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
     folder: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
   register: vm_guest_info
 
