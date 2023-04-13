@@ -32,7 +32,7 @@ data:
   vsphere_cluster: {{ vcenter_cluster }}
   vsphere_datastore: {{ vcenter_datastore }}
   vsphere_network: {{ vcenter_network }}
-  vsphere_dc_path: {{ vsphere_dc_path | default('') }}
+  vcenter_dc_path: {{ vcenter_dc_path | default('') }}
 
   cluster_nodes: '{{ cluster_nodes | to_json }}'
 {% if vsphere_iso_folder is defined %}
