@@ -126,7 +126,7 @@
         username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
         password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
         validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-        datacenter: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+        datacenter: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
         datastore: "{{ cluster_configmap_info.resources[0].data.vsphere_datastore }}"
         path: "{{ cluster_configmap_info.resources[0].data.vsphere_iso_folder | default('/ISOs') }}"
         state: directory
@@ -137,7 +137,7 @@
         username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
         password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
         validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
-        datacenter_name: "{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
+        datacenter_name: "{{ cluster_configmap_info.resources[0].data.vcenter_dc_path | default('') }}{{ cluster_configmap_info.resources[0].data.vsphere_datacenter }}"
         folder_name: "{{ cluster_configmap_info.resources[0].data.vsphere_vm_folder | default(cluster_configmap_info.resources[0].data.cluster_name) }}"
         folder_type: vm
         state: present
