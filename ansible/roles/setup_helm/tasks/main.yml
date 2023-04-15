@@ -8,57 +8,57 @@
 - name: Install Helm
   when: check_helm_result.rc != 0
   block:
-  - name: Get architecture
-    ansible.builtin.shell: uname -m
-    register: architecture_type_cmd
+    - name: Get architecture
+      ansible.builtin.shell: uname -m
+      register: architecture_type_cmd
 
-  - name: Create a tmp path
-    ansible.builtin.file:
-      path: /tmp/helm
-      state: directory
-      mode: "0755"
+    - name: Create a tmp path
+      ansible.builtin.file:
+        path: /tmp/helm
+        state: directory
+        mode: "0755"
 
-  - name: Download the Helm release to the tmp folder - x64
-    ansible.builtin.get_url:
-      url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
-      dest: /tmp/helm/helm.tar.gz
-      mode: "0644"
-    when: architecture_type_cmd.stdout == "x86_64"
+    - name: Download the Helm release to the tmp folder - x64
+      when: architecture_type_cmd.stdout == "x86_64"
+      ansible.builtin.get_url:
+        url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
+        dest: /tmp/helm/helm.tar.gz
+        mode: "0644"
 
-  - name: Check the {{ binary_target_path }}
-    ansible.builtin.stat:
-      path: "{{ binary_target_path }}"
-    register: binary_path_dir_stat
-    become: true
+    - name: Check the {{ binary_target_path }}
+      ansible.builtin.stat:
+        path: "{{ binary_target_path }}"
+      register: binary_path_dir_stat
+      become: true
 
-  - name: Extract the helm tar file
-    ansible.builtin.unarchive:
-      src: /tmp/helm/helm.tar.gz
-      dest: /tmp/helm
+    - name: Extract the helm tar file
+      ansible.builtin.unarchive:
+        src: /tmp/helm/helm.tar.gz
+        dest: /tmp/helm
 
-  - name: Move the helm binary to {{ binary_target_path }}
-    ansible.builtin.copy:
-      remote_src: true
-      src: /tmp/helm/linux-amd64/helm
-      dest: "{{ binary_target_path }}/helm"
-      mode: "0755"
-    when: (binary_path_dir_stat.stat.writeable | default(false)) and architecture_type_cmd.stdout == "x86_64"
-    become: true
+    - name: Move the helm binary to {{ binary_target_path }}
+      when: (binary_path_dir_stat.stat.writeable | default(false)) and architecture_type_cmd.stdout == "x86_64"
+      ansible.builtin.copy:
+        remote_src: true
+        src: /tmp/helm/linux-amd64/helm
+        dest: "{{ binary_target_path }}/helm"
+        mode: "0755"
+      become: true
 
-  - name: Fail if the target binary path is not writable
-    ansible.builtin.fail:
-      msg: "The target binary path {{ binary_target_path }} is not writable!  Move /tmp/helm/linux-amd64/helm to a directory in your $PATH!"
-    when: not binary_path_dir_stat.stat.writeable and architecture_type_cmd.stdout == "x86_64"
+    - name: Fail if the target binary path is not writable
+      when: not binary_path_dir_stat.stat.writeable and architecture_type_cmd.stdout == "x86_64"
+      ansible.builtin.fail:
+        msg: "The target binary path {{ binary_target_path }} is not writable!  Move /tmp/helm/linux-amd64/helm to a directory in your $PATH!"
 
-  - name: Check helm version
-    ansible.builtin.shell: helm version
-    register: helm_version_check
+    - name: Check helm version
+      ansible.builtin.shell: helm version
+      register: helm_version_check
 
-  - name: Output the deployed Helm version
-    ansible.builtin.debug:
-      msg: "{{ helm_version_check.stdout }}"
+    - name: Output the deployed Helm version
+      ansible.builtin.debug:
+        msg: "{{ helm_version_check.stdout }}"
 
-  - name: Cleanup tmp path
-    ansible.builtin.file:
-      path: /tmp/helm
-      state: absent
+    - name: Cleanup tmp path
+      ansible.builtin.file:
+        path: /tmp/helm
+        state: absent

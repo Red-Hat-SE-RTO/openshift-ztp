@@ -1,4 +1,4 @@
 ---
 # defaults file for setup_helm
-helm_version: 3.8.2
+helm_version: 3.11.3
 binary_target_path: /usr/local/bin
