@@ -1,10 +1,10 @@
 ---
 # tasks file for configure_aap2_controller
 - name: Load manifest into variable
-  local_action:
-    module: ansible.builtin.slurp
+  ansible.builtin.slurp:
     src: "{{ subscription_manifest_path }}"
   register: manifest_file
+  # delegate_to: localhost # shouldn't need this since it's all on a localhost...
 
 - name: Proxy and Root CA Things
   tags:

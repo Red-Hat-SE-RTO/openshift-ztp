@@ -1,4 +1,8 @@
 ---
+# noqa exemptions:
+#   ignore-errors: Because I am dumb and haven't tested
+#    better error checks from the vSphere modules
+
 - name: Delete vSphere Infrastructure for ZT
   hosts: all
   gather_facts: false
@@ -37,9 +41,9 @@
           register: vsphere_secret
 
         - name: Fail if the vCenter credentials secret is not found
+          when: vsphere_secret.resources | length == 0
           ansible.builtin.fail:
             msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
-          when: vsphere_secret.resources | length == 0
 
         - name: Get the Cluster Configuration
           kubernetes.core.k8s_info:
@@ -50,9 +54,9 @@
           register: cluster_configmap_info
 
         - name: Fail if the Cluster Config ConfigMap is not found
+          when: cluster_configmap_info.resources | length == 0
           ansible.builtin.fail:
             msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
-          when: cluster_configmap_info.resources | length == 0
 
         - name: Unmarshal the Cluster ConfigMap
           ansible.builtin.set_fact:
@@ -68,7 +72,7 @@
             loop_var: node_item
           ansible.builtin.include_tasks: tasks/remove_vmware_infra.yml
 
-        - name: Delete the iso if present
+        - name: Delete the iso if present # noqa: ignore-errors
           community.vmware.vsphere_file:
             host: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
             username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
@@ -87,7 +91,7 @@
             kind: Application
             namespace: "{{ argocd_namespace }}"
             name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
-          ignore_errors: true
+          # ignore_errors: true # why?
 
         - name: Remove Managed cluster
           kubernetes.core.k8s:
@@ -95,7 +99,7 @@
             api_version: cluster.open-cluster-management.io/v1
             kind: ManagedCluster
             name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
-          ignore_errors: true
+          # ignore_errors: true
 
         - name: Cluster namespace
           kubernetes.core.k8s:
@@ -103,4 +107,4 @@
             api_version: v1
             kind: Namespace
             name: "{{ cluster_configmap_info.resources[0].data.cluster_name }}"
-          ignore_errors: true
+          # ignore_errors: true
