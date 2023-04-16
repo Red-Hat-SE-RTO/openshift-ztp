@@ -1,6 +1,6 @@
 # Zero Touch Provisioning by the Southeast RTO Team
 
-![EE Build & Deploy](https://github.com/Red-Hat-SE-RTO/openshift-ztp/actions/workflows/build-ee.yml/badge.svg)
+![ansible-lint](https://github.com/Red-Hat-SE-RTO/openshift-ztp/actions/workflows/lint-ansible.yml/badge.svg) ![EE Build & Deploy](https://github.com/Red-Hat-SE-RTO/openshift-ztp/actions/workflows/build-ee.yml/badge.svg)
 
 This repository houses assets for deploying OpenShift via ZTP (Zero-Touch Provisioning) to vSphere - other infrastructure platforms will be added as needed.
 
