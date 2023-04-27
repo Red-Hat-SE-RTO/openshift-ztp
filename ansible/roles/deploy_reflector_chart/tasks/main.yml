@@ -3,7 +3,7 @@
 - name: Template the Reflector Helm Chart Repository
   kubernetes.core.k8s:
     state: present
-    ansible.builtin.template: templates/chart-repository.yml.j2
+    template: templates/chart-repository.yml.j2
 
 - name: Create the Reflector Project - {{ reflector_namespace }}
   kubernetes.core.k8s:
@@ -36,4 +36,4 @@
   kubernetes.core.k8s:
     validate_certs: false
     state: present
-    ansible.builtin.template: templates/rolebinding.yml.j2
+    template: templates/rolebinding.yml.j2
