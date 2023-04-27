@@ -3,7 +3,7 @@
 odf_operator_namespace: openshift-storage
 odf_storagecluster_name: ocs-storagecluster
 
-aws_storagecluster_storageclass: gp2
+aws_storagecluster_storageclass: gp3-csi
 aws_storagecluster_block_size: 512
 
 local_storagecluster_storageclass: odf
