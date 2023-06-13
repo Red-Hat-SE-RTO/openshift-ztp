@@ -9,7 +9,7 @@ spec:
   giteaAdminUser: {{ gitea_admin_username }}
   giteaAdminPassword: "{{ gitea_admin_password }}"
   giteaAdminEmail: {{ gitea_admin_email }}
-  giteaImageTag: latest
+  giteaImageTag: {{ gitea_image_tag }}
   giteaVolumeSize: 10Gi
   giteaVolumeStorageClass: {{ gitea_storageclass_name }}
   postgresqlVolumeSize: 4Gi
