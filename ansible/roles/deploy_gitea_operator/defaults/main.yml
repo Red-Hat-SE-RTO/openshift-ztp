@@ -6,6 +6,9 @@ gitea_operator_channel: stable
 ## gitea_operator_source: kenmoini-gitea | redhat-gpte-gitea
 gitea_operator_source: kenmoini-gitea
 
+## Pin the image tag due to some weird issue in 1.20 forcing OAuth reconfigs on start up
+gitea_image_tag: '1.19'
+
 gitea_admin_username: opentlc-mgr
 gitea_admin_password: "r3dh4t123!"
 gitea_admin_email: opentlc-mgr@redhat.com
