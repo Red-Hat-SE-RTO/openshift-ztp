@@ -24,4 +24,4 @@ additional_build_steps:
   append:
     - RUN curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xvzf - -C /usr/local/bin/ oc kubectl && chmod 755 /usr/local/bin/oc && chmod 755 /usr/local/bin/kubectl && curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
     - RUN /usr/local/bin/helm repo add emberstack https://emberstack.github.io/helm-charts && /usr/local/bin/helm repo add kong https://charts.konghq.com && /usr/local/bin/helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx && /usr/local/bin/helm repo add jetstack https://charts.jetstack.io && /usr/local/bin/helm repo add hashicorp https://helm.releases.hashicorp.com && /usr/local/bin/helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets && /usr/local/bin/helm repo add external-secrets https://charts.external-secrets.io && /usr/local/bin/helm repo update
-    - RUN git config --global --add safe.directory *
+    - RUN git config --global --add safe.directory "*"
