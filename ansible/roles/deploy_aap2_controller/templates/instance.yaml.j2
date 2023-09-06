@@ -30,13 +30,13 @@ spec:
   admin_email: {{ aap_controller_admin_email }}
   task_privileged: true
   projects_storage_class: {{ aap_controller_storageclass_name }}
-  projects_storage_access_mode: ReadWriteOnce
+  projects_storage_access_mode: {{ aap_controller_storageclass_mode }}
+  projects_persistence: true
   web_resource_requirements:
     limits:
       cpu: 1000m
     requests:
       cpu: 250m
-  projects_persistence: true
   replicas: 1
   admin_user: {{ aap_controller_admin_username }}
   loadbalancer_protocol: http
