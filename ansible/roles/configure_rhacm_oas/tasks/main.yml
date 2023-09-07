@@ -214,7 +214,7 @@
   delay: 10
   retries: 3
   vars:
-    managedClusterSet_name: hubClusters
+    managedClusterSet_name: hub-clusters
 
 - name: Create ManagedClusterSet in RHACM for Spokes
   kubernetes.core.k8s:
@@ -228,9 +228,9 @@
   delay: 10
   retries: 3
   vars:
-    managedClusterSet_name: spokeClusters
+    managedClusterSet_name: spoke-clusters
 
-- name: Bind the Hub Cluster to the hubClusters ManagedClusterSet
+- name: Bind the Hub Cluster to the hub-clusters ManagedClusterSet
   kubernetes.core.k8s:
     name: "local-cluster"
     kind: ManagedCluster
@@ -244,7 +244,7 @@
       name: "local-cluster"
       metadata:
         labels:
-          cluster.open-cluster-management.io/clusterset: hubClusters
+          cluster.open-cluster-management.io/clusterset: hub-clusters
   register: k8s_run
   until: k8s_run is not failed
   delay: 10
