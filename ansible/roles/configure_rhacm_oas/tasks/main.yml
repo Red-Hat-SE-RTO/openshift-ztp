@@ -201,3 +201,51 @@
     - templates/06_multiclusterengine.yml.j2
   loop_control:
     loop_var: file_item
+
+- name: Create ManagedClusterSet in RHACM for Hub
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/10_managedClusterSets.yml.j2') | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+  vars:
+    managedClusterSet_name: hubClusters
+
+- name: Create ManagedClusterSet in RHACM for Spokes
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/10_managedClusterSets.yml.j2') | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+  vars:
+    managedClusterSet_name: spokeClusters
+
+- name: Bind the Hub Cluster to the hubClusters ManagedClusterSet
+  kubernetes.core.k8s:
+    name: "local-cluster"
+    kind: ManagedCluster
+    api_version: cluster.open-cluster-management.io/v1
+    merge_type:
+      - strategic-merge
+      - merge
+    definition:
+      kind: ManagedCluster
+      apiVersion: cluster.open-cluster-management.io/v1
+      name: "local-cluster"
+      metadata:
+        labels:
+          cluster.open-cluster-management.io/clusterset: hubClusters
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
