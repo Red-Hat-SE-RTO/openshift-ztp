@@ -9,3 +9,6 @@ aap_controller_admin_username: admin
 aap_controller_admin_email: kmoini@redhat.com
 
 aap_controller_name: ac-tower
+
+# Pinning to 2.1 because of some git related mess
+aap_operator_channel: stable-2.1-cluster-scoped

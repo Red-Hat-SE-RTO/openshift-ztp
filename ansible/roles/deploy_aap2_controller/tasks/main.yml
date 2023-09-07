@@ -47,6 +47,7 @@
   when: chan_item is search("cluster-scoped")
 
 - name: Set the latest CSV version
+  when: chan_item.name == operator_release_channels_cluster
   ansible.builtin.set_fact:
     operator_channel: "{{ chan_item.name }}"
     operator_csv_version: "{{ chan_item.currentCSV }}"
@@ -56,7 +57,20 @@
     loop_var: chan_item
     index_var: chan_idx
     label: "{{ chan_item.name }}"
-  when: chan_item.name == operator_release_channels_cluster
+
+- name: Override the Channel and CSV Version if defined
+  when:
+    - aap_operator_channel is defined
+    - chan_item.name == aap_operator_channel
+  ansible.builtin.set_fact:
+    operator_channel: "{{ chan_item.name }}"
+    operator_csv_version: "{{ chan_item.currentCSV }}"
+    operator_csv_version_index: "{{ chan_idx }}"
+  loop: "{{ r_pm.resources[0].status.channels }}"
+  loop_control:
+    loop_var: chan_item
+    index_var: chan_idx
+    label: "{{ chan_item.name }}"
 
 - name: Set additional operator specific facts
   ansible.builtin.set_fact:
