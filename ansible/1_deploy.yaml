@@ -4,6 +4,14 @@
   connection: local
   gather_facts: false
 
+  module_defaults:
+    kubernetes.core.k8s_info:
+      validate_certs: false
+    kubernetes.core.k8s:
+      validate_certs: false
+    kubernetes.core.helm:
+      validate_certs: false
+
   vars:
     output_lines: []
     #########################################
