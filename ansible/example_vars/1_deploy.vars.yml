@@ -1,0 +1,33 @@
+---
+#########################################
+## Secrets Management
+deploy_reflector: true
+deploy_sealed_secrets: false # not supported yet
+deploy_hashicorp_vault: false # not supported yet
+
+#########################################
+## Operator Management
+deploy_rh_cert_manager: false
+deploy_openshift_logging: false
+deploy_nfd: false
+deploy_lso: true
+deploy_odf: true
+deploy_http_mirror: true
+deploy_rhacm: true
+deploy_gitea: true
+deploy_rh_gitops: true
+deploy_aap2_controller: true
+deploy_rh_sso: false
+deploy_openshift_pipelines: false
+deploy_shipwright: false
+
+#########################################
+## Local Storage Operator Variables
+## lso_hostname_targets: is a list of hostnames to be used by the lso-operator for a LocalVolumeSet
+lso_hostname_targets:
+  - infra-1
+  - infra-2
+  - infra-3
+
+deploy_to_infra_nodes: true
+enable_rhacm_observability: false
