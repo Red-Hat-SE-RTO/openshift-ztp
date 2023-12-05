@@ -1,6 +1,6 @@
 ---
 # defaults file for configure_aap2_controller
-aap2_operator_namespace: ansible-automation-platform
+aap2_operator_namespace: aap
 aap2_controller_name: ac-tower
 aap2_admin_secret_name: "{{ aap2_controller_name }}-admin-password"
 aap2_serviceaccount_name: "{{ aap2_controller_name }}"
