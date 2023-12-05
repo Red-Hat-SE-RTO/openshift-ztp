@@ -3,5 +3,9 @@
 http_mirror_operator_namespace: ztp-mirror
 
 mirrored_versions:
-  - "4.9"
-  - "4.10"
+  #- "4.9"
+  #- "4.10"
+  #- "4.11"
+  - "4.12"
+  - "4.13"
+  - "4.14"
