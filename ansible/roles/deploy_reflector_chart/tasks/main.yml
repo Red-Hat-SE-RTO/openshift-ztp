@@ -18,6 +18,12 @@
         name: "{{ reflector_namespace }}"
       spec: {}
 
+- name: Add the Reflector Emberstack Helm repo to the local system
+  kubernetes.core.helm_repository:
+    name: emberstack
+    url: "{{ reflector_helm_repository }}"
+    state: present
+
 # - name: Update Helm Repositories
   # kubernetes.core.helm:
     # name: reflector

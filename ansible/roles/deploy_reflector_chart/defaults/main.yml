@@ -1,3 +1,4 @@
 ---
 # defaults file for deploy_reflector_chart
 reflector_namespace: reflector
+reflector_helm_repository: https://emberstack.github.io/helm-charts
