@@ -4,12 +4,19 @@ metadata:
   labels:
     app.kubernetes.io/component: automationcontroller
     app.kubernetes.io/managed-by: automationcontroller-operator
-    app.kubernetes.io/name: ac-tower
+    app.kubernetes.io/name: {{ aap_controller_name }}
     app.kubernetes.io/operator-version: ''
-    app.kubernetes.io/part-of: ac-tower
-  name: ac-tower
+    app.kubernetes.io/part-of: {{ aap_controller_name }}
+  name: {{ aap_controller_name }}
   namespace: {{ aap_operator_namespace }}
 spec:
+  set_self_labels: true
+  ipv6_disabled: false
+  auto_upgrade: true
+  security_context_settings:
+    runAsUser: 996
+    runAsGroup: 0
+    #fsGroup: 0
   ee_resource_requirements:
     limits:
       cpu: 1000m
@@ -29,9 +36,9 @@ spec:
   projects_storage_size: 8Gi
   admin_email: {{ aap_controller_admin_email }}
   task_privileged: true
+  projects_persistence: false
   projects_storage_class: {{ aap_controller_storageclass_name }}
   projects_storage_access_mode: {{ aap_controller_storageclass_mode }}
-  projects_persistence: true
   web_resource_requirements:
     limits:
       cpu: 1000m
