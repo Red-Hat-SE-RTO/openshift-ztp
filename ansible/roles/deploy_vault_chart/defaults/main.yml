@@ -1,3 +1,4 @@
 ---
 # defaults file for deploy_vault_chart
 vault_namespace: hashicorp-vault
+vault_chart_repository: https://helm.releases.hashicorp.com
