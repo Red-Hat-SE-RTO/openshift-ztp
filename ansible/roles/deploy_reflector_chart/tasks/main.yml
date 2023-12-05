@@ -27,13 +27,11 @@
 
 - name: Deploy the latest version of the Reflector Helm Chart
   kubernetes.core.helm:
-    validate_certs: false
     name: reflector
     chart_ref: emberstack/reflector
     release_namespace: "{{ reflector_namespace }}"
 
 - name: Add the SCC RoleBinding
   kubernetes.core.k8s:
-    validate_certs: false
     state: present
     template: templates/rolebinding.yml.j2
