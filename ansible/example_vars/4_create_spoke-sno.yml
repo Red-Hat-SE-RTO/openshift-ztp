@@ -1,0 +1,116 @@
+---
+vcenter_credential_secret_name: "loe-rdu-vcenter-credentials"
+pull_secret_secret_name: ztp-deployment-pull-secret
+git_push_credentials_secret_name: "git-push-credentials"
+source_git_repo: http://gitea.gitea.svc.cluster.local:3000/user-1/openshift-ztp.git
+
+cluster_type: sno
+cluster_name: sno-ocp
+base_domain: d70.lab.kemo.network
+cluster_location: loe-rdu
+
+openshift_release: "4.13.22"
+
+cluster_node_network_ipam: "static"
+cluster_node_cidr: "192.168.70.0/24"
+
+cluster_node_network_static_dns_search_domains:
+  - kemo.labs
+  - kemo.network
+
+cluster_node_network_static_dns_servers:
+  - 192.168.42.9
+  - 192.168.42.10
+
+vcenter_datacenter: LabDC
+vcenter_dc_path: RootF/
+vcenter_cluster: LabCluster
+vcenter_datastore: nvme
+vcenter_network: disconPG
+#vsphere_iso_folder: OptionalFolderForISOs # defaults to /ISOs
+#vsphere_vm_folder: OptionalFolderForVMs # defaults to the cluster_name
+template_secrets: true
+
+cluster_nodes:
+  - name: sno-white
+    type: sno-node
+    vm:
+      # resource_pool is optional, define a Resource Pool for the VM
+      #resource_pool: vsphere-cluster-rp
+      cpu_cores: 8
+      cpu_sockets: 2
+      cpu_threads: 1
+      memory: 65536
+      disks:
+        - size: 240
+          name: boot
+    network:
+      interfaces:
+        - name: eth0
+          mac_address: 00:00:00:00:00:00
+          dhcp: false
+          ipv4:
+            - address: 192.168.70.71
+              prefix: 24
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.70.1
+          next_hop_interface: eth0
+          table_id: 254
+
+http_proxy: 'http://192.168.42.31:3128/'
+https_proxy: 'http://192.168.42.31:3128/'
+#no_proxy: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,172.30.0.0/16,192.168.0.0/16,api-int.core-ocp.lab.kemo.network,api.core-ocp.lab.kemo.network,localhost,127.0.0.1,.apps.core-ocp.lab.kemo.network"
+no_proxy: ".cluster.local,.svc,.svc.cluster.local,10.128.0.0/14,172.30.0.0/16,192.168.0.0/16,.kemo.labs,localhost,127.0.0.1,.kemo.network"
+pass_proxy_to_spoke_from_hub: true
+
+# https://www.ibm.com/docs/en/zcxrhos/1.1.0?topic=installation-procedure
+## Spoke Proxy Configuration
+#spoke_httpProxy: "http://192.168.42.31:3128/"
+# spoke_httpsProxy -  A proxy URL to use for creating HTTPS connections outside the cluster. If you use an MITM transparent proxy network that does not require additional proxy configuration but requires additional CAs, you must not specify an httpsProxy value.
+#spoke_httpsProxy: "http://192.168.77.1:3128/"
+#spoke_noProxy: ".svc.cluster.local,.cluster.local,.svc,10.128.0.0/14,172.30.0.0/16,192.168.0.0/16,api-int.{{ cluster_name }}.{{ base_domain }},api.{{ cluster_name }}.{{ base_domain }},localhost,.apps.{{ cluster_name }}.{{ base_domain }},127.0.0.1"
+
+#insert_proxy_infraenv: false
+
+ansible_job_runner_image: quay.io/kenmoini/aap2-rooted-runner
+ansible_job_runner_image_version: latest
+
+root_ca_secret_name: cluster-root-ca-bundle
+
+manifestOverrides:
+  - name: spoke-cluster-config
+    # Both name and filename have to be unique
+    filename: 99-cm-spoke-cluster-config.yaml
+    content: |
+      ---
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: spoke-cluster-config
+        namespace: openshift-config
+        labels:
+          name: {{ cluster_name }}
+          cloud: vSphere
+          vendor: OpenShift
+          datacenter: {{ vcenter_datacenter }}
+          cluster: {{ vcenter_cluster }}
+          cluster-name: {{ cluster_name }}
+      data:
+        cluster_name: {{ cluster_name }}
+        cluster_domain: {{ base_domain }}
+        cluster_provider: vsphere
+        cluster_type: {{ cluster_type }}
+
+        vsphere_datacenter: {{ vcenter_datacenter }}
+        vsphere_cluster: {{ vcenter_cluster }}
+        vsphere_datastore: {{ vcenter_datastore }}
+        vsphere_network: {{ vcenter_network }}
+      {% if vsphere_iso_folder is defined %}
+        vsphere_iso_folder: {{ vsphere_iso_folder }}
+      {% endif %}
+      {% if vsphere_vm_folder is defined %}
+        vsphere_vm_folder: {{ vsphere_vm_folder }}
+      {% endif %}
+
+        cluster_nodes: '{{ cluster_nodes | to_json }}'
