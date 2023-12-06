@@ -79,5 +79,7 @@ spec:
       recurse: true
   project: {{ project_name }}
   syncPolicy:
+    syncOptions:
+      - RespectIgnoreDifferences=true
     automated:
       allowEmpty: true
