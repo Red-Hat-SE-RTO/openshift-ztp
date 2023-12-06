@@ -13,6 +13,7 @@ metadata:
     cluster-domain: {{ cluster_name }}.{{ base_domain }}
     cluster-role: ztp-spoke
     cluster-type: {{ cluster_type }}
+    deployment-type: {{ deployment_type }}
 {% if extra_labels is defined %}
 {% for label in extra_labels %}
     {{ label.key }}: {{ label.value }}
