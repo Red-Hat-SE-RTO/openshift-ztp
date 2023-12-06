@@ -39,7 +39,7 @@
 
 #- name: Create a directory for the spoke cluster
 #  ansible.builtin.file:
-#    path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
+#    path: "{{ argoapp_temp_dir.path }}/git/{{ target_spoke_git_path }}"
 #    state: directory
 #    mode: "0755"
 
@@ -52,7 +52,7 @@
 - name: Template the ArgoCD Application
   ansible.builtin.template:
     src: templates/99_argocd_application.yml.j2
-    dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
+    dest: "{{ argoapp_temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
     mode: "0644"
   vars:
     application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
