@@ -1,0 +1,17 @@
+---
+
+# configure_rhacm is a boolean to configure RHACM for ZTP services
+configure_rhacm: true
+
+# configure_aap2_controller is a boolean to configure AAP2 Controller for ZTP services
+configure_aap2_controller: true
+
+# configure_rh_sso is a boolean to configure RH SSO for ZTP services, namely for the AppOfApps
+configure_rh_gitops: true
+
+# pull_secret_path is the path to the OpenShift Pull secret
+pull_secret_path: ~/rh-ocp-pull-secret.json
+
+# subscription_manifest_path is the path to the AAP2 Subscription Manifest
+## Can be skipped if you subscribe manually
+subscription_manifest_path: ~/aap2-subscription-manifest.zip
