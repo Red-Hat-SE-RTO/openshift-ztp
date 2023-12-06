@@ -1,0 +1,7 @@
+---
+# defaults file for create_vsphere_infra
+
+deployment_type: vsphere
+
+argocd_url: http://openshift-gitops-server.openshift-gitops.svc.cluster.local
+argocd_namespace: openshift-gitops

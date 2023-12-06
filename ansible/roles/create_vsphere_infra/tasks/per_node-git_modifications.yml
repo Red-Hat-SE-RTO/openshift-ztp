@@ -1,0 +1,114 @@
+---
+- name: Flatten the map for this specific node
+  ansible.builtin.set_fact:
+    node_nic_dict: "{{ node_nic_dict | default({}) | combine({node_nic_item.name: node_nic_item.macAddress}) }}"
+  loop: "{{ node_nic_map[node_item.name] }}"
+  loop_control:
+    loop_var: node_nic_item
+
+- name: d
+  ansible.builtin.debug:
+    msg: "{{ node_nic_dict }}"
+
+# ==============================================================================
+# NMStateConfig files
+# ==============================================================================
+
+- name: Read in the node NMState file from the cloned repo
+  ansible.builtin.set_fact:
+    nmstate_file: "{{ lookup('file', nmstate_temp_dir.path + '/git/ztp-clusters/' + target_spoke_git_path + '/11_nmstate_config-' + node_item.name + '.yml') | from_yaml }}"
+
+- name: Set the MAC Address for each NIC
+  ansible.utils.update_fact:
+    updates:
+      - path: nmstate_file.spec.interfaces
+        value: "{{ node_nic_map[node_item.name] }}"
+  register: nmstate_file_update
+
+- name: Write out the NMState file
+  ansible.builtin.copy:
+    content: "{{ nmstate_file_update.nmstate_file | to_nice_yaml }}"
+    dest: "{{ nmstate_temp_dir.path }}/git/ztp-clusters/{{ target_spoke_git_path }}/11_nmstate_config-{{ node_item.name }}.yml"
+    mode: "0644"
+
+# ==============================================================================
+# Cluster ConfigMap file
+# ==============================================================================
+- name: Read in the cluster configmap file from the cloned repo
+  ansible.builtin.set_fact:
+    cluster_configmap_file: "{{ lookup('file', nmstate_temp_dir.path + '/git/ztp-clusters/' + target_spoke_git_path + '/08_cluster_config.yml') | from_yaml }}"
+
+- name: Extract the cluster_nodes key
+  ansible.builtin.set_fact:
+    read_cluster_nodes: "{{ cluster_configmap_file.data.cluster_nodes | from_json }}"
+
+- name: Get the specific node data from the object
+  ansible.builtin.set_fact:
+    read_cluster_node: "{{ read_node_item }}"
+    read_cluster_node_interfaces: "{{ read_node_item.network.interfaces }}"
+    read_cluster_node_index: "{{ r_node_idx }}"
+  loop: "{{ read_cluster_nodes }}"
+  loop_control:
+    loop_var: read_node_item
+    index_var: r_node_idx
+    label: "{{ read_node_item.name }}"
+  when: node_item.name == read_node_item.name
+
+- name: Build a list of updates for the interfaces
+  ansible.builtin.set_fact:
+    update_list: "{{ update_list + update }}"
+  loop: "{{ read_cluster_node_interfaces }}"
+  loop_control:
+    index_var: iface_idx
+    loop_var: iface_item
+  vars:
+    update_list: []
+    update:
+      - path: read_cluster_node_interfaces[{{ iface_idx }}].mac_address
+        value: "{{ node_nic_dict[iface_item.name] }}"
+
+- name: Update the original interface fact
+  ansible.utils.update_fact:
+    updates: "{{ update_list }}"
+  register: updated_iface_list
+
+- name: Update the read_cluster_node variable with the updated interfaces
+  ansible.utils.update_fact:
+    updates:
+      - path: read_cluster_node.network.interfaces
+        value: "{{ updated_iface_list.read_cluster_node_interfaces }}"
+  register: updated_cluster_node
+
+- name: Update the read_cluster_nodes variable with the updated node
+  ansible.utils.update_fact:
+    updates:
+      - path: read_cluster_nodes[{{ read_cluster_node_index }}]
+        value: "{{ updated_cluster_node.read_cluster_node }}"
+  register: updated_cluster_nodes
+
+- name: Update the cluster_configmap_file.data.cluster_nodes variable with the updated node
+  ansible.utils.update_fact:
+    updates:
+      - path: cluster_configmap_file.data.cluster_nodes
+        value: "{{ updated_cluster_nodes.read_cluster_nodes | to_json }}"
+  register: updated_cluster_configmap_file
+
+- name: Write out the cluster configmap file
+  ansible.builtin.copy:
+    content: "{{ updated_cluster_configmap_file.cluster_configmap_file | to_nice_yaml }}"
+    dest: "{{ nmstate_temp_dir.path }}/git/ztp-clusters/{{ target_spoke_git_path }}/08_cluster_config.yml"
+    mode: "0644"
+
+- name: Reset facts
+  ansible.builtin.set_fact:
+    nmstate_file: ""
+    read_cluster_node: ""
+    read_cluster_nodes: ""
+    read_cluster_node_interfaces: ""
+    read_cluster_node_index: ""
+    updated_iface_list: ""
+    updated_cluster_node: ""
+    updated_cluster_nodes: ""
+    updated_cluster_configmap_file: ""
+    update_list: ""
+    

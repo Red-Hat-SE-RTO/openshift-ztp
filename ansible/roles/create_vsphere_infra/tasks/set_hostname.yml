@@ -1,0 +1,74 @@
+---
+
+- name: Get the Agent CRDs
+  kubernetes.core.k8s_info:
+    api_version: agent-install.openshift.io/v1beta1
+    kind: Agent
+    namespace: "{{ cluster_configmap.namespace }}"
+    label_selectors:
+      - "infraenvs.agent-install.openshift.io = {{ infraenv.name }}"
+  register: agent_crd_info
+
+- name: Reset facts per looped node item
+  ansible.builtin.set_fact:
+    node_mac_addresses: []
+    agent_mac_addresses: []
+
+- name: Set the mac address list for this looped node item
+  ansible.builtin.set_fact:
+    node_mac_addresses: "{{ node_mac_addresses + [node_iface.mac_address] }}"
+  loop: "{{ node_item.network.interfaces }}"
+  loop_control:
+    loop_var: node_iface
+    label: "{{ node_iface.name }}"
+
+- name: Set the mac address list for this looped Agents
+  when: (agent_item.status.inventory.interfaces | json_query('[].macAddress')) | intersect(node_mac_addresses)
+  ansible.builtin.set_fact:
+    agent_mac_addresses: "{{ agent_mac_addresses + agent_item.status.inventory.interfaces | json_query('[].macAddress') }}"
+    agent_name: "{{ agent_item.metadata.name }}"
+    agent_role: "{% if node_item.type == 'converged-node' %}master{% endif %}{% if node_item.type == 'control-plane' %}master{% endif %}{% if node_item.type == 'application-node' %}worker{% endif %}"
+    agent_hostname: "{{ node_item.name }}"
+  loop: "{{ agent_crd_info.resources }}"
+  loop_control:
+    loop_var: agent_item
+    label: "{{ agent_item.metadata.name }}"
+
+- name: "Debug - {{ node_item.name }}"
+  ansible.builtin.debug:
+    msg: "{{ node_mac_addresses }}"
+
+- name: Debug - agent macs
+  ansible.builtin.debug:
+    msg: "{{ agent_mac_addresses }}"
+
+- name: Debug - agent ensemble
+  ansible.builtin.debug:
+    msg:
+      - "{{ agent_name }}"
+      - "{{ agent_mac_addresses }}"
+      - "{{ agent_role }}"
+      - "{{ agent_hostname }}"
+
+- name: Set hostname information for the agent
+  kubernetes.core.k8s:
+    state: patched
+    kind: Agent
+    name: "{{ agent_name }}"
+    namespace: "{{ cluster_configmap.namespace }}"
+    api_version: agent-install.openshift.io/v1beta1
+    definition:
+      spec:
+        hostname: "{{ agent_hostname }}"
+
+- name: Set role information for the agent
+  when: node_item.type not in ['sno-node', 'converged-node']
+  kubernetes.core.k8s:
+    state: patched
+    kind: Agent
+    name: "{{ agent_name }}"
+    namespace: "{{ cluster_configmap.namespace }}"
+    api_version: agent-install.openshift.io/v1beta1
+    definition:
+      spec:
+        role: "{{ agent_role }}"

@@ -1,0 +1,22 @@
+---
+- name: Set empty facts
+  ansible.builtin.set_fact:
+    mac_interfaces_count: 0
+
+- name: Setup VMWare disk dictionary
+  ansible.builtin.set_fact:
+    disks: "{{ disks | default([]) + [{'size_gb': disk_item.size, 'type': 'thin'}] }}"
+  loop: "{{ node_item.vm.disks }}"
+  loop_control:
+    loop_var: disk_item
+
+- name: Setup VMWare network mac address count
+  ansible.builtin.set_fact:
+    mac_interfaces_count: "{{ (mac_interfaces_count | int + 1) }}"
+  loop: "{{ node_item.network.interfaces }}"
+  loop_control:
+    loop_var: iface_item
+
+- name: Setup Agent Names
+  ansible.builtin.set_fact:
+    agent_names: "{{ agent_names | default([]) + [node_item.name] }}"

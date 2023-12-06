@@ -1,0 +1,78 @@
+---
+
+- name: Technologic
+  block:
+
+    - name: Git add the new cluster # noqa: command-instead-of-module
+      ansible.builtin.shell: |
+        git add ztp-clusters/{{ target_spoke_git_path }}
+      args:
+        chdir: "{{ nmstate_temp_dir.path }}/git"
+
+    - name: Check the git status
+      ansible.builtin.shell: |
+        git status --porcelain | wc -l
+      args:
+        chdir: "{{ nmstate_temp_dir.path }}/git"
+      register: git_status_result
+
+    - name: Git commit the new cluster # noqa: command-instead-of-module
+      when: git_status_result.stdout != "0"
+      ansible.builtin.shell: |
+        git commit -m "Update NMState: {{ cluster_configmap_info.resources[0].data.cluster_name }}"
+      args:
+        chdir: "{{ nmstate_temp_dir.path }}/git"
+      register: git_commit_result
+
+    - name: Push functions when using the SSH method
+      when: push_git_auth_method == "ssh" and git_status_result.stdout != "0"
+      block:
+
+        - name: Git set new remote # noqa: command-instead-of-module
+          ansible.builtin.shell: |
+            git remote add private {{ push_git_url }}
+          args:
+            chdir: "{{ nmstate_temp_dir.path }}/git"
+
+        - name: Save the contents of the SSH Key to a file
+          ansible.builtin.copy:
+            content: "{{ push_git_ssh_key }}"
+            dest: "{{ nmstate_temp_dir.path }}/secrets/push_git_ssh_key"
+            mode: "0600"
+          no_log: true
+
+        - name: Create .ssh folder
+          ansible.builtin.file:
+            path: "{{ ansible_env.HOME }}/.ssh"
+            state: directory
+            mode: "0700"
+
+        - name: Git push the new cluster # noqa: command-instead-of-module
+          ansible.builtin.shell: |
+            ssh-keyscan github.com >> $HOME/.ssh/known_hosts
+            chmod 0644 $HOME/.ssh/known_hosts
+            git config core.sshCommand "ssh -i {{ nmstate_temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
+            git push private {{ push_git_branch }}
+          args:
+            chdir: "{{ nmstate_temp_dir.path }}/git"
+
+    - name: Push functions when using the Basic Auth method
+      when: push_git_auth_method == "basic" and git_status_result.stdout != "0"
+      block:
+        - name: Git set new remote # noqa: command-instead-of-module
+          ansible.builtin.shell: |
+            git remote add private "{{ push_git_url_combined }}"
+          args:
+            chdir: "{{ nmstate_temp_dir.path }}/git"
+
+        - name: Do a git config --list # noqa: command-instead-of-module
+          ansible.builtin.shell: |
+            git config --list
+          args:
+            chdir: "{{ nmstate_temp_dir.path }}/git"
+
+        - name: Git push the new cluster # noqa: command-instead-of-module
+          ansible.builtin.shell: |
+            git -c http.sslVerify=false push private {{ push_git_branch }}
+          args:
+            chdir: "{{ nmstate_temp_dir.path }}/git"

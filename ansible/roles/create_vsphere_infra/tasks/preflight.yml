@@ -1,0 +1,84 @@
+---
+# ===================================================================================
+# Query the needed OpenShift objects
+# ===================================================================================
+
+- name: Query OpenShift for needed Configs & Secrets
+  block:
+
+    - name: Get the vCenter Credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: "{{ vcenter_credentials_secret.namespace }}"
+        name: "{{ vcenter_credentials_secret.name }}"
+      register: vsphere_secret
+
+    - name: Fail if the vCenter credentials secret is not found
+      when: vsphere_secret.resources | length == 0
+      ansible.builtin.fail:
+        msg: "No vCenter credentials secret found! Looking for {{ vcenter_credentials_secret.namespace }}/{{ vcenter_credentials_secret.name }}"
+
+    - name: Get the Git Push Secret
+      when: git_push_secret is defined
+      block:
+        - name: Get the Git Push Secret
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Secret
+            namespace: "{{ git_push_secret.namespace }}"
+            name: "{{ git_push_secret.name }}"
+          register: git_push_secret_object
+
+        - name: Fail if the Git Push Secret is not found
+          when: git_push_secret_object.resources | length == 0
+          ansible.builtin.fail:
+            msg: "No Git Push Secret found! Looking for {{ git_push_secret.namespace }}/{{ git_push_secret.name }}"
+
+    - name: Query vCenter for a connectivity test
+      community.vmware.vmware_datacenter_info:
+        hostname: '{{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}'
+        username: '{{ vsphere_secret.resources[0].data.vcenter_username | b64decode }}'
+        password: '{{ vsphere_secret.resources[0].data.vcenter_password | b64decode }}'
+        validate_certs: "{{ vsphere_secret.resources[0].data.vcenter_validate_ssl | b64decode }}"
+      register: vcenter_test_info
+
+    - name: Fail if the vCenter instance cannot be connected to
+      when: vcenter_test_info.datacenter_info | length == 0
+      ansible.builtin.fail:
+        msg: "Cannot connect to vCenter at {{ vsphere_secret.resources[0].data.vcenter_fqdn | b64decode }}!"
+
+    - name: Get the Cluster Configuration
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        namespace: "{{ cluster_configmap.namespace }}"
+        name: "{{ cluster_configmap.name }}"
+      register: cluster_configmap_info
+
+    - name: Fail if the Cluster Config ConfigMap is not found
+      when: cluster_configmap_info.resources | length == 0
+      ansible.builtin.fail:
+        msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
+
+    - name: Unmarshal the Cluster ConfigMap
+      ansible.builtin.set_fact:
+        cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
+        dynamic_mac: false
+
+    - name: Create a total array of interfaces
+      ansible.builtin.set_fact:
+        cluster_interfaces: "{{ cluster_interfaces | default([]) + node_item.network.interfaces }}"
+      loop: "{{ cluster_nodes }}"
+      loop_control:
+        loop_var: node_item
+        label: "{{ node_item.name }}"
+
+    - name: Loop through all of the interfaces and set dynamic_mac to true if there is no MAC address defined on an interface
+      when: interface_item.mac_address == "00:00:00:00:00:00"
+      ansible.builtin.set_fact:
+        dynamic_mac: true
+      loop: "{{ cluster_interfaces }}"
+      loop_control:
+        loop_var: interface_item
+        label: "{{ interface_item.name }}"

@@ -1,0 +1,117 @@
+---
+# tasks file for create_vsphere_infra
+- name: Run Preflight tasks
+  ansible.builtin.include_tasks: preflight.yml
+
+- name: Create the vCenter schema
+  ansible.builtin.include_tasks: vcenter_schema.yml
+
+- name: Set common Infrastructure facts
+  ansible.builtin.include_tasks: per_node-create_vmware_infra_common.yml
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+
+- name: Create the VMs without a CDROM defined
+  ansible.builtin.include_tasks: per_node-create_vmware_vm_shells.yml
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+
+- name: Get the VM Info and reformat the NICs
+  ansible.builtin.include_tasks: per_node-reformat_nmstate.yml
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+
+- name: Run Git Functions
+  block:
+    - name: Setup Git variables
+      ansible.builtin.include_tasks: git_setup.yml
+
+    - name: Run Git modifications
+      ansible.builtin.include_tasks: per_node-git_modifications.yml
+      loop: "{{ cluster_nodes }}"
+      loop_control:
+        loop_var: node_item
+
+    - name: Run Git Push
+      ansible.builtin.include_tasks: git_push.yml
+
+  always:
+    - name: Delete the temporary directory used by the Git functions
+      ansible.builtin.file:
+        path: "{{ nmstate_temp_dir.path }}"
+        state: absent
+        force: true
+
+- name: Sync ArgoCD Application
+  kubernetes.core.k8s:
+    state: patched
+    kind: Application
+    api_version: argoproj.io/v1alpha1
+    namespace: "{{ argocd_namespace }}"
+    name: "{{ cluster_configmap_info.resources[0].data.deployment_type }}-{{ cluster_configmap_info.resources[0].data.cluster_type }}-{{ cluster_configmap_info.resources[0].data.cluster_name }}"
+    merge_type:
+      - strategic-merge
+      - merge
+    definition:
+      operation:
+        initiatedBy:
+          username: ztp-bot
+        sync:
+          syncStrategy:
+            hook: {}
+
+- name: Copy ISO from InfraEnv status to vCenter
+  ansible.builtin.include_tasks: copy_iso.yml
+
+- name: Attach the ISO to each of the VMs and boot them
+  ansible.builtin.include_tasks: per_node-attach_iso.yml
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+
+- name: Read in the Cluster Configuration ConfigMap again now that the modifications have been made
+  block:
+    - name: Get the Cluster Configuration
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        namespace: "{{ cluster_configmap.namespace }}"
+        name: "{{ cluster_configmap.name }}"
+      register: cluster_configmap_info
+
+    - name: Fail if the Cluster Config ConfigMap is not found
+      when: cluster_configmap_info.resources | length == 0
+      ansible.builtin.fail:
+        msg: "No Cluster Config ConfigMap found! Looking for {{ cluster_configmap.namespace }}/{{ cluster_configmap.name }}"
+
+    - name: Unmarshal the Cluster ConfigMap
+      ansible.builtin.set_fact:
+        cluster_nodes: "{{ cluster_configmap_info.resources[0].data.cluster_nodes | from_json }}"
+
+# ===========================================================
+# Agent Approval, Metadata Setting
+# ===========================================================
+
+- name: Loop through Agents
+  ansible.builtin.include_tasks: agent_loop_runner.yml
+  vars:
+    task_approved_agents: "{{ approved_agents }}"
+
+- name: Loop through Agents and Set Hostname and Role
+  ansible.builtin.include_tasks: set_hostname.yml
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+    label: "{{ node_item.name }}"
+  # when: cluster_configmap_info.resources[0].data.cluster_type != "sno"
+
+# ===========================================================
+# Start Cluster Install
+# ===========================================================
+
+- name: Start the cluster install
+  ansible.builtin.include_tasks: start_cluster_install.yml
+  # when: cluster_configmap_info.resources[0].data.cluster_type == "full"
