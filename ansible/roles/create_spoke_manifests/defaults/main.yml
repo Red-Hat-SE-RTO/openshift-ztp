@@ -27,7 +27,7 @@ ansible_tower_secret_name: "ansible-tower-credentials"
 pull_secret_secret_name: "ztp-deployment-pull-secret"
 
 # What Secret name and namespace should the Git push credentials be pulled from?
-git_push_credentials_secret_name: "ztp-git-push-credentials"
+git_push_credentials_secret_name: "git-push-credentials"
 git_push_credentials_secret_namespace: "{{ credential_namespace }}"
 
 openshift_release: "4.13.22"
