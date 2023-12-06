@@ -54,17 +54,3 @@
       loop_control:
         loop_var: manifest
         label: "{{ manifest.name }}: {{ manifest.filename }}"
-
-    - name: Add the ArgoCD Application
-      when: create_argo_application | bool
-      block:
-        - name: Template the ArgoCD Application
-          ansible.builtin.template:
-            src: templates/99_argocd_application.yml.j2
-            dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
-            mode: "0644"
-          vars:
-            application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
-            git_repo_path: "{{ target_spoke_git_path }}"
-            git_repo_url: "{{ push_git_url }}"
-            project_name: "{{ argocd_project_name }}"

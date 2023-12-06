@@ -43,8 +43,8 @@
     state: directory
     mode: "0755"
 
-- name: Create a directory for the spoke cluster ArgoCD application
-  ansible.builtin.file:
-    path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
-    state: directory
-    mode: "0755"
+#- name: Create a directory for the spoke cluster ArgoCD application
+#  ansible.builtin.file:
+#    path: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
+#    state: directory
+#    mode: "0755"

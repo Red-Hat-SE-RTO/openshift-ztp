@@ -22,6 +22,12 @@
     - name: Read in the SSH Public Key
       ansible.builtin.include_tasks: ssh_key.yml
 
+- name: Create the ArgoCD cluster Application
+  when: create_argo_application | bool
+  block:
+    - name: Set up the local file system and clone the repo down
+      ansible.builtin.include_tasks: git_pull_push_argoapp.yml
+
 - name: Set up the local file system and clone the repo down
   ansible.builtin.include_tasks: git_clone.yml
 
@@ -30,3 +36,5 @@
 
 - name: Git Push
   ansible.builtin.include_tasks: git_push.yml
+  vars:
+    git_target_branch: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"

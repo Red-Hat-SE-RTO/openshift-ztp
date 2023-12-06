@@ -54,7 +54,7 @@ spec:
     server: 'https://kubernetes.default.svc'
   source:
     repoURL: '{{ git_repo_url }}'
-    targetRevision: HEAD
+    targetRevision: {{ git_target_revision }}
     ## Path is the repo directory that containers the cluster(s) configuration and deployment manifests
     path: {{ git_repo_path }}
     #path: ztp-clusters/${INFRA}/${DEPLOYMENT_TYPE}/${CLUSTER_NAME}
@@ -62,4 +62,6 @@ spec:
     directory:
       recurse: true
   project: {{ project_name }}
-  syncPolicy: {}
+  syncPolicy:
+    automated:
+      allowEmpty: true

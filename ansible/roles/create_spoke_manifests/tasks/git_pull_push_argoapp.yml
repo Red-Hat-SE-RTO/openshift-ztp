@@ -1,4 +1,68 @@
 ---
+
+#######################################################
+## Filesystem Operations
+- name: Filesystem Configuration
+  block:
+    - name: Create a temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: build
+      register: argoapp_temp_dir
+
+    - name: Create subdirectories in temporary path
+      ansible.builtin.file:
+        path: "{{ argoapp_temp_dir.path }}/{{ path_item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - git
+        - secrets
+      loop_control:
+        loop_var: path_item
+
+- name: Clone down the repo
+  when: source_git_repo != push_git_url
+  ansible.builtin.git:
+    repo: "{{ source_git_repo }}"
+    dest: "{{ argoapp_temp_dir.path }}/git"
+    clone: true
+    version: "{{ source_git_repo_branch }}"
+
+- name: Clone down the repo
+  when: source_git_repo == push_git_url
+  ansible.builtin.git:
+    repo: "{{ push_git_url_combined }}"
+    dest: "{{ argoapp_temp_dir.path }}/git"
+    clone: true
+    version: "{{ source_git_repo_branch }}"
+
+#- name: Create a directory for the spoke cluster
+#  ansible.builtin.file:
+#    path: "{{ temp_dir.path }}/git/{{ target_spoke_git_path }}"
+#    state: directory
+#    mode: "0755"
+
+- name: Create a directory for the spoke cluster ArgoCD application
+  ansible.builtin.file:
+    path: "{{ argoapp_temp_dir.path }}/git/{{ argo_application_git_repo_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Template the ArgoCD Application
+  ansible.builtin.template:
+    src: templates/99_argocd_application.yml.j2
+    dest: "{{ temp_dir.path }}/git/{{ argo_application_git_repo_path }}/argo_application.yml"
+    mode: "0644"
+  vars:
+    application_name: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
+    git_repo_path: "{{ target_spoke_git_path }}"
+    git_repo_url: "{{ push_git_url }}"
+    git_target_revision: "{{ deployment_type }}-{{ cluster_type }}-{{ cluster_name }}"
+    project_name: "{{ argocd_project_name }}"
+
+#######################################################
+## Git Operations - Push
 # noqa exemptions:
 #   command-instead-of-module: We are using git commands instead of modules
 #   because the git module does not support all the options we need, like pushing
@@ -12,7 +76,7 @@
         git config user.email "{{ push_git_user_email }}"
         git config user.name "{{ push_git_user_name }}"
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Git set push user token info # noqa: command-instead-of-module
       when: push_git_auth_method in ["http", "https"]
@@ -20,34 +84,33 @@
         git config --global github.user {{ push_git_username }}
         git config --global github.token {{ push_git_password }}
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Git add the new cluster # noqa: command-instead-of-module
       ansible.builtin.shell: |
         git add {{ target_spoke_git_path }}
         git add {{ argo_application_git_repo_path }}
-        git checkout -b {{ git_target_branch }}
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Git commit the new cluster # noqa: command-instead-of-module
       ansible.builtin.shell: |
         git commit -m "add new ztp cluster: {{ cluster_name }}"
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Git set new remote # noqa: command-instead-of-module
       when: push_git_auth_method == "ssh"
       ansible.builtin.shell: |
         git remote add private {{ push_git_url }}
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Save the contents of the SSH Key to a file
       when: push_git_auth_method == "ssh"
       ansible.builtin.copy:
         content: "{{ push_git_ssh_key }}"
-        dest: "{{ temp_dir.path }}/secrets/push_git_ssh_key"
+        dest: "{{ argoapp_temp_dir.path }}/secrets/push_git_ssh_key"
         mode: "0600"
       no_log: true
 
@@ -63,37 +126,37 @@
       ansible.builtin.shell: |
         ssh-keyscan github.com >> $HOME/.ssh/known_hosts
         chmod 0644 $HOME/.ssh/known_hosts
-        git config core.sshCommand "ssh -i {{ temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
+        git config core.sshCommand "ssh -i {{ argoapp_temp_dir.path }}/secrets/push_git_ssh_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
         git push private {{ push_git_branch }}
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Git set new remote # noqa: command-instead-of-module
       when: push_git_auth_method == "basic"
       ansible.builtin.shell: |
         git remote add private "{{ push_git_url_combined }}"
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Do a git config --list # noqa: command-instead-of-module
       when: push_git_auth_method == "basic"
       ansible.builtin.shell: |
         git config --list
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
     - name: Git push the new cluster # noqa: command-instead-of-module
       when: push_git_auth_method == "basic"
       ansible.builtin.shell: |
-        git -c http.sslVerify=false push private {{ git_target_branch }}
+        git -c http.sslVerify=false push private main
       args:
-        chdir: "{{ temp_dir.path }}/git"
+        chdir: "{{ argoapp_temp_dir.path }}/git"
 
 #######################################################
 ## Cleanup
 - name: Delete the temporary directory
   ansible.builtin.file:
-    path: "{{ temp_dir.path }}"
+    path: "{{ argoapp_temp_dir.path }}"
     state: absent
     force: true
   tags:
