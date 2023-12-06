@@ -30,7 +30,7 @@ pull_secret_secret_name: "ztp-deployment-pull-secret"
 git_push_credentials_secret_name: "ztp-git-push-credentials"
 git_push_credentials_secret_namespace: "{{ credential_namespace }}"
 
-openshift_release: "4.10.3"
+openshift_release: "4.13.22"
 
 ######################################################################################
 ## Ansible Automation Platform 2 Configuration
@@ -87,4 +87,4 @@ install_packages: false
 
 infraenv_cpu_arch: x86_64
 
-clusterset_name: default
+clusterset_name: spoke-clusters
