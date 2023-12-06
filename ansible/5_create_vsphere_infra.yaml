@@ -1,0 +1,43 @@
+---
+- name: Deploy vSphere Infrastructure for ZTP via RHACM OAS Discovery ISO
+  hosts: all
+  gather_facts: false
+  module_defaults:
+    kubernetes.core.k8s_info:
+      validate_certs: false
+    kubernetes.core.k8s:
+      validate_certs: false
+
+  vars:
+    vcenter_credentials_secret:
+      namespace: "{{ vcenter_credentials_secret_namespace }}"
+      name: "{{ vcenter_credentials_secret_name }}"
+    infraenv:
+      namespace: "{{ infraenv_namespace }}"
+      name: "{{ infraenv_name }}"
+    cluster_configmap:
+      namespace: "{{ cluster_configmap_namespace }}"
+      name: "{{ cluster_configmap_name }}"
+    # git_push_secret is required when using dynamic mac address as created by vSphere
+    git_push_secret:
+      namespace: "{{ git_push_secret_namespace }}"
+      name: "{{ git_push_secret_name }}"
+    auto_approve_hosts: true
+    agent_names: []
+    approved_agents: []
+
+  environment:
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+    no_proxy: "{{ no_proxy | default('') }}"
+    HTTP_PROXY: "{{ http_proxy | default('') }}"
+    HTTPS_PROXY: "{{ https_proxy | default('') }}"
+    NO_PROXY: "{{ no_proxy | default('') }}"
+    K8S_AUTH_PROXY: "{{ http_proxy | default('') }}"
+    K8S_AUTH_NO_PROXY: "{{ no_proxy | default('') }}"
+
+  tasks:
+
+    - name: Load the create_vsphere_infra role
+      ansible.builtin.include_role:
+        name: create_vsphere_infra
