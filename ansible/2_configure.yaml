@@ -9,8 +9,8 @@
       validate_certs: false
     kubernetes.core.k8s:
       validate_certs: false
-    kubernetes.core.helm:
-      validate_certs: false
+    #kubernetes.core.helm:
+    #  validate_certs: false
 
   vars:
     #########################################
