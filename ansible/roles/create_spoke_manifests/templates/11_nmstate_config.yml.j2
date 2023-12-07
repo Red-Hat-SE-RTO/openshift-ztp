@@ -1,5 +1,5 @@
 {% set macAddressDefined = false %}
-{% for iface in node_item.network.interfaces %}{% if iface.mac_address is defined %}{% set macAddressDefined = true %}{% endfor %}
+{% for iface in node_item.network.interfaces %}{% if iface.mac_address is defined %}{% set macAddressDefined = true %}{% endif %}{% endfor %}
 ---
 apiVersion: agent-install.openshift.io/v1beta1
 kind: NMStateConfig
