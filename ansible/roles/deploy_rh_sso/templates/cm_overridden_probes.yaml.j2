@@ -10,29 +10,31 @@ data:
   liveness_probe.sh: |
     #!/bin/bash
     set -e
-    export NO_PROXY="${NO_PROXY},$(hostname -i)"
-    export no_proxy="${no_proxy},$(hostname -i)"
-    curl -s --max-time 10 --fail http://$(hostname -i):8080/auth > /dev/null
+    if [ -d "/opt/eap/bin" ]; then
+      /opt/eap/bin/livenessProbe.sh
+    else
+      export NO_PROXY="${NO_PROXY},$(hostname -i)"
+      export no_proxy="${no_proxy},$(hostname -i)"
+      curl -s --max-time 10 --fail http://$(hostname -i):8080/auth > /dev/null
+    fi
+
   readiness_probe.sh: |
     #!/bin/bash
     set -e
 
-    export NO_PROXY="${NO_PROXY},$(hostname -i)"
-    export no_proxy="${no_proxy},$(hostname -i)"
-
-    DATASOURCE_POOL_TYPE="data-source"
-    DATASOURCE_POOL_NAME="KeycloakDS"
-
-    PASSWORD_FILE="/tmp/management-password"
-    PASSWORD="not set"
-    USERNAME="admin"
-    AUTH_STRING=""
-
     if [ -d "/opt/eap/bin" ]; then
-        pushd /opt/eap/bin > /dev/null
-      DATASOURCE_POOL_TYPE="xa-data-source"
-      DATASOURCE_POOL_NAME="keycloak_postgresql-DB"
+      /opt/eap/bin/readinessProbe.sh
     else
+      export NO_PROXY="${NO_PROXY},$(hostname -i)"
+      export no_proxy="${no_proxy},$(hostname -i)"
+      DATASOURCE_POOL_TYPE="data-source"
+      DATASOURCE_POOL_NAME="KeycloakDS"
+      
+      PASSWORD_FILE="/tmp/management-password"
+      PASSWORD="not set"
+      USERNAME="admin"
+      AUTH_STRING=""
+
         pushd /opt/jboss/keycloak/bin > /dev/null
       if [ -f "$PASSWORD_FILE" ]; then
         PASSWORD=$(cat $PASSWORD_FILE)
@@ -42,7 +44,7 @@ data:
         echo $PASSWORD > $PASSWORD_FILE
       fi
       AUTH_STRING="--digest -u $USERNAME:$PASSWORD"
+      
+      curl -s --max-time 10 --fail http://localhost:9990/management $AUTH_STRING --header "Content-Type: application/json" -d "{\"operation\":\"test-connection-in-pool\", \"address\":[\"subsystem\",\"datasources\",\"${DATASOURCE_POOL_TYPE}\",\"${DATASOURCE_POOL_NAME}\"], \"json.pretty\":1}"
+      curl -s --max-time 10 --fail http://$(hostname -i):8080/auth > /dev/null
     fi
-
-    curl -s --max-time 10 --fail http://localhost:9990/management $AUTH_STRING --header "Content-Type: application/json" -d "{\"operation\":\"test-connection-in-pool\", \"address\":[\"subsystem\",\"datasources\",\"${DATASOURCE_POOL_TYPE}\",\"${DATASOURCE_POOL_NAME}\"], \"json.pretty\":1}"
-    curl -s --max-time 10 --fail http://$(hostname -i):8080/auth > /dev/null
