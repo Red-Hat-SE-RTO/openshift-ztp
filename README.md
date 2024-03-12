@@ -67,6 +67,20 @@ There are two processes that are needed to deploy OpenShift to vSphere via ZTP:
 - One-time setup of a Hub Cluster
 - Individual GitOps-based deployment templating of manifests into a Git repo, per Spoke Clusters
 
+### Requirements 
+* Ensure OpenShift Storage nodes are labeled 
+```
+# curl -OL https://gist.githubusercontent.com/tosin2013/ec8d76807c47a5f7856b5e6c7021944b/raw/e1443421eb22fbb2f08ed4e94d6294a0bd96d01d/ocp-infra-label.sh
+# chmod +x ocp-infra-label.sh
+# vim ocp-infra-label.sh # Edit Machine names
+array=( worker1 worker2 worker3 )
+# ./ocp-infra-label.sh
+```
+* Ensure api and ingress are configured on the cluster
+  * [Replacing the default ingress certificate](https://docs.openshift.com/container-platform/4.15/security/certificates/replacing-default-ingress-certificate.html)
+  * [Adding API server certificates](https://docs.openshift.com/container-platform/4.15/security/certificates/api-server.html)
+
+
 ### Setting up the Hub Cluster
 
 Assuming you have an OCP 4.9+ cluster deployed with OpenShift Assisted Installer Service (OAS), you can simply run the following to bootstrap it into a Hub Cluster:
