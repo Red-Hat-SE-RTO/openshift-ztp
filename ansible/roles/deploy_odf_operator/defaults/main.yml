@@ -7,3 +7,6 @@ aws_storagecluster_storageclass: gp3-csi
 aws_storagecluster_block_size: 512
 
 local_storagecluster_storageclass: odf
+
+aro_storagecluster_storageclass: managed-csi
+aro_storagecluster_block_size: 512

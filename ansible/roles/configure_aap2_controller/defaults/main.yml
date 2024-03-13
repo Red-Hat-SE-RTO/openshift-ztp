@@ -14,7 +14,7 @@ aap2_execution_environments_name: GitNPip
 aap2_k8s_credential_name: Local Hub Cluster
 
 aap2_job_template_create_infra_name: AJ - Create vSphere Infrastructure
-aap2_job_template_create_infra_playbook: ansible/5_create_vsphere_infra.yml
+aap2_job_template_create_infra_playbook: ansible/5_create_vsphere_infra.yaml
 
 aap2_job_template_delete_infra_name: Delete Spoke Cluster
 aap2_job_template_delete_infra_playbook: ansible/delete_vmware_deployment.yml
