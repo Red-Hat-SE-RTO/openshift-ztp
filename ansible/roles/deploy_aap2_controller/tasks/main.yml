@@ -144,6 +144,7 @@
   register: cm_k8s_info_run
   delay: 10
   retries: 3
+  when: (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_aap2.resources[0].spec.trustedCA.name != '')
 
 - name: Copy data over to a secret formatted for AAP2
   kubernetes.core.k8s:
