@@ -182,6 +182,19 @@
   retries: 3
   when: r_ocp_infra.resources[0].status.platform == "AWS"
 
+- name: Create the ODF StorageCluster for Azure
+  kubernetes.core.k8s:
+    state: present
+    merge_type:
+      - strategic-merge
+      - merge
+    definition: "{{ lookup('template', 'templates/aro_storagecluster.yaml.j2') | from_yaml }}"
+  register: k8s_run
+  until: k8s_run is not failed
+  delay: 10
+  retries: 3
+  when: r_ocp_infra.resources[0].status.platform == "Azure"
+
 - name: Create the ODF StorageCluster for LSO
   kubernetes.core.k8s:
     state: present
@@ -193,7 +206,7 @@
   until: k8s_run is not failed
   delay: 10
   retries: 3
-  when: r_ocp_infra.resources[0].status.platform != "AWS"
+  when: r_ocp_infra.resources[0].status.platform != "AWS" and r_ocp_infra.resources[0].status.platform != "Azure"
 
 - name: Create the ODF StorageSystem
   kubernetes.core.k8s:
