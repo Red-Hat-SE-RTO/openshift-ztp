@@ -66,7 +66,7 @@ spec:
               memory: "500Mi"
           volumeMounts:
             - name: mirror-config
-              mountPath: /etc/ztp-mirror
+              mountPath: /etc/http-mirror
             - name: ztp-mirror
               mountPath: /tmp/server/pub
 {% if (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name is defined) and (r_cluster_root_ca_mirror.resources[0].spec.trustedCA.name != '') %}
